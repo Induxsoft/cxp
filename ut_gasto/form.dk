@@ -1,0 +1,113 @@
+#include "dkli.dkh"
+#!
+module "form.dk"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "uielements.dkl"
+    #include "config.dk"
+
+    do @context.begin(@crud_context)
+    ref infoProv = ifnull(@("&./info_proveedor"),record.create())
+
+    #$
+    div(class="container")
+    {
+        h1(class="text-primary"){$"Gasto"}
+
+        div(class="row")
+        {
+            div(class="col-lg-8 col-md-9 col-sm-12")
+            {
+                form(action="." method="post")
+                {
+                    div(class="row")
+                    {
+                        div(class="col-lg-4 col-md-4 col-sm-12"){
+                            label(class="form-label" "for"="txt-fecha"){$"Fecha:"}
+                            input(type="date" class="form-control" name="fecha" id="txt_fecha" value="#<@('$input/fecha')>" required="")
+                        }
+                        div(class="col-lg-4 col-md-4 col-sm-12"){
+                            label(class="form-label" "for"="txt_vencimiento"){$"Fecha de vencimiento:"}
+                            input(type="date" class="form-control" name="vencimiento" id="vencimiento" value="#<@('$input/vencimiento')>" required="")
+                        }
+                        div(class="col-lg-4 col-md-4 col-sm-12"){
+                            label(class="form-label" "for"="txt_referencia"){$"Referencia:"}
+                            input(type="text" class="form-control" name="referencia" id="txt_referencia" value="#<@('$input/referencia')>" required="")
+                        }
+                    }
+
+                    label(class="form-label" "for"="sel_proveedor"){$"Proveedor:"}
+                    "input-key"(
+                        id="sel_proveedor"
+                        name="proveedor"
+                        "data-key"="sys_pk"
+                        "data-search"="codigo"
+                        "data-text"="nombre"
+                        "data-value"="#<to.json(infoProv)>"
+                        "data-source"="#<@url_buscar_proveedor>"
+                        columns="codigo,nombre,tipo"
+                        colcaptions="Código,Nombre,Tipo"
+                        "box-title-text"="Seleccione un proveedor"
+                        required="true"
+                    ){$""}
+
+                    label(class="form-label" "for"="sel_categoria"){$"Categoría:"}
+                    ##
+                    new params
+                    {
+                        @"datatable*": ifnull(@("&./categorias"),list.create())
+                        @"id": "sel_categoria"
+                        new member "attributes"
+                        {
+                            @"class": "form-select"
+                            @"name": "categoria"
+                            @"required": ""
+                        }
+                        @"value_field": "sys_pk"
+                        @"text_field": "descripcion"
+                        @"selected": @("$input/categoria")
+                    }
+                    do uie.dbSelect(params)
+                    ##
+
+                    label(class="form-label" "for"="sel_divisa"){$"Divisa:"}
+                    ##
+                    new params
+                    {
+                        @"datatable*": ifnull(@("&./divisas"),list.create())
+                        @"id": "sel_divisa"
+                        new member "attributes"
+                        {
+                            @"class": "form-select"
+                            @"name": "divisa"
+                            @"required": ""
+                        }
+                        @"value_field": "sys_pk"
+                        @"text_field": "divisa"
+                        @"selected": @("$input/divisa")
+                    }
+                    do uie.dbSelect(params)
+                    ##
+
+                    label(class="form-label" "for"="txt_concepto"){$"Concepto:"}
+                    textarea(class="form-control" name="concepto" id="txt_concepto" required=""){$"#<@('$input/concepto')>"}
+
+                    div(class="d-flex gap-2 align-items-center justify-content-end mt-2")
+                    {
+                        label(class="form-label" "for"="txt_importe"){$"Importe:"}
+                        input(type="number" class="form-control w-25" name="importe" min="1" id="txt_importe" value="#<@('$input/importe')>" required="")
+                    }
+
+                    div(class="d-flex gap-1 justify-content-end my-2")
+                    {
+                        button(type="submit" class="btn btn-primary"){$"Aceptar"}
+                        button(type="reset" class="btn btn-danger"){$"Cancelar"}
+                    }
+                }
+            }
+        }
+
+        p{$"#<@('$error/message')>"}
+    }
+}

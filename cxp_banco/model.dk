@@ -1,0 +1,13 @@
+#include "dkli.dkh"
+#!
+module "model"
+{
+    @table_name = "banco"
+
+    @read_query = "SELECT b.sys_pk, b.sys_guid, b.sys_recver, b.nombre, IFNULL(b.notas,'') AS notas, IFNULL(b.website,'') AS website, IFNULL(CONCAT(c.nombre,' ',c.apellidos),'') AS contacto FROM banco AS b LEFT JOIN contacto AS c ON c.sys_pk = b.contacto WHERE b.sys_pk = @_entity_id AND NOT IFNULL(b.sys_deleted,0);"
+
+    @list_query = "SELECT b.sys_pk, b.sys_guid, b.sys_recver, b.nombre, IFNULL(b.notas,'') AS notas, IFNULL(b.website,'') AS website, IFNULL(CONCAT(c.nombre,' ',c.apellidos),'') AS contacto FROM banco AS b LEFT JOIN contacto AS c ON c.sys_pk = b.contacto WHERE NOT IFNULL(b.sys_deleted,0);"
+
+    @create_fields = "sys_guid,sys_dtcreated,sys_timestamp,nombre,notas,website"
+    @update_fields = "sys_timestamp,sys_recver,nombre,notas,website"
+}

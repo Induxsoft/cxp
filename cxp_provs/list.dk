@@ -1,0 +1,45 @@
+#include "dkli.dkh"
+#!
+module "list.dk"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "dbr.dkh"
+    #include "uielements.dkl"
+
+    #include "config.dk"
+    #include "lib.dk"
+    do @context.begin(@crud_context)
+
+    #$
+    div(class="container")
+    {
+        h1(class="h4"){$"Proveedores"}
+
+        div
+        {
+            "edit-table"(class="w-100" id="lst_prov" data="#<to.json(@('&.'))>")
+            {
+                "edit-thead"
+                {
+                    "edit-tr"
+                    {
+                        "edit-th"(type="NoEditable" field="codigo"){$"Código"}
+                        "edit-th"(type="NoEditable" field="nombre"){$"Nombre"}
+                        "edit-th"(type="NoEditable" field="rfc"){$"RFC"}
+                        "edit-th"(type="NoEditable" field="saldo"){$"Saldo"}
+                        "edit-th"(type="NoEditable" field="tipo"){$"Tipo de proveedor"}
+                        "edit-th"(type="NoEditable" field="divisa"){$"Divisa"}
+                        "edit-th"(type="NoEditable" field="zona"){$"Zona"}
+                    }
+                }
+                /* "edit-tbody"
+                {
+                    // contenido...
+                } */
+            }
+        }
+
+        p{$"#<@('$error/message')>"}
+    }
+}

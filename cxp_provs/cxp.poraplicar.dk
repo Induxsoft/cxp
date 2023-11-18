@@ -1,0 +1,72 @@
+#include "dkli.dkh"
+#!
+module "cxp.poraplicar.dk"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "dbr.dkh"
+    #include "uielements.dkl"
+
+    #include "config.dk"
+    #include "lib.dk"
+    do @context.begin(@crud_context)
+
+    #$
+    div(class="container")
+    {
+        h1(class="h4"){$"Pagos y bonificaciones por aplicar"}
+
+        div
+        {
+            div(class="d-flex justify-content-between")
+            {
+                h6(class=""){$"#<@('$./nombre')>"}
+                h6(class=""){$"#<@('$./divisa')>"}
+            }
+
+            table(class="table table-bordered")
+            {
+                thead
+                {
+                    tr
+                    {
+                        th{$"Saldo total"}
+                        th{$"Saldo docs"}
+                        th{$"Por aplicar"}
+                    }
+                }
+                tbody
+                {
+                    tr
+                    {
+                        td{$"#<format(@('#./saldos/saldo_total'),'$ #,0.00')>"}
+                        td{$"#<format(@('#./saldos/saldo_docs'),'$ #,0.00')>"}
+                        td{$"#<format(@('#./saldos/por_aplicar'),'$ #,0.00')>"}
+                    }
+                }
+            }
+
+            "edit-table"(class="w-100" data="#<to.json(@('&./docs'))>")
+            {
+                "edit-thead"
+                {
+                    "edit-tr"
+                    {
+                        "edit-th"(type="NoEditable" field="documento"){$"Documento"}
+                        "edit-th"(type="NoEditable" field="referencia"){$"Referencia"}
+                        "edit-th"(type="NoEditable" field="emision"){$"Fecha"}
+                        "edit-th"(type="NoEditable" field="debe"){$"Importe"}
+                        "edit-th"(type="NoEditable" field="aplicado"){$"Aplicado"}
+                        "edit-th"(type="NoEditable" field="xaplicar"){$"Por aplicar"}
+                    }
+                }
+                /* "edit-tbody"
+                {
+                    // contenido...
+                } */
+            }
+        }
+
+        p{$"#<@('$error/message')>"}
+    }
+}
