@@ -9,3 +9,5 @@ Incluir la siguiente regla en el routes.map
 Se requiere nuevos tipos de categorias
  - ID: 30
  - CONST: Transferencias bancarias
+
+En el archivo config.dk de cxp_docs y ut_gasto, modificar el host del enlace para la busqueda de proveedores.
