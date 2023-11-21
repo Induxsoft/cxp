@@ -95,7 +95,7 @@ model "erp.cxp"
         @"destino" int required
         @"fecha" date required                      // Fecha en que se realiza la aplicación
         @"importe" decimal(18,8)                    // Importe aplicado
-        @"fk_dcxc_aplicadoa" ref:"dcxp" required    // Referencia al documento desde el que se aplica (pago o bonificación)
+        @"fk_dcxp_aplicadoa" ref:"dcxp" required    // Referencia al documento desde el que se aplica (pago o bonificación)
         @"aplicadoa" ref:"dcxp" required            // Referencia al documento al que se aplicó
     }
 
