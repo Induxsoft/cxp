@@ -1,0 +1,34 @@
+#include "dkli.dkh"
+#!
+module
+{
+	@DOCS_POR_PAGAR="/cxp/documentos/"
+	@PROVEEDORES="/cxp/proveedores/"
+	@GASTOS="/cxp/gastos/"
+	@ADD_BANCO="./_new/"
+	@URL_BANCOS="/cxp/bancos/"
+	@URL_CUENTAS="/cxp/cuentas/"
+	@URL_MOVCUENTAS="/cxp/movcuenta/"
+	@URL_MOVCUENTAS_ROW=@URL_MOVCUENTAS + "@cuenta/movimientos/"
+	@AGREGAR_DEPOSITO="../../_new/deposito/"
+	@AGREGAR_RETIRO="../../_new/retiro/"
+	@REALIZAR_TRANSFERENCIA="../../_new/traspaso/"
+
+
+	@APLICAR_BONIFICACION="/cxp/documentos/@doc/bonificacion/"
+	@APLICAR_PAGO="/cxp/documentos/@doc/pago/"
+	@APLICAR_PAGO_MORA="/cxp/documentos/@doc/intmoratorios/"
+	@CONSULTAR_DOCUMENTO="/cxp/documentos/@doc/"
+	@ESTADO_CUENTA_PROVEEDOR="/cxp/proveedores/@proveedor/balance/"
+
+	//proveedor
+	@DOCS_POR_PAGAR_PROVEEDOR="/cxp/proveedores/@proveedor/pendientes/"
+	@PAGOS_POR_APLICAR="/cxp/proveedores/@proveedor/xaplicar/"
+	@PAGOS_PROVEEDOR="/cxp/proveedores/@proveedor/pago/"
+	@BONIFICACION_PROVEEDOR="/cxp/proveedores/@proveedor/bonificacion/"
+
+	@ADD_DOCS_POR_PAGAR="/cxp/documentos/_new/"
+
+	@ADD_GASTO="/cxp/gastos/_new/"
+	@CONSULTAR_GASTO="/cxp/gastos/@id/"
+}

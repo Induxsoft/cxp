@@ -1,0 +1,142 @@
+                    <button
+                        type="button" data-bs-toggle="collapse" data-bs-target="#navtoggle_x31yyd"
+                        aria-controls="navtoggle_x31yyd" aria-expanded="false" aria-label="Toggle navigation"
+                        class="navbar-toggler"><span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div id="navtoggle_x31yyd" class="collapse navbar-collapse">
+                        <div class="dropdown">
+                          <a class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-auto-close="outside"  id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                            Comercialización
+                          </a>
+                          <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                            <li><a href="#<@url_backoffice>/cotizacion/" class="dropdown-item">Cotizaciones</a></li>
+                            <li><a href="#<@url_backoffice>/contrato/" class="dropdown-item">Contratos y anexos</a></li>
+                            <li><a href="#<@url_backoffice>/factura/" class="dropdown-item">Facturación y cobranza</a></li>
+                            <li><a href="#<@url_backoffice>/certificado/" class="dropdown-item">Certificado</a></li>
+                            
+                          </ul>
+
+                          </ul>
+                        </div>
+
+                        <div class="dropdown">
+                          <a class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-auto-close="outside"  id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                            Logística
+                          </a>
+                          <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                            <li><a href="#<@url_backoffice>/orden/" class="dropdown-item">Órdenes</a></li>
+                            <li><a href="#<@url_backoffice>/transporte/" class="dropdown-item">Unidades</a></li>
+                            <li><a href="#<@url_backoffice>/prod_boleta/" class="dropdown-item">Boletas</a></li>
+                            <li><a href="#<@url_backoffice>/cuadrilla/" class="dropdown-item">Cuadrillas</a></li>
+                                <li><a href="#<@url_backoffice>/prod_bodega/" class="dropdown-item">Bodegas</a></li>
+                            <li><a href="#<@url_backoffice>/bodegas_bancos/" class="dropdown-item">Inventario de producto</a></li>
+                            <li><a href="#<@url_backoffice>/?id=Inventario_de_insumos" class="dropdown-item">Inventario de insumos</a></li>
+
+                          </ul>
+                        </div>
+
+                        <div class="dropdown">
+                          <a class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-auto-close="outside"  id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                            Finanzas
+                          </a>
+                          <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                            <li><a href="#<@url_backoffice>/maniobras_pagar/" class="dropdown-item">Maniobras por pagar</a></li>
+                            <li><a href="#<@url_backoffice>/?id=Nómina" class="dropdown-item">Nómina</a></li>
+                            <li><a href="#<@url_backoffice>/?id=Gastos" class="dropdown-item">Gastos</a></li>
+                            <li><a href="#<@url_backoffice>/?id=Requisiciones" class="dropdown-item">Requisiciones</a></li>
+                            <li><a href="#<@url_backoffice>/?id=Facturas_de_proveedores" class="dropdown-item">Facturas de proveedores</a></li>
+                          </ul>
+                        </div>
+
+                        <div class="dropdown flex-grow-1">
+                          <a class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-auto-close="outside"  id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                            Catálogos
+                          </a>
+
+                          <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                            <li class="dropdown-item"><a href="#<@url_backoffice>/divisa/" style="color: black;text-decoration: none;">Divisas</a></li>
+                            <!-- <li class="dropdown-item"><a href="#<@url_backoffice>/ingenio/" style="color: black;text-decoration: none;">Ingenios</a></li> -->
+                            <li class="dropdown-item"><a href="#<@url_backoffice>/planta/" style="color: black;text-decoration: none;">Plantas</a></li>
+                            <li class="dropdown-item"><a href="#<@url_backoffice>/zafra/" style="color: black;text-decoration: none;">Zafras</a></li>
+                            <li class="dropdown-item"><a href="#<@url_backoffice>/certificadora/" style="color: black;text-decoration: none;">Certificadoras</a></li>
+
+                                 <li class="dropend">
+                                    <a href="#" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown">Clientes</a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="#<@url_backoffice>/tipocliente/" class="dropdown-item">Tipos de clientes</a></li>
+                                        <li><a href="#<@url_backoffice>/cliente/" class="dropdown-item">Clientes</a></li>
+                                        <li><a href="#<@url_backoffice>/tipoconcepto/" class="dropdown-item">Tipos de conceptos</a></li>
+                                        <li><a href="#<@url_backoffice>/concepto/" class="dropdown-item">Conceptos de facturación</a></li>
+                                        <li><a href="#<@url_backoffice>/consignatario/" class="dropdown-item">Consignatarios</a></li>
+                                    </ul>
+                                </li>
+
+                                <li class="dropend">
+                                    <a href="#" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown">Transportación</a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="#<@url_backoffice>/operador/" class="dropdown-item">Operadores</a></li>
+                                        <!-- <li><a href="#<@url_backoffice>/transporte/" class="dropdown-item">Unidades</a></li> -->
+                                        <li><a href="#<@url_backoffice>/tipo_transporte/" class="dropdown-item">Tipos de transportes</a></li>
+                                        <li><a href="#<@url_backoffice>/linea_transporte/" class="dropdown-item">Líneas de transporte</a></li>
+                                    </ul>
+                                </li>
+
+                                 <li class="dropend">
+                                    <a href="#" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown">Proveedores</a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="#<@url_backoffice>/tipoproveedor/" class="dropdown-item">Tipos de proveedores</a></li>
+                                        <li><a href="#<@url_backoffice>/proveedor/" class="dropdown-item">Proveedores</a></li>
+                                    </ul>
+                                </li>
+
+                                <li class="dropend">
+                                    <a href="#" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown">Productos</a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="#<@url_backoffice>/tipo_boleta/" class="dropdown-item">Tipo de boletas</a></li>
+                                        <li><a href="#<@url_backoffice>/prod_banco/" class="dropdown-item">Bancos</a></li>
+                                        <li><a href="#<@url_backoffice>/prod_producto/" class="dropdown-item">Productos</a></li>
+                                        <li><a href="#<@url_backoffice>/prod_marca/" class="dropdown-item">Marcas</a></li>
+                                        <li><a href="#<@url_backoffice>/prod_presentacion/" class="dropdown-item">Medidas y presentaciones</a></li>
+                                        <li><a href="#<@url_backoffice>/prod_calidad/" class="dropdown-item">Calidades</a></li>
+                                        <li><a href="#<@url_backoffice>/prod_condicion/" class="dropdown-item">Condiciones</a></li>
+                                        <li><a href="#<@url_backoffice>/tipo_orden/" class="dropdown-item">Tipo de órdenes</a></li>
+                                        <li><a href="#<@url_backoffice>/planta_proceso/" class="dropdown-item">Plantas de procesos</a></li>
+                                    </ul>
+                                </li>
+
+                                 <li class="dropend">
+                                    <a href="#" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown">Insumos y servicios</a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="#<@url_backoffice>/insumo_almacen/" class="dropdown-item">Almacenes</a></li>
+                                        <li><a href="#<@url_backoffice>/insumo_tipo/" class="dropdown-item">Tipos de insumos</a></li>
+                                        <li><a href="#<@url_backoffice>/insumo/" class="dropdown-item">Insumos</a></li>
+                                    </ul>
+                                </li>
+
+                                 <li class="dropend">
+                                    <a href="#" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown">Recursos humanos</a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="#<@url_backoffice>/rh_empleado_org/" class="dropdown-item">Empleados</a></li>
+                                        <li><a href="#<@url_backoffice>/rh_categoria_empleado/" class="dropdown-item">Categorías de empleados</a></li>
+                                        <li><a href="#<@url_backoffice>/rh_unidad_org/" class="dropdown-item">Unidades organizacionales</a></li>
+                                    </ul>
+                                </li>
+
+                                 <li class="dropend">
+                                    <a href="#" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown">Usuarios</a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="#<@url_backoffice>/usergroup/" class="dropdown-item">Grupos de usuarios</a></li>
+                                        <li><a href="#<@url_backoffice>/tuser/" class="dropdown-item">Usuarios internos</a></li>
+                                        <li><a href="#<@url_backoffice>/?id=Usuarios_externos" class="dropdown-item">Usuarios externos</a></li>
+                                    </ul>
+                                </li>
+
+                                
+                                <li class="dropdown-item"><a href="#<@url_backoffice>/?all=1" style="color: black;text-decoration: none;">Ver todo</a></li>
+
+                          </ul>
+                        </div>
+                        <div id="" class="d-flex align-items-center justify-content-start px-2 gap-2">
+                            #<html_session()>
+                        </div>
+                     </div>

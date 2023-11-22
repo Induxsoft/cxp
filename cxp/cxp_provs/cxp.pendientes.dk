@@ -1,0 +1,98 @@
+#include "dkli.dkh"
+#!
+module "cxp.pendientes.dk"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "dbr.dkh"
+    #include "uielements.dkl"
+
+    #include "config.dk"
+    #include "lib.dk"
+    do @context.begin(@crud_context)
+    #include "../../config.dk"
+
+    #$
+    div(class="container")
+    {
+        h1(class="h4"){$"Documentos pendientes de pago"}
+
+        div
+        {
+            div(class="d-flex justify-content-between")
+            {
+                h6(class=""){$"#<@('$./nombre')>"}
+                h6(class=""){$"#<@('$./divisa')>"}
+            }
+
+            table(class="table table-bordered")
+            {
+                thead
+                {
+                    tr
+                    {
+                        th{$"Saldo total"}
+                        th{$"Saldo docs"}
+                        th{$"Por aplicar"}
+                    }
+                }
+                tbody
+                {
+                    tr
+                    {
+                        td{$"#<format(@('#./saldos/saldo_total'),'$ #,0.00')>"}
+                        td{$"#<format(@('#./saldos/saldo_docs'),'$ #,0.00')>"}
+                        td{$"#<format(@('#./saldos/por_aplicar'),'$ #,0.00')>"}
+                    }
+                }
+            }
+            button(class="btn btn-outline-primary induxsoft-corners" onclick="aplicar('#<@APLICAR_BONIFICACION>')"){"Aplicar bonificación"}
+            button(class="btn btn-outline-success induxsoft-corners" onclick="aplicar('#<@APLICAR_PAGO>')"){"Aplicar pago"}
+            button(class="btn btn-outline-secondary induxsoft-corners" onclick="aplicar('#<@APLICAR_PAGO_MORA>')"){"Aplicar cargos por mora"}
+            "edit-table"(class="w-100" id="lst_dcxp" data="#<to.json(@('&./docs'))>")
+            {
+                "edit-thead"
+                {
+                    "edit-tr"
+                    {
+                        "edit-th"(type="NoEditable" field="documento"){$"Documento"}
+                        "edit-th"(type="NoEditable" field="referencia"){$"Referencia"}
+                        "edit-th"(type="NoEditable" field="emision"){$"Fecha"}
+                        "edit-th"(type="NoEditable" field="aplicacion"){$"Vencimiento"}
+                        "edit-th"(type="NoEditable" field="haber"){$"Importe"}
+                        "edit-th"(type="NoEditable" field="int_moratorios"){$"IntMoratorios"}
+                        "edit-th"(type="NoEditable" field="bonificaciones"){$"Bonificaciones"}
+                        "edit-th"(type="NoEditable" field="pagos"){$"Pagos"}
+                        "edit-th"(type="NoEditable" field="saldo"){$"Saldo"}
+                    }
+                }
+                /* "edit-tbody"
+                {
+                    // contenido...
+                } */
+            }
+            a(href="../../" class="btn btn-outline-danger btn-sm"){"Salir"}
+        }
+
+        p{$"#<@('$error/message')>"}
+
+        script
+        {
+            $'
+                var table=document.getElementById("lst_dcxp");
+
+                function aplicar(url="")
+                {
+                    if(table.CurrentRowIndex()<0)
+                    {
+                        alert("Debe seleccionar una fila");
+                        return;
+                    }
+                    var data=table.DataArray[table.CurrentRowIndex()];
+                    var url=url.includes("@doc") ? url.replace("@doc",data.sys_pk) :  url.replace("@proveedor",data.pkproveedor);
+                    window.location.href=url;
+                }
+            '
+        }
+    }
+}

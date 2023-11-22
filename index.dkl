@@ -1,0 +1,23 @@
+#include "dkli.dkh"
+#!
+module "index"
+{
+	#include "functions.dkh"
+	#include "serialize.dkh"
+	#include "config.dk"
+	#$
+	div(class="container-fluid")
+	{
+		div(class="card")
+		{
+			div(class="card-body")
+			{
+				a(href="#<@DOCS_POR_PAGAR>"){"Documentos por pagar"}br{}
+				a(href="#<@PROVEEDORES>"){"Proveedores"}br{}
+				a(href="#<@GASTOS>"){"Gastos"}br{}
+				a(href="#<@URL_BANCOS>"){"Bancos"}br{}
+				a(href="#<@URL_CUENTAS>"){"Cuentas"}br{}
+			}
+		}
+	}
+}

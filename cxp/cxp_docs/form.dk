@@ -1,0 +1,66 @@
+#include "dkli.dkh"
+#!
+module "form.dk"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+
+    do @context.begin(@crud_context)
+    
+    #$
+    div(class="container")
+    {
+        p{"#<@('$error/message')>"}
+        h1{$"Detalles"}
+
+        p{
+            b{$"Proveedor: "}
+            $"#<@('$./proveedor')>"
+        }
+
+        p{
+            b{$"Referencia: "}
+            $"#<@('$./referencia')>"
+        }
+
+        p{
+            b{$"Documento: "}
+            $"#<@('$./documento')>"
+        }
+
+        p{
+            b{$"Emisión: "}
+            $"#<@('$./emision')>"
+        }
+
+        p{
+            b{$"Aplicación: "}
+            $"#<@('$./aplicacion')>"
+        }
+
+        p{
+            b{$"Debe: "}
+            $"#<@('#./debe')>"
+        }
+
+        p{
+            b{$"Haber: "}
+            $"#<@('#./haber')>"
+        }
+
+        p{
+            b{$"Divisa: "}
+            $"#<@('$./divisa')>"
+        }
+
+        p{
+            b{$"Tipo de cambio: "}
+            $"#<@('#./tipocambio')>"
+        }
+
+        p{
+            b{$"Concepto: "}
+            $"#<@('$./notas')>"
+        }
+    }
+}
