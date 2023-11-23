@@ -10,6 +10,7 @@ module "cxp.poraplicar.dk"
     #include "config.dk"
     #include "lib.dk"
     do @context.begin(@crud_context)
+    #include "../../config.dk"
 
     #$
     div(class="container")
@@ -46,7 +47,9 @@ module "cxp.poraplicar.dk"
                 }
             }
 
-            "edit-table"(class="w-100" data="#<to.json(@('&./docs'))>")
+            button(class="btn btn-outline-primary" onclick="aplicarPago('#<@APLICAR_PAGOS>')"){"Aplicar"}
+
+            "edit-table"(class="w-100" id="table_poraplicar" data="#<to.json(@('&./docs'))>")
             {
                 "edit-thead"
                 {
@@ -69,5 +72,27 @@ module "cxp.poraplicar.dk"
         }
 
         p{$"#<@('$error/message')>"}
+
+        script
+        {
+            $'
+            var table=document.getElementById("table_poraplicar");
+            document.addEventListener("DOMContentLoaded",()=>
+            {
+               
+            });
+
+             function aplicarPago(url="")
+                {
+                    if(table.CurrentRowIndex()<0)
+                    {
+                        alert("Debe seleccionar una fila");
+                        return;
+                    }
+                    var data=table.DataArray[table.CurrentRowIndex()];
+                    window.location.href=url.replace("@id",data.sys_pk);
+                }
+            '
+        }
     }
 }

@@ -22,7 +22,7 @@ module "cxp.list"
             button(class="btn btn-outline-primary induxsoft-corners" onclick="aplicar('#<@APLICAR_BONIFICACION>')"){"Aplicar bonificación"}
             button(class="btn btn-outline-primary induxsoft-corners" onclick="aplicar('#<@APLICAR_PAGO>')"){"Aplicar pago"}
             button(class="btn btn-outline-primary induxsoft-corners" onclick="aplicar('#<@APLICAR_PAGO_MORA>')"){"Aplicar cargos por mora"}
-            button(class="btn btn-outline-primary induxsoft-corners" onclick="aplicar('#<@CONSULTAR_DOCUMENTO>')"){"Consultar documentos"}
+            button(class="btn btn-outline-primary induxsoft-corners" onclick="aplicar('#<@CONSULTAR_DOCUMENTO>')"){"Consultar documento"}
             button(class="btn btn-outline-primary induxsoft-corners" onclick="aplicar('#<@ESTADO_CUENTA_PROVEEDOR>')"){"Estado de cuenta"}
             span(class="flex-grow-1"){""}  
             a(href="/" class="btn btn-outline-danger btn-sm"){"x"}

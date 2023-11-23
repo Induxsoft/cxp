@@ -93,6 +93,8 @@ module "model"
     }
     ut.agregarGasto::&db,&params,&data
     {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
+
         new gasto
         {
             @"sys_pk": 0
@@ -121,15 +123,19 @@ module "model"
         do dbr.commit(db)
         exception
         {
+            last_error=last_error()
             if dbr.in_transaction(db){do dbr.rollback(db)}
 
-            // do ut.prepareView(db,params,data)
-            do rise_error(last_error_code(),last_error())
+            do ut.prepareView(db,params,data)
+            do ut.data(db,data)
+            do rise_error(0,last_error)
         }
     }
 
     ut.list::&db,&params
     {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_GASTOS)) { do rise_error(0,"No autorizado")}
+
         new filters {}
 
         fecha_inicial = date_format(@@(params,"$fi"),"yyyy-MM-dd")
@@ -176,6 +182,8 @@ module "model"
 
     ut.read::&db,&params
     {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_UN_GASTO)) { do rise_error(0,"No autorizado")}
+            
         ref entity=entity.read(db,params)
 
         sql = "SELECT sys_pk,descripcion FROM categoria WHERE tipo = 2 AND NOT IFNULL(sys_deleted,0) ORDER BY sys_pk;"
@@ -227,6 +235,8 @@ module "model"
     }
     ut.blank::&db,&params
     {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
+
         new data
         do ut.prepareView(db,params,data)
         do ut.data(db,data)

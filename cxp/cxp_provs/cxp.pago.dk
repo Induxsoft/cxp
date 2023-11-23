@@ -16,7 +16,7 @@ module "cxp.pago.dk"
     #$
     div(class="container")
     {
-        h1(class="h4"){$"Pagar Proveedor"}
+        h1(class="h4"){$"Pago a proveedor"}
 
         form(action="." method="post")
         {
@@ -100,7 +100,7 @@ module "cxp.pago.dk"
                             ##
                             new params
                             {
-                                @"datatable*": ifnull(@("&./documentos"),list.create())
+                                @"datatable*": ifnull(@("&./documentos_cuenta"),list.create())
                                 @"id": "sel_documento_retiro"
                                 new member "attributes"
                                 {

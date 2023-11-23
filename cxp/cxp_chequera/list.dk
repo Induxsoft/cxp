@@ -12,14 +12,23 @@ module "list.dk"
     #$
     div(class="container")
     {
-        h1{$"Cuentas de cheque"}
+        h1{$"Cuentas de cheque"} 
+        div(class="d-flex")
+        {
+            span(class="flex-grow-1"){""}  
+            a(href="/" class="btn btn-outline-danger btn-sm"){"x"}
+        }
+        
 
     
         div(class="d-flex")
         {
             a(class="btn btn-outline-primary induxsoft-corners" href="#<@ADD_BANCO>"){"Agregar"}
             span(class="flex-grow-1"){""}
-            a(href="#<@URL_BANCOS>"){"Bancos"}    
+
+            a(href="#<@URL_BANCOS>"){"Bancos"}
+
+               
         }
         div(class="table-responsive mt-2")
         {

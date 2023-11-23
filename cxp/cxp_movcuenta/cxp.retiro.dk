@@ -27,7 +27,7 @@ module "form.dk"
                     ##
 
                     label(class="form-label" "for"="txt_beneficiario"){$"Beneficiario:"}
-                    input(type="text" class="form-control form-control-sm" name="beneficiario" id="txt_beneficiario" value="")
+                    input(type="text" class="form-control form-control-sm" name="beneficiario" id="txt_beneficiario" value="#<@('$input/beneficiario')>")
 
                     label(class="form-label" "for"="sel_categoria"){$"Categoria:"}
                     ##
@@ -40,16 +40,16 @@ module "form.dk"
                     ##
 
                     label(class="form-label" "for"="txt_referencia"){$"Referencia:"}
-                    input(type="text" class="form-control form-control-sm" name="referencia" id="txt_referencia" value="" required="")
+                    input(type="text" class="form-control form-control-sm" name="referencia" id="txt_referencia" value="#<@('$input/referencia')>" required="")
 
                     label(class="form-label" "for"="txt_fecha"){$"Fecha:"}
-                    input(type="date" class="form-control form-control-sm" name="fecha" id="txt_fecha" value="" required="")
+                    input(type="date" class="form-control form-control-sm" name="fecha" id="txt_fecha" value="#<@('$input/fecha')>" required="")
 
                     label(class="form-label" "for"="txt_aplicacion"){$"Fecha de aplicación:"}
-                    input(type="date" class="form-control form-control-sm" name="aplicacion" id="txt_aplicacion" value="" required="")
+                    input(type="date" class="form-control form-control-sm" name="aplicacion" id="txt_aplicacion" value="#<@('$input/aplicacion')>" required="")
 
                     label(class="form-label" "for"="txt_importe"){$"Importe:"}
-                    input(type="number" class="form-control form-control-sm" name="importe" min="0" id="txt_importe" value="" required="")
+                    input(type="number" class="form-control form-control-sm" name="importe" min="0" id="txt_importe" value="#<@('$input/importe')>" required="")
 
                     label(class="form-label" "for"="txt_concepto"){$"Concepto:"}
                     textarea(class="form-control" name="concepto" id="txt_concepto")

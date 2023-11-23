@@ -26,8 +26,10 @@ module "list.dk"
                 a(class="btn btn-outline-primary" href="#<@AGREGAR_DEPOSITO>"){"Agregar depósito"}
                 a(class="btn btn-outline-primary" href="#<@AGREGAR_RETIRO>"){"Agregar retiro"}
                 a(class="btn btn-outline-primary" href="#<@REALIZAR_TRANSFERENCIA>"){"Realizar transferencia"}
-                span(class="flex-grow-1")
                 a(class="btn btn-outline-primary" href="#<@ADD_GASTO>"){"Agregar gasto"}
+
+                span(class="flex-grow-1"){""}  
+                a(href="/" class="btn btn-outline-danger btn-sm"){"x"}
             }   
             
 

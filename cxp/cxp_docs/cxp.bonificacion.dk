@@ -194,7 +194,7 @@ module "cxp.crear"
                     div(class="mt-2 d-flex gap-1 justify-content-end")
                     {
                         button(type="submit" class="btn btn-primary"){$"Aceptar"}
-                        button(type="reset" class="btn btn-danger"){$"Cancelar"}
+                        A(type="reset" class="btn btn-danger" href="../../"){$"Cancelar"}
                     }
                 }
             }

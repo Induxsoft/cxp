@@ -16,7 +16,7 @@ module "cxp.crear"
     #$
     div(class="container")
     {
-        h1(class="h4"){$"Pagar documento"}
+        h1(class="h4"){$"Aplicar abono"}
 
         form(action="." method="post")
         {
@@ -175,7 +175,7 @@ module "cxp.crear"
                             ##
                             new params
                             {
-                                @"datatable*": ifnull(@("&./documentos"),list.create())
+                                @"datatable*": ifnull(@("&./documentos_cuenta"),list.create())
                                 @"id": "sel_documento_retiro"
                                 new member "attributes"
                                 {
@@ -286,7 +286,7 @@ module "cxp.crear"
                     div(class="mt-2 d-flex gap-1 justify-content-end")
                     {
                         button(type="submit" class="btn btn-primary"){$"Aceptar"}
-                        button(type="reset" class="btn btn-danger"){$"Cancelar"}
+                        a(type="reset" class="btn btn-danger" href="../../"){$"Cancelar"}
                     }
                 }
             }

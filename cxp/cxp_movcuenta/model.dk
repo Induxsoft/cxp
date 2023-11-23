@@ -83,6 +83,8 @@ module "model"
 
     mov.obtenerMovimientosCuenta::&db,&params
     {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ESTADO_CUENTA_BANCARIA)) { do rise_error(0,"No autorizado")}
+
         sql = "SELECT sys_pk,sys_guid,nombre FROM chequera WHERE sys_pk = @_entity_id;"
         ref cuenta = dbr.rec(db,sql,params)
 
@@ -128,6 +130,8 @@ module "model"
 
     mov.deposito::&db,&params,&data
     {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_DEPOSITO)) { do rise_error(0,"No autorizado")}
+
         new deposito
         {
             @"sys_pk": 0
@@ -151,6 +155,7 @@ module "model"
         do dbr.insert(db,"movcuenta",deposito)
 
         @url_redir=@URL_MOVCUENTAS + @@(deposito,"$icuenta") +"/movimientos/" 
+
         exception
         {
             do mov.prepareView(db,params,data)
@@ -160,6 +165,8 @@ module "model"
 
     mov.retiro::&db,&params,&data
     {
+        if not(@@(params,"#auth_transferencia")){if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_RETIRO)) { do rise_error(0,"No autorizado")}}
+
         new retiro
         {
             @"sys_pk": 0
@@ -183,6 +190,7 @@ module "model"
         }
         do dbr.insert(db,"movcuenta",retiro)
         @url_redir=@URL_MOVCUENTAS + @@(retiro,"$icuenta") +"/movimientos/" 
+
         exception
         {
             do mov.prepareView(db,params,data)
@@ -192,6 +200,9 @@ module "model"
 
     mov.traspaso::&db,&params,&data
     {
+        params<"auth_transferencia">:dbr.security.isauth(db,@CXP_SEC_PRIVID_REALIZAR_TRANSFERENCIA)
+        if not(@@(params,"#auth_transferencia")) { do rise_error(0,"No autorizado")}
+
         do dbr.begin(db)
 
         new retiro
@@ -229,14 +240,21 @@ module "model"
         
         exception
         {
+            last_error=last_error()
             if dbr.in_transaction(db) { do dbr.rollback(db) }
             do mov.prepareView(db,params,data)
-            do rise_error(last_error_code(),last_error())
+            do rise_error(0,last_error)
         }
     }
 
     mov.blank::&db,&params
     {
+        switch @@(params,"$_view")
+        {
+            case "deposito"{if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_DEPOSITO)) { do rise_error(0,"No autorizado")}}
+            case "retiro"{if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_RETIRO)) { do rise_error(0,"No autorizado")}}
+            case "traspaso"{if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_REALIZAR_TRANSFERENCIA)) { do rise_error(0,"No autorizado")}}
+        }
         new data
         do mov.prepareView(db,params,data)
         return data

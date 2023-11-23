@@ -62,6 +62,10 @@ module "model"
                 data<"info_dcxp*"> : erp.cxp.documentos.obtener(db,@@(params,"$_entity_id"))
                 sql = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_pago,0);"
                 data<"documentos*"> : dbr.list(db,sql,@null)
+
+                sql = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_chq_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.retiros,0);"
+                data<"documentos_cuenta*"> : dbr.list(db,sql,@null)
+                
                 sql = "SELECT c.sys_pk,CONCAT(c.nombre,'(',d.codigo,')') nombre FROM chequera c INNER JOIN divisa d ON d.sys_pk = c.idivisa WHERE NOT IFNULL(c.sys_deleted,0) ORDER BY c.sys_pk;"
                 data<"cuentas*"> : dbr.list(db,sql,@null)
                 sql = "SELECT sys_pk,descripcion FROM categoria WHERE tipo = 2 AND NOT IFNULL(sys_deleted,0) ORDER BY sys_pk;"
@@ -80,6 +84,13 @@ module "model"
 
     cxp.obtenerDocumentoPorPagar::&db,&params
     {
+        switch @@(params,"$_view")
+        {
+            case "pago"{if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_ABONO)) { do rise_error(0,"No autorizado")}}
+            case "bonificacion"{if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_BONIFICACION)) { do rise_error(0,"No autorizado")}}
+            case "intmoratorios"{if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CARGO_POR_MORA)) { do rise_error(0,"No autorizado")}}
+        }
+
         ref dcxp = erp.cxp.documentos.obtener(db,@@(params,"$_entity_id"))
         do cxp.prepareView(db,params,dcxp)
         return dcxp
@@ -87,18 +98,24 @@ module "model"
 
     cxp.crearDocumentoPorPagar::&db,&params,&data
     {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_AGREGAR_DCXP)) { do rise_error(0,"No autorizado")}
+
         ref dcxp = erp.cxp.documentos.crear(db,data)
+
         return dcxp
 
         exception
         {
+            last_err=last_error()
             do cxp.prepareView(db,params,data)
-            do rise_error(last_error_code(),last_error())
+            do rise_error(0,last_err)
         }
     }
 
     cxp.pagarDocumento::&db,&params,&data
     {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_ABONO)) { do rise_error(0,"No autorizado")}
+
         do erp.cxp.documentos.pagar(db,data)
 
         exception
@@ -110,6 +127,8 @@ module "model"
 
     cxp.crearBonificacion::&db,&params,&data
     {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_BONIFICACION)) { do rise_error(0,"No autorizado")}
+
         do erp.cxp.documentos.bonificar(db,data)
 
         exception
@@ -121,6 +140,8 @@ module "model"
 
     cxp.aplicarIntMoratorios::&db,&params,&data
     {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CARGO_POR_MORA)) { do rise_error(0,"No autorizado")}
+
         do erp.cxp.documentos.financiar(db,data)
 
         exception
@@ -149,6 +170,9 @@ module "model"
 
     cxp.list::&db,&params
     {
+
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_DOCS_POR_PAGAR)) { do rise_error(0,"No autorizado")}
+            
         fformat = "yyyy-MM-dd"
 
         proveedor = trim(@@(params,"$prov"))
@@ -208,6 +232,8 @@ module "model"
 
     cxp.read::&db,&params
     {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_DOC)) { do rise_error(0,"No autorizado")}
+
         @read_query = "
         SELECT
             pdr.codigo AS cproveedor,
@@ -288,6 +314,7 @@ module "model"
 
     cxp.aplicarPagos::&db,&params,&data
     {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_PAGOSBONIFICACION_DOCSPAGAR)) { do rise_error(0,"No autorizado")}
         // ref doc_origen = ifnull(@@(data,"&origen"),record.create())
         ref dxdestinos = ifnull(@@(data,"&aplicacion"),list.create())
 
@@ -343,6 +370,8 @@ module "model"
 
     cxp.blank::&db,&params
     {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_AGREGAR_DCXP)) { do rise_error(0,"No autorizado")}
+
         new data
         do cxp.prepareView(db,params,data)
 

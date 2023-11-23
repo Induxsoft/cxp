@@ -9,6 +9,12 @@ module "Controller configs"
 	#include "crudl/crudl.dk"
 	#include "../config.dk"
 
+	if @@(@http_context,"$session/user/ids")==""
+	{
+		@http_context<"response/headers/Location">:"/login.dk"
+		return
+	}
+	
 	@base_path = "cxp"
 	@path_root="web/host"
 	
@@ -60,7 +66,7 @@ module "Controller configs"
 
     @ws=@@(@http_context,"request/get/ws")
 
-    @crudl.qname="MaxiComercioProductivo@MaxiComercio.R5"
+    @crudl.qname=@qname.crud
 
 	@crudl.access_privilege='
 	{

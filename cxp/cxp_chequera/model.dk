@@ -58,18 +58,64 @@ module "model"
 
     read::&db,&params
     {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_EDIT_CUENTA_BANCARIA)) { do rise_error(0,"No autorizado")}
+
         ref data = entity.read(db,params)
         do prepareView(db,params,data)
         return data
     }
+    update::&db,&params,&data
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_EDIT_CUENTA_BANCARIA)) { do rise_error(0,"No autorizado")}
 
+        return entity.update(db,params,data)
+
+        exception
+        {
+            last_error=last_error()
+            do prepareView(db,params,data)
+            do rise_error(0,last_error)
+        }
+    }
     blank::&db,&params
     {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_CUENTA_BANCARIA)) { do rise_error(0,"No autorizado")}
+
         new data
         do prepareView(db,@null,data)
         return data
     }
+    create::&db,&params,&data
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_CUENTA_BANCARIA)) { do rise_error(0,"No autorizado")}
 
+        return entity.create(db,params,data)
+
+        exception
+        {
+            last_error=last_error()
+            do prepareView(db,params,data)
+            do rise_error(0,last_error)
+        }
+    }
+
+    list::&db,&params
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_CUENTAS_BANCARIAS)) { do rise_error(0,"No autorizado")}
+
+        return entity.list(db,params)
+    }
+    delete::&db,&params
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_DEL_CUENTA_BANCARIA)) { do rise_error(0,"No autorizado")}
+
+        return entity.delete(db,params)
+    }
+
+    point @delete to delete
+    point @update to update
+    point @create to create
     point @read to read
     point @blank to blank
+    point @list to list
 }
