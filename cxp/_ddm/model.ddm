@@ -99,6 +99,12 @@ model "erp.cxp"
         @"aplicadoa" ref:"dcxp" required            // Referencia al documento al que se aplicó
     }
 
+    entity "zona" : "TableModel"
+    {
+        @"nombre" string(30) unique required
+        @"notas" string(255) 
+    }
+
     // -------------------------------------------------------
 
     // Enumeración de tipos de categorías de propósito general
