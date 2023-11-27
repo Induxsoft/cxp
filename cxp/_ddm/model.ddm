@@ -167,8 +167,8 @@ model "erp.cxp"
         @"tel3" string(50)
         @"tratamiento" string(5)
         @"website" string(150)
-        @"domicilio1" int ref:"domicilio" ["sys_pk"]
-        @"domicilio2" int ref:"domicilio" ["sys_pk"]
+        @"domicilio1" int //ref:"domicilio" ["sys_pk"]
+        @"domicilio2" int //ref:"domicilio" ["sys_pk"]
     }
 
     // Datos de una cuenta en una institución financiera
