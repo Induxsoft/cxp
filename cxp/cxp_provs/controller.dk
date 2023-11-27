@@ -1,0 +1,40 @@
+#include "dkli.dkh"
+#!
+module "controller"
+{
+    #include "lib.dk"
+
+    switch @@(@_GET,"$_view")
+    {
+        case "bonificacion"
+        {
+            point @update to cxp.bonificarProveedor
+            @form_view = "cxp.bonificacion.dk"
+            break
+        }
+        case "pago"
+        {
+            point @update to cxp.pagarProveedor
+            @form_view = "cxp.pago.dk"
+            break
+        }
+        case "balance"
+        {
+            point @read to cxp.obtenerBalance
+            @form_view = "cxp.balance.dk"
+            break
+        }
+        case "pendientes"
+        {
+            point @read to cxp.obtenerDocsPendientesDePago
+            @form_view = "cxp.pendientes.dk"
+            break
+        }
+        case "xaplicar"
+        {
+            point @read to cxp.obtenerPagosPorAplicar
+            @form_view = "cxp.poraplicar.dk"
+            break
+        }
+    }
+}

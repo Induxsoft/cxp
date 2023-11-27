@@ -1,0 +1,58 @@
+#include "dkli.dkh"
+#!
+module "model"
+{
+    @table_name = "banco"
+
+    @read_query = "SELECT b.sys_pk, b.sys_guid, b.sys_recver, b.nombre, IFNULL(b.notas,'') AS notas, IFNULL(b.website,'') AS website, IFNULL(CONCAT(c.nombre,' ',c.apellidos),'') AS contacto FROM banco AS b LEFT JOIN contacto AS c ON c.sys_pk = b.contacto WHERE b.sys_pk = @_entity_id AND NOT IFNULL(b.sys_deleted,0);"
+
+    @list_query = "SELECT b.sys_pk, b.sys_guid, b.sys_recver, b.nombre, IFNULL(b.notas,'') AS notas, IFNULL(b.website,'') AS website, IFNULL(CONCAT(c.nombre,' ',c.apellidos),'') AS contacto FROM banco AS b LEFT JOIN contacto AS c ON c.sys_pk = b.contacto WHERE NOT IFNULL(b.sys_deleted,0);"
+
+    @create_fields = "sys_guid,sys_dtcreated,sys_timestamp,nombre,notas,website"
+    @update_fields = "sys_timestamp,sys_recver,nombre,notas,website"
+
+    banco.list::&db,&params
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_BANCOS)) { do rise_error(0,"No autorizado")}
+
+        return entity.list(db,params)
+    }
+    banco.add::&db,&params,&data
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_BANCOS)) { do rise_error(0,"No autorizado")}
+
+        return entity.create(db,params,data)
+    }
+    banco.blank::&db,&params
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_BANCOS)) { do rise_error(0,"No autorizado")}
+
+        return record.create()
+    }
+
+    banco.read::&db,&params
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_EDIT_BANCOS)) { do rise_error(0,"No autorizado")}
+
+        return entity.read(db,params)
+    }
+    banco.update::&db,&params,&data
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_EDIT_BANCOS)) { do rise_error(0,"No autorizado")}
+
+        return entity.update(db,params,data)
+    }
+    banco.delete::&db,&params
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_DEL_BANCOS)) { do rise_error(0,"No autorizado")}
+
+        return entity.delete(db,params)
+    }
+    
+    point @delete to banco.delete
+    point @update to banco.update
+    point @read to banco.read
+    point @blank to banco.blank
+    point @create to banco.add
+    point @list to banco.list
+}

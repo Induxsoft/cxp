@@ -1,0 +1,5 @@
+﻿"ID","Const","sys_recver","sys_lock","sys_deleted"
+"1","cIngreso",\N,\N,\N
+"2","cEgreso",\N,\N,\N
+"3","cInventario",\N,\N,\N
+"30","Transferencias bancarias",\N,\N,\N

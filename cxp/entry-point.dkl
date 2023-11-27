@@ -1,0 +1,78 @@
+﻿#include "dkli.dkh"
+#!
+module "Controller configs"
+{
+	#include "functions.dkh"
+	#include "serialize.dkh"
+	#include "dbr.dkh"
+	#include "crudl/crudl.dk"
+	#include "config.dk"
+
+	if @@(@http_context,"$session/user/ids") == "" {
+		@http_context<"response/headers/location"> : "/"
+		return
+	}
+
+	@base_path="cxp"
+	@path_root=path.concat(@@(@http_context,"$request/headers/DOCUMENT_ROOT"),"packs")
+	
+	// Enmascaramiento de enrutamiento (Ejemplos)
+	// Definición de patrones de rutas con base en parámetros GET (request/get)
+	// do crudl.routes.pattern("/module/submodule/process/subprocess/")
+
+	// Comparación de rutas entrantes y asignación de parámetro _entities_type
+	// if crudl.routes.entity("inventario/movimientos/entrada/confirmar/","inventario-movs.entrada-confirmar")
+    // {
+    //    //Si es la ruta indicada, esto es @true y se asigna _entities_type
+    // }
+	// if crudl.route("inventario/movimientos/entrada/confirmar/")
+	// {
+    //    //Si es la ruta indicada esto es @true pero no se modifica _entities_type
+    // }
+
+	// do rise_error(0,to.json(@http_context))
+
+	//No modifique a menos que sepa lo que está haciendo
+
+	do crudl.routes.pattern("/_program/")
+	
+	do crudl.routes.entity("/documentos/","cxp_docs")
+	do crudl.routes.entity("/proveedores/","cxp_provs")
+	do crudl.routes.entity("/gastos/","ut_gasto")
+	do crudl.routes.entity("/bancos/","cxp_banco")
+	do crudl.routes.entity("/cuentas/","cxp_chequera")
+	do crudl.routes.entity("/movcuenta/","cxp_movcuenta")
+	
+	@dbmvc_path="crudl/"
+	
+	@auto_crud=@true
+
+	@db_engine="MY_SQL"	
+
+	@list_view="list.dk"
+	@form_view="form.dk"
+	@error_view="error.dk"
+
+	@entity_id_blank="_new"
+
+	@dkl_view_ext=".dk"
+	@websencia_ext=".jsnwm"
+
+    @crudl.user="admin"
+    @crudl.pwd=""
+
+    @path_template_protected=@path_root+"/_protected/default.htt"
+
+    @crudl.enable_idreplacement=@true
+
+    @ws=@@(@http_context,"request/get/ws")
+
+    @crudl.qname=@qname.crud
+
+	@crudl.access_privilege='
+	{
+		"access":[{"workspace":"'+@ws+'"}]
+	}'
+
+	#include "crudl/controller.dkl"
+}

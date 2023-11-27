@@ -1,0 +1,389 @@
+#include "dkli.dkh"
+#!
+module "model"
+{
+    #include "lib.dk"
+    #include "erp.cxp.documentos.dk"
+
+    cxp.buscarProveedor::&db,&params
+    {
+        sql = "SELECT 
+            pdr.sys_pk,
+            pdr.codigo,
+            pdr.nombre,
+            tpp.descripcion AS tipo,
+            dvs.codigo AS divisa,
+            dvs.tcambio
+        FROM proveedor AS pdr 
+            INNER JOIN tipoproveedor AS tpp ON tpp.sys_pk = pdr.tipo
+            INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
+        WHERE (pdr.codigo LIKE CONCAT('%',@search,'%') OR pdr.nombre LIKE CONCAT('%',@search,'%'));"
+
+        return dbr.list(db,sql,params)
+    }
+
+    cxp.prepareView::&db,&params,&data
+    {
+        switch @@(params,"$_view")
+        {
+            case ""
+            {
+                if @@(params,"$_entity_id") == "_new"
+                {
+                    sql = "SELECT 
+                        pdr.sys_pk,
+                        pdr.codigo,
+                        pdr.nombre,
+                        tpp.descripcion AS tipo,
+                        dvs.codigo AS divisa,
+                        dvs.tcambio
+                    FROM proveedor AS pdr 
+                        INNER JOIN tipoproveedor AS tpp ON tpp.sys_pk = pdr.tipo
+                        INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
+                    WHERE"
+
+                    if @@(data,"#proveedor") > 0 { data<"info_proveedor*"> : dbr.rec(db, sql+" pdr.sys_pk = @proveedor;",data) }
+                    else if @@(params,"$prov") != "" { data<"info_proveedor*"> : dbr.rec(db, sql+" pdr.sys_pk = @prov OR pdr.codigo = @prov;",params) }
+
+                    sql = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.pagable,0);"
+                    data<"documentos*"> : dbr.list(db,sql,@null)
+                }
+                break
+            }
+            case "bonificacion"
+            {
+                data<"info_dcxp*"> : erp.cxp.documentos.obtener(db,@@(params,"$_entity_id"))
+                sql = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_bonific,0);"
+                data<"documentos*"> : dbr.list(db,sql,@null)
+                break
+            }
+            case "pago"
+            {
+                data<"info_dcxp*"> : erp.cxp.documentos.obtener(db,@@(params,"$_entity_id"))
+                sql = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_pago,0);"
+                data<"documentos*"> : dbr.list(db,sql,@null)
+
+                sql = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_chq_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.retiros,0);"
+                data<"documentos_cuenta*"> : dbr.list(db,sql,@null)
+                
+                sql = "SELECT c.sys_pk,CONCAT(c.nombre,'(',d.codigo,')') nombre FROM chequera c INNER JOIN divisa d ON d.sys_pk = c.idivisa WHERE NOT IFNULL(c.sys_deleted,0) ORDER BY c.sys_pk;"
+                data<"cuentas*"> : dbr.list(db,sql,@null)
+                sql = "SELECT sys_pk,descripcion FROM categoria WHERE tipo = 2 AND NOT IFNULL(sys_deleted,0) ORDER BY sys_pk;"
+                data<"categorias*"> : dbr.list(db,sql,@null)
+                break
+            }
+            case "intmoratorios"
+            {
+                data<"info_dcxp*"> : erp.cxp.documentos.obtener(db,@@(params,"$_entity_id"))
+                sql = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_int_mor,0);"
+                data<"documentos*"> : dbr.list(db,sql,@null)
+                break
+            }
+        }
+    }
+
+    cxp.obtenerDocumentoPorPagar::&db,&params
+    {
+        switch @@(params,"$_view")
+        {
+            case "pago"{if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_ABONO)) { do rise_error(0,"No autorizado")}}
+            case "bonificacion"{if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_BONIFICACION)) { do rise_error(0,"No autorizado")}}
+            case "intmoratorios"{if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CARGO_POR_MORA)) { do rise_error(0,"No autorizado")}}
+        }
+
+        ref dcxp = erp.cxp.documentos.obtener(db,@@(params,"$_entity_id"))
+        do cxp.prepareView(db,params,dcxp)
+        return dcxp
+    }
+
+    cxp.crearDocumentoPorPagar::&db,&params,&data
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_AGREGAR_DCXP)) { do rise_error(0,"No autorizado")}
+
+        ref dcxp = erp.cxp.documentos.crear(db,data)
+
+        return dcxp
+
+        exception
+        {
+            last_err=last_error()
+            do cxp.prepareView(db,params,data)
+            do rise_error(0,last_err)
+        }
+    }
+
+    cxp.pagarDocumento::&db,&params,&data
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_ABONO)) { do rise_error(0,"No autorizado")}
+
+        do erp.cxp.documentos.pagar(db,data)
+
+        exception
+        {
+            do cxp.prepareView(db,params,data)
+            do rise_error(last_error_code(),last_error())
+        }
+    }
+
+    cxp.crearBonificacion::&db,&params,&data
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_BONIFICACION)) { do rise_error(0,"No autorizado")}
+
+        do erp.cxp.documentos.bonificar(db,data)
+
+        exception
+        {
+            do cxp.prepareView(db,params,data)
+            do rise_error(last_error_code(),last_error())
+        }
+    }
+
+    cxp.aplicarIntMoratorios::&db,&params,&data
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CARGO_POR_MORA)) { do rise_error(0,"No autorizado")}
+
+        do erp.cxp.documentos.financiar(db,data)
+
+        exception
+        {
+            do cxp.prepareView(db,params,data)
+            do rise_error(last_error_code(),last_error())
+        }
+    }
+
+    cxp.vFields::field
+    {
+        switch field
+        {
+            case "codigo" { return "pdr.codigo" }
+            case "proveedor" { return "pdr.nombre" }
+            case "documento" { return "doc.const" }
+            case "referencia" { return "cxp.referencia" }
+            case "emision" { return "cxp.fecha" }
+            case "aplicacion" { return "cxp.aplicacion" }
+            case "debe" { return "cxp.debe" }
+            case "haber" { return "cxp.haber" }
+            case "divisa" { return "dvs.codigo" }
+            default { return "" }
+        }
+    }
+
+    cxp.list::&db,&params
+    {
+
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_DOCS_POR_PAGAR)) { do rise_error(0,"No autorizado")}
+            
+        fformat = "yyyy-MM-dd"
+
+        proveedor = trim(@@(params,"$prov"))
+        orderby = cxp.vFields(tolower(trim(@@(params,"$orderby"))))
+        direction = toupper(trim(@@(params,"$direction")))
+        fi_emision = date_format(trim(@@(params,"$fie")), fformat)
+        ff_emision = date_format(trim(@@(params,"$ffe")), fformat)
+        fi_aplicacion = date_format(trim(@@(params,"$fia")), fformat)
+        ff_aplicacion = date_format(trim(@@(params,"$ffa")), fformat)
+        recent = field.dnum(params,"recent",250)
+
+        if not(field.exist(params,"orderby")) && not(field.exist(params,"recent")) {
+            orderby = "aplicacion"
+            recent = 250
+        }
+        if not(field.exist(params,"orderby")) && field.exist(params,"recent") {
+            orderby = "cxp.sys_dtcreated"
+        }
+        if direction != "ASC" || direction != "DESC" { direction = "DESC" }
+
+        sql = "
+        SELECT
+            cxp.sys_pk,pdr.sys_pk pkproveedor,
+            pdr.codigo AS cproveedor,
+            pdr.nombre AS proveedor,
+            doc.const AS documento,
+            cxp.referencia,
+            DATE_FORMAT(cxp.fecha, '%Y-%m-%d') AS emision,
+            DATE_FORMAT(cxp.aplicacion, '%Y-%m-%d') AS aplicacion,
+            IFNULL(cxp.debe,0) AS debe,
+            IFNULL(cxp.haber,0) AS haber,
+            dvs.codigo AS divisa
+        FROM dcxp AS cxp 
+            INNER JOIN cdocumentos AS doc ON doc.id = cxp.documento
+            INNER JOIN proveedor AS pdr ON pdr.sys_pk = cxp.iproveedor
+            INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
+        WHERE TRUE"
+
+        if proveedor != "" {
+            sql = sql + " AND (
+                pdr.sys_pk = @prov
+                OR pdr.sys_guid = @prov
+                OR pdr.codigo = @prov
+            )"
+        }
+        
+        if fi_emision != "" && ff_emision != "" && fi_aplicacion == "" && ff_aplicacion == "" { sql = sql + " AND DATE(cxp.fecha) BETWEEN @fie AND @ffe" }
+        if fi_emision == "" && ff_emision == "" && fi_aplicacion != "" && ff_aplicacion != "" { sql = sql + " AND DATE(cxp.aplicacion) BETWEEN @fia AND @ffa" }
+
+        if orderby != "" { sql = sql + " ORDER BY "+orderby+" "+direction }
+
+        if fi_emision == "" && ff_emision == "" && fi_aplicacion == "" && ff_aplicacion == "" { sql = sql + " LIMIT "+str(recent)+";" }
+
+        query = trim(sql)
+        return dbr.list(db,query,params)
+    }
+
+    cxp.read::&db,&params
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_DOC)) { do rise_error(0,"No autorizado")}
+
+        @read_query = "
+        SELECT
+            pdr.codigo AS cproveedor,
+            pdr.nombre AS proveedor,
+            doc.const AS documento,
+            cxp.referencia,
+            DATE_FORMAT(cxp.fecha, '%Y-%m-%d') AS emision,
+            DATE_FORMAT(cxp.aplicacion, '%Y-%m-%d') AS aplicacion,
+            IFNULL(cxp.debe,0) AS debe,
+            IFNULL(cxp.haber,0) AS haber,
+            dvs.codigo AS divisa,
+            cxp.tipocambio,
+            cxp.notas
+        FROM dcxp AS cxp 
+            INNER JOIN cdocumentos AS doc ON doc.id = cxp.documento
+            INNER JOIN proveedor AS pdr ON pdr.sys_pk = cxp.iproveedor
+            INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
+        WHERE cxp.sys_pk = @_entity_id"
+
+        ref read = entity.read(db,params)
+        // do cxp.prepareView(db,params,read)
+
+        return read
+    }
+
+    cxp.obtenerDocumentosPendientesDePago::&db,&params
+    {
+        sql = "
+        SELECT
+            cxp.sys_pk,
+            cxp.sys_guid,
+            doc.const AS documento,
+            cxp.referencia,
+            DATE_FORMAT(cxp.fecha,'%Y-%m-%d') AS emision,
+            IFNULL(cxp.debe,0) AS debe,
+            IFNULL(cxp.haber,0) AS haber,
+            (IFNULL(cxp.debe,0) - IFNULL(cxp.xaplicar,0)) AS aplicado,
+            IFNULL(cxp.xaplicar,0) AS xaplicar,
+            cxp.iproveedor
+        FROM dcxp AS cxp
+            INNER JOIN cdocumentos AS doc ON doc.id = cxp.documento
+        WHERE cxp.sys_pk = @_entity_id
+            AND IFNULL(cxp.xaplicar,0) > 0;
+        "
+        ref xAplicar = dbr.rec(db,sql,params)
+
+        sql = "
+        SELECT
+            cxp.sys_pk,
+            cxp.sys_guid,
+            doc.const AS documento,
+            cxp.referencia,
+            DATE_FORMAT(cxp.fecha,'%Y-%m-%d') AS emision,
+            DATE_FORMAT(cxp.aplicacion,'%Y-%m-%d') AS aplicacion,
+            IFNULL(cxp.bonificaciones,0) AS bonificaciones,
+            IFNULL(cxp.debe,0) AS debe,
+            IFNULL(cxp.haber,0) AS haber,
+            IFNULL(cxp.intmoratorios,0) AS int_moratorios,
+            IFNULL(cxp.pagos,0) AS pagos,
+            (IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) AS saldo,
+            0 AS aplicar,
+            (IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) AS sfinal
+        FROM dcxp AS cxp
+            INNER JOIN cdocumentos AS doc ON doc.id = cxp.documento
+        WHERE cxp.iproveedor = @iproveedor
+            AND (IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) > 0;
+        "
+        ref pendientes = dbr.list(db,sql,xAplicar)
+
+        new result
+        {
+            @"xaplicar*": xAplicar
+            @"pendientes*": pendientes
+        }
+
+        return result
+    }
+
+    cxp.aplicarPagos::&db,&params,&data
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_PAGOSBONIFICACION_DOCSPAGAR)) { do rise_error(0,"No autorizado")}
+        // ref doc_origen = ifnull(@@(data,"&origen"),record.create())
+        ref dxdestinos = ifnull(@@(data,"&aplicacion"),list.create())
+
+        go foreach.lobj(value:dst) with(dxdestinos)
+        {
+            dst<"aplicado">:0
+            do dbr.begin(db)
+
+            new aplcxp
+            {
+                @"sys_pk": 0
+                @"sys_guid": uuid()
+                @"sys_dtcreated*": now()
+                @"sys_timestamp*": now()
+                @"destino": 4 //pagos
+                @"fecha*": now()
+                @"importe": @@(dst,"#aplicar")
+                @"aplicadoa": @@(dst,"#id_origen")
+                @"fk_dcxp_aplicadoa": @@(dst,"#id_destino")
+                @"sys_recver": 0
+            }
+            do dbr.insert(db,"aplcxp",aplcxp)
+
+            // Aumentar en pago al documento a aplicar
+            sql = "
+            UPDATE dcxp 
+                SET pagos = (IFNULL(pagos,0) + @aplicar) 
+            WHERE sys_pk = @id_destino
+                AND ((IFNULL(haber,0) + IFNULL(intmoratorios,0) - IFNULL(bonificaciones,0) - IFNULL(pagos,0) - @aplicar) >= 0);
+            "
+            if not(dbr.execute(db,sql,dst)) { do rise_error(1,"Documento destino no encontrado o el importe a aplicar es mayor al saldo del documento.") }
+            // Disminuir en xaplicar al documento de origen
+            sql = "
+            UPDATE dcxp 
+                SET xaplicar = (IFNULL(xaplicar,0) - @aplicar)
+            WHERE sys_pk = @id_origen
+                AND (IFNULL(debe,0) - (IFNULL(debe,0) - IFNULL(xaplicar,0)) - @aplicar) >= 0;
+            "
+            if not(dbr.execute(db,sql,dst)) { do rise_error(2,"Documento origen no encontrado o el importe aplicado es mayor al saldo disponible por aplicar.") }
+
+            do dbr.commit(db)
+
+            dst<"aplicado"> : @@(dst,"#aplicar")
+            exception
+            {
+                if dbr.in_transaction(db) { do dbr.rollback(db) }
+                dst<"error"> : last_error()
+            }
+        }
+
+        return dxdestinos
+    }
+
+    cxp.blank::&db,&params
+    {
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_AGREGAR_DCXP)) { do rise_error(0,"No autorizado")}
+
+        new data
+        do cxp.prepareView(db,params,data)
+
+        return data
+    }
+
+    @table_name = "dcxp"
+
+    // point @create 	to entity.create
+	// point @read		to entity.read
+	// point @update 	to entity.update
+	// point @delete 	to entity.delete
+	// point @list		to entity.list
+    // point @blank	    to entity.blank
+}
