@@ -148,6 +148,27 @@ model "erp.cxp"
         @"nombre" string(50) unique required
         @"notas" string(2048)
         @"website" string(150)
+        @"contacto" int ref:"contacto" ["sys_pk"]
+    }
+
+    entity "contacto" : "TableModel"
+    {
+        @"apellidos" string(50) required
+        @"email1" string(50)
+        @"email2" string(50)
+        @"email3" string(50)
+        @"email4" string(50)
+        @"empresa" string(50)
+        @"nombre" string(50) required
+        @"notas" memo
+        @"puesto" string(50)
+        @"tel1" string(50)
+        @"tel2" string(50)
+        @"tel3" string(50)
+        @"tratamiento" string(5)
+        @"website" string(150)
+        @"domicilio1" int ref:"domicilio" ["sys_pk"]
+        @"domicilio2" int ref:"domicilio" ["sys_pk"]
     }
 
     // Datos de una cuenta en una institución financiera
