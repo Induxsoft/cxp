@@ -55,6 +55,7 @@ model "erp.cxp"
         @"telefonos" string(50)                 // Teléfonos de contacto
         @"website" string(150)                  // Sitio Web
         @"uf_sys_baja" bool                     // Si es true, el proveedor está dado de baja
+        @"izona" int ref:"zona" ["sys_pk"]
     }
 
     // Documentos comerciales que afectan la cuenta por pagar de un proveedor
