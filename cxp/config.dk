@@ -2,8 +2,6 @@
 #!
 module
 {
-	@qname.crud="miconexion@grupoapps"
-
 	@DOCS_POR_PAGAR="/cxp/documentos/"
 	@PROVEEDORES="/cxp/proveedores/"
 	@GASTOS="/cxp/gastos/"

@@ -14,7 +14,7 @@ module "Controller configs"
 	}
 
 	@base_path="cxp"
-	@path_root=@@(@http_context,"$request/headers/DOCUMENT_ROOT")
+	@path_root="" //Establezca una ruta de ser necesario
 	
 	// Enmascaramiento de enrutamiento (Ejemplos)
 	// Definición de patrones de rutas con base en parámetros GET (request/get)
@@ -67,7 +67,7 @@ module "Controller configs"
 
     @ws=@@(@http_context,"request/get/ws")
 
-    @crudl.qname=@qname.crud
+    @crudl.qname=""
 
 	@crudl.access_privilege='
 	{

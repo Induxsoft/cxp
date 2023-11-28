@@ -72,7 +72,10 @@ program
     file_sitem = path.concat(dir,"\\_initial_data\\sitem.csv")
     file_tipoproveedor = path.concat(dir,"\\_initial_data\\tipoproveedor.csv")
     
-    qname = @qname.crud
+    ref args = commandline("=")
+    
+    qname = trim(@@(args,"$qn"))
+    if qname == "" { do rise_error(99,"Debe de indicar un nombre cualificado de conexión.") }
     
     do print("-- ------------------------- ctiposcategorias")
     do installData(qname,file_ctiposcategorias)
