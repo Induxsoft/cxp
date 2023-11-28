@@ -27,7 +27,7 @@ module "list.dk"
                 button(class="btn btn-outline-primary induxsoft-corners" onclick="aplicar('#<@BONIFICACION_PROVEEDOR>')"){"Bonificación a proveedor"}
                 
                 span(class="flex-grow-1"){""}  
-                a(href="/" class="btn btn-outline-danger btn-sm"){"x"}
+                a(href="/cxp/" class="btn btn-outline-danger btn-sm"){"x"}
             }
             "edit-table"(class="w-100" id="lst_prov" data="#<to.json(@('&.'))>")
             {

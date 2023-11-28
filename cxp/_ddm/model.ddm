@@ -230,6 +230,13 @@ model "erp.cxp"
     // Enumeración de formas de pago
     entity "cformaspago" : "EnumModel" {}
 
+    entity "sitem" : "TableModel"
+    {
+        @"description" string(250) 
+        @"itemid" string(32) unique required
+        @"itemparent" int ref:"sitem" ["sys_pk"] 
+    }
+
     /* Gasto, un pago realizado a un proveedor sin pasar por CxP */
     entity "ut_gasto" : "TableModel"
     {

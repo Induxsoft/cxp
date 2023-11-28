@@ -17,7 +17,7 @@ module "list.dk"
         div(class="d-flex")
         {
             span(class="flex-grow-1"){""}  
-            a(href="/" class="btn btn-outline-danger btn-sm"){"x"}
+            a(href="/cxp/" class="btn btn-outline-danger btn-sm"){"x"}
         }
         div(class="d-flex")
         {

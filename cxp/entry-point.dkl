@@ -14,7 +14,7 @@ module "Controller configs"
 	}
 
 	@base_path="cxp"
-	@path_root=path.concat(@@(@http_context,"$request/headers/DOCUMENT_ROOT"),"packs")
+	@path_root=@@(@http_context,"$request/headers/DOCUMENT_ROOT")
 	
 	// Enmascaramiento de enrutamiento (Ejemplos)
 	// Definición de patrones de rutas con base en parámetros GET (request/get)

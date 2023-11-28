@@ -25,7 +25,7 @@ module "cxp.list"
             button(class="btn btn-outline-primary induxsoft-corners" onclick="aplicar('#<@CONSULTAR_DOCUMENTO>')"){"Consultar documento"}
             button(class="btn btn-outline-primary induxsoft-corners" onclick="aplicar('#<@ESTADO_CUENTA_PROVEEDOR>')"){"Estado de cuenta"}
             span(class="flex-grow-1"){""}  
-            a(href="/" class="btn btn-outline-danger btn-sm"){"x"}
+            a(href="/cxp/" class="btn btn-outline-danger btn-sm"){"x"}
         }
         div
         {
