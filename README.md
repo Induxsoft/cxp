@@ -3,10 +3,10 @@ Incluir las dependencias:
  - induxsoft.controls.js
  - induxsoft.controls.editable.js
 
-Incluir las siguientes regla en el routes.map
+Incluir las siguientes lineas en routes.map (crear si no existe) ubicado dentro de _protected
 
- - *: /cxp/{_program}/{_entity_id}/{_view}/ > /packs/cxp/entry-point.dkl
- - *: /cxp/{_program}/{_entity_id?} > /packs/cxp/entry-point.dkl
- - *: /cxp/ > /packs/cxp/index.dkl
+ - *: /cxp/{_program}/{_entity_id}/{_view}/ > /cxp/entry-point.dkl
+ - *: /cxp/{_program}/{_entity_id?} > /cxp/entry-point.dkl
+ - *: /cxp/ > /cxp/index.dkl
 
-Colocar al final solo si aun no se cuenta con el map: `*: / > /packs/webshell/index.dkl`
+Colocar al final solo si aun no se cuenta con el map: `*: / > /webshell/index.dkl`
