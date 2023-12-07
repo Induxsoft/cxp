@@ -1,0 +1,122 @@
+#include "dkli.dkh"
+#!
+module "cxp.balance.dk"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "dbr.dkh"
+    #include "uielements.dkl"
+    #include "../icons.dk"
+    #include "../config.dk"
+    #include "lib.dk"
+    
+    do @context.begin(@crud_context)
+    
+    #$
+    div(class="container")
+    {
+        h1(class="h4"){$"Balance"}
+
+        div
+        {
+            div(class="bg-light my-1")
+            {
+                div(class="btn-group" role="group")
+                {
+                    a(href="#<@CXP_MENU>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
+                    a(href="#<replace(@DOCS_POR_PAGAR_PROVEEDOR,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Documentos por pagar"}
+                    a(href="#<@ADD_DOCS_POR_PAGAR>" class="btn btn-light btn-sm fw-bolder"){"Agregar"}
+                    a(href="#<replace(@PAGOS_POR_APLICAR,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Pagos por aplicar"}
+                    a(href="#<replace(@PAGOS_PROVEEDOR,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Pago a proveedor"}
+                    a(href="#<replace(@BONIFICACION_PROVEEDOR,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Bonificación a proveedor"}
+                    a(href="#<@ADD_GASTO>?proveedor=#<@('$parameters/_entity_id')>" class="btn btn-light btn-sm fw-bolder"){"Agregar gasto"}
+                    a(href="./" class="btn btn-light btn-sm fw-bolder"){$"Refrescar"}
+                }
+            }
+
+            div(class="d-flex justify-content-between")
+            {
+                h6(class=""){$"#<@('$./nombre')>"}
+                h6(class=""){$"#<@('$./divisa')>"}
+            }
+
+            table(class="table table-bordered")
+            {
+                thead
+                {
+                    tr
+                    {
+                        th{$"Saldo inicial"}
+                        th{$"Debe"}
+                        th{$"Haber"}
+                        th{$"Saldo al final"}
+                        th{$"Saldo docs"}
+                        th{$"Por aplicar"}
+                    }
+                }
+                tbody
+                {
+                    tr
+                    {
+                        td{$"#<format(@('#./saldos/saldo_inicial'),'$ #,0.00')>"}
+                        td{$"#<format(@('#./saldos/debe'),'$ #,0.00')>"}
+                        td{$"#<format(@('#./saldos/haber'),'$ #,0.00')>"}
+                        td{$"#<format(@('#./saldos/saldo_alfinal'),'$ #,0.00')>"}
+                        td{$"#<format(@('#./saldos/saldo_docs'),'$ #,0.00')>"}
+                        td{$"#<format(@('#./saldos/por_aplicar'),'$ #,0.00')>"}
+                    }
+                }
+            }
+
+            div(class="bg-light my-1")
+            {
+                div(class="btn-group" role="group")
+                {
+                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_BONIFICACION>')"){"Aplicar bonificación"}
+                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_PAGO>')"){"Aplicar pago"}
+                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_PAGO_MORA>')"){"Aplicar cargos por mora"}
+                }
+            }
+
+            "edit-table"(class="w-100" id="lst_dcxp" data="#<to.json(@('&./docs'))>")
+            {
+                "edit-thead"
+                {
+                    "edit-tr"
+                    {
+                        "edit-th"(type="NoEditable" field="documento"){$"Documento"}
+                        "edit-th"(type="NoEditable" field="referencia"){$"Referencia"}
+                        "edit-th"(type="NoEditable" field="emision"){$"Emisión"}
+                        "edit-th"(type="NoEditable" field="aplicacion"){$"Aplicación"}
+                        "edit-th"(type="NoEditable" field="debe"){$"Debe"}
+                        "edit-th"(type="NoEditable" field="haber"){$"Haber"}
+                        "edit-th"(type="NoEditable" field="notas"){$"Concepto"}
+                    }
+                }
+                /* "edit-tbody"
+                {
+                    // contenido...
+                } */
+            }
+        }
+
+        p{$"#<@('$error/message')>"}
+
+        script
+        {$'
+            var table=document.getElementById("lst_dcxp");
+
+            function aplicar(url="")
+            {
+                if(table.CurrentRowIndex()<0)
+                {
+                    alert("Debe seleccionar una fila");
+                    return;
+                }
+                var data=table.DataArray[table.CurrentRowIndex()];
+                var url=url.includes("@doc") ? url.replace("@doc",data.sys_pk) : url.replace("@proveedor",data.pkproveedor);
+                window.location.href=url;
+            }
+        '}
+    }
+}

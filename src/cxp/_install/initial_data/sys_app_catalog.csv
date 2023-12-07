@@ -1,0 +1,7 @@
+"pack_id","app_id","app_title","created","app_info"
+"cxp","cxp.documentos.v1","Documentos por pagar",2023-12-05T23:59:59,"Administración de documentos por pagar"
+"cxp","cxp.proveedores.v1","Proveedores y cuentas por pagar",2023-12-05T23:59:59,"Administración de cuentas por pagar"
+"cxp","cxp.bancos.v1","Bancos",2023-12-05T23:59:59,"Administración de cuentas bancos"
+"cxp","cxp.chequeras.v1","Cuentas de cheque",2023-12-05T23:59:59,"Administración de cuentas de cheque"
+"cxp","cxp.movcuenta.v1","Movimientos de cuenta",2023-12-05T23:59:59,"Administración de movimientos de cuenta"
+"cxp","cxp.gastos.v1","Gastos",2023-12-05T23:59:59,"Administración de gastos"

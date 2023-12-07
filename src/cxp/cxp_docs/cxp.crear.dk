@@ -1,0 +1,118 @@
+#include "dkli.dkh"
+#!
+module "cxp.crear"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "dbr.dkh"
+    #include "uielements.dkl"
+    #include "../config.dk"
+    #include "lib.dk"
+
+    do @context.begin(@crud_context)
+    ref infoProv = ifnull(@("&./info_proveedor"),record.create())
+
+    #$
+    div(class="container")
+    {
+        h1(class="h4"){$"Agregar documento por pagar"}
+
+        form(action="." method="post" enctype="multipart/form-data")
+        {
+            label(class="form-label" "for"="sel_pdr"){$"Proveedor:"}
+            "input-key"(
+                id="sel_pdr"
+                name="proveedor"
+                "data-key"="sys_pk"
+                "data-search"="codigo"
+                "data-text"="nombre"
+                "data-value"="#<to.json(infoProv)>"
+                "data-source"="#<@url_buscar_proveedor>"
+                columns="codigo,nombre,tipo"
+                colcaptions="Código,Nombre,Tipo"
+                "box-title-text"="Seleccione un proveedor"
+                required="true"
+            ){$""}
+
+            div(class="row")
+            {
+                div(class="col-lg-4") {
+                    label(class="form-label" "for"="txt_divisa"){$"Divisa:"}
+                    input(type="text" class="form-control" name="divisa" id="txt_divisa" value="#<@@(infoProv,'$divisa')>" disabled="true" readonly="true")
+                }
+                div(class="col-lg-4") {
+                    label(class="form-label" "for"="txt_tcambio"){$"Tipo de cambio:"}
+                    input(type="number" class="form-control" name="tcambio" id="txt_tcambio" value="#<@@(infoProv,'#tcambio')>")
+                }
+                div(class="col-lg-4") {
+                    label(class="form-label" "for"="sel_tdoc"){$"Tipo de documento:"}
+                    ##
+                    do listarTiposDocumentos()
+                    ##
+                }
+
+                div(class="col-lg-4") {
+                    label(class="form-label" "for"="txt_ref"){$"Referencia:"}
+                    input(type="text" class="form-control rounded-0" name="referencia" id="txt_ref" value="#<@('$input/referencia')>" required="true")
+                }
+                div(class="col-lg-4") {
+                    label(class="form-label" "for"="txt_fdoc"){$"Fecha del documento:"}
+                    input(type="date" class="form-control rounded-0" name="fecha_documento" id="txt_fdoc" value="#<@('$input/fecha_documento')>" required="true")
+                }
+                div(class="col-lg-4") {
+                    label(class="form-label" "for"="txt_flimite"){$"Fecha límite de pago:"}
+                    input(type="date" class="form-control rounded-0" name="fecha_limite_pago" id="txt_flimite" value="#<@('$input/fecha_limite_pago')>" required="true")
+                }
+
+                div(class="col-12")
+                {
+                    // label(class="form-label" "for"="txt_comprobante"){$"Comprobante fiscal:"}
+                    // input(type="file" class="form-control" name="comprobante" accept=".pdf,.xml" id="txt_comprobante")
+
+                    label(class="form-label" "for"="txt_concepto"){$"Concepto:"}
+                    textarea(class="form-control" name="concepto" id="txt_concepto" required="true")
+                    { $"#<@('$input/concepto')>" }
+
+                    /* div(class="form-check") {
+                        input(class="form-check-input" type="checkbox" name="aplicable" id="ch_aplicable" checked="checked")
+                        label(class="form-check-label" "for"="ch_aplicable"){$"Marcar como aplicable"}
+                    } */
+                    // input(type="hidden" name="aplicable" value="true")
+                }
+
+                div(class="mt-2 d-flex gap-1 justify-content-end align-items-center")
+                {
+                    label(class="form-label" "for"="txt_importe"){$"Importe:"}
+                    input(type="number" class="form-control rounded-0 w-25" name="importe" min="0" id="txt_importe" value="#<@('#input/importe')>" required="true")
+                }
+            }
+
+            div(class="mt-2 d-flex gap-1 justify-content-end")
+            {
+                button(type="submit" class="btn btn-primary"){$"Aceptar"}
+                a(type="reset" class="btn btn-danger" href=".."){$"Cancelar"}
+            }
+        }
+
+        p{$"#<@('$error/message')>"}
+
+        div
+        {
+            script
+            {$'
+            window.onload = function(){
+                let ik_proveedor = document.getElementById("sel_pdr");
+                ik_proveedor.addEventListener("change",function(data) {
+                    let dtPdr = ik_proveedor.getValue();
+
+                    let txt_divisa = document.getElementById("txt_divisa");
+                    let txt_tcambio = document.getElementById("txt_tcambio");
+
+                    txt_divisa.value = dtPdr.divisa;
+                    txt_tcambio.value = dtPdr.tcambio;
+                });
+            }
+            '}
+        }
+    }
+}

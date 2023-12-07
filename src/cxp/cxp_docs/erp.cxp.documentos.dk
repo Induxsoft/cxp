@@ -1,0 +1,337 @@
+#include "dkli.dkh"
+#!
+module ":erp.cxp.documentos"
+{
+    obtener::&db,id
+    {
+        new p { @"id":id }
+
+        sql = "SELECT
+            cxp.sys_pk,
+            cxp.sys_guid,
+            DATE_FORMAT(cxp.sys_dtcreated,'%Y-%m-%d %H:%i:%s') AS sys_dtcreated,
+            DATE_FORMAT(cxp.sys_timestamp,'%Y-%m-%d %H:%i:%s') AS sys_timestamp,
+            cxp.aplicable,
+            DATE_FORMAT(cxp.aplicacion,'%Y-%m-%d %H:%i:%s') AS fecha_aplicacion,
+            IFNULL(cxp.bonificaciones,0) AS bonificaciones,
+            IFNULL(cxp.debe,0) AS debe,
+            cxp.documento,
+            DATE_FORMAT(cxp.fecha,'%Y-%m-%d %H:%i:%s') AS fecha_documento,
+            DATE_FORMAT(cxp.fultmoratorios,'%Y-%m-%d %H:%i:%s') AS fultmoratorios,
+            IFNULL(cxp.haber,0) AS haber,
+            IFNULL(cxp.intfinancieros,0) AS intereses_financieros,
+            IFNULL(cxp.intmoratorios,0) AS intereses_moratorios,
+            (IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) AS saldo,
+            cxp.notas,
+            IFNULL(cxp.pagos,0) AS pagos,
+            cxp.referencia,
+            cxp.tipocambio,
+            cxp.xaplicar,
+            cxp.iproveedor,
+            pdr.codigo AS cproveedor,
+            pdr.nombre AS proveedor,
+            pdr.saldo AS saldoprov,
+            dvs.codigo AS divisa,
+            DATE_FORMAT(now(),'%Y-%m-%d') AS hoy
+        FROM dcxp AS cxp
+            INNER JOIN proveedor AS pdr ON pdr.sys_pk = cxp.iproveedor
+            INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
+        WHERE cxp.sys_pk = @id
+            OR cxp.sys_guid = @id"
+        
+        return dbr.rec(db,sql,p)
+    }
+
+    crear::&db,&data
+    {
+        GUID = uuid()
+
+        new row
+        {
+            @"sys_pk": 0
+            @"sys_guid": GUID
+            @"sys_dtcreated*": now()
+            @"sys_timestamp*": now()
+            @"aplicable": @true
+            @"aplicacion*": str2dt(@@(data,"$fecha_limite_pago"))
+            @"auditado": @false
+            @"basecm": 0
+            @"bonificaciones": 0.0
+            @"contabilizado": @false
+            @"debe": 0.0
+            @"documento": @@(data,"#documento")
+            @"fecha*": str2dt(@@(data,"$fecha_documento"))
+            @"fultmoratorios*": str2dt(@@(data,"$fecha_limite_pago"))
+            @"haber": @@(data,"#importe")
+            @"intfinancieros": 0.0
+            @"intmoratorios": 0.0
+            @"notas": @@(data,"$concepto")
+            @"pagos": 0.0
+            @"porimpuestocap": 0.0
+            @"porimpuestofin": 0.0
+            @"porimpuestomor": 0.0
+            @"referencia": @@(data,"$referencia")
+            @"relacionadoa": 0
+            @"tasamoratorios": 0.0
+            @"tipocambio": @@(data,"#tcambio")
+            @"xaplicar": 0.0
+            @"iproveedor": @@(data,"#proveedor")
+            @"sys_recver": 0
+        }
+
+        do dbr.begin(db)
+        do dbr.insert(db,"dcxp",row)
+        sql = "UPDATE proveedor SET saldo = (ifnull(saldo,0) + @importe) WHERE sys_pk = @proveedor;"
+        do dbr.execute(db,sql,data)
+        do dbr.commit(db)
+
+        return erp.cxp.documentos.obtener(db,GUID)
+
+        exception
+        {
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            do rise_error(last_error_code(),last_error())
+        }
+    }
+
+    pagar::&db,&data
+    {
+        do dbr.begin(db)
+
+        new retiro
+        {
+            @"sys_pk": 0
+            @"sys_guid": uuid()
+            @"sys_dtcreated*": now()
+            @"sys_timestamp*": now()
+            @"aplicacion*": str2dt(@@(data,"$fecha_aplicacion"))
+            @"auditado": @true
+            @"beneficiario": @@(data,"$beneficiario")
+            @"cancelado": @false
+            @"conciliado": parse.bool(@@(data,"$conciliado"))
+            @"contabilizado": @false
+            @"egreso": @@(data,"#importe")
+            @"fecha*": str2dt(@@(data,"$fecha_documento"))
+            @"ingreso": 0.0
+            @"notas": @@(data,"$notas")
+            @"referencia": @@(data,"$referencia")
+            @"tipo": @@(data,"#documento_retiro")
+            @"icategoria": @@(data,"#categoria_retiro")
+            @"icuenta": @@(data,"#cuenta_retiro")
+        }
+        do dbr.insert(db,"movcuenta",retiro)
+        
+        idcxp = uuid()
+        new dcxp
+        {
+            @"sys_pk": 0
+            @"sys_guid": idcxp
+            @"sys_dtcreated*": now()
+            @"sys_timestamp*": now()
+            @"aplicable": @false
+            @"aplicacion*": str2dt(@@(data,"$fecha_aplicacion"))
+            @"auditado": @false
+            @"basecm": 0
+            @"bonificaciones": 0.0
+            @"contabilizado": @false
+            @"debe": @@(data,"#importe")
+            @"documento": @@(data,"#documento")
+            @"fecha*": str2dt(@@(data,"$fecha_documento"))
+            @"fultmoratorios*": str2dt(@@(data,"$fecha_documento"))
+            @"haber": 0.0
+            @"intfinancieros": 0.0
+            @"intmoratorios": 0.0
+            @"notas": @@(data,"$notas")
+            @"pagos": 0.0
+            @"porimpuestocap": 0.0
+            @"porimpuestofin": 0.0
+            @"porimpuestomor": 0.0
+            @"referencia": @@(data,"$referencia")
+            @"relacionadoa": 0
+            @"tasamoratorios": 0.0
+            @"tipocambio": @@(data,"#tcambio")
+            @"xaplicar": 0.0
+            @"imovchequera": @@(data,"#cuenta_retiro")
+            @"iproveedor": @@(data,"#proveedor")
+            @"sys_recver": 0
+        }
+        do dbr.insert(db,"dcxp",dcxp)
+
+        new p { @"idcxp":idcxp }
+        fk_dcxp_aplicadoa = dbr.num(db,"SELECT sys_pk FROM dcxp WHERE sys_guid = @idcxp;",p)
+        new aplcxp
+        {
+            @"sys_pk": 0
+            @"sys_guid": uuid()
+            @"sys_dtcreated*": now()
+            @"sys_timestamp*": now()
+            @"destino": @@(data,"#destino")
+            @"fecha*": str2dt(@@(data,"$fecha_documento"))
+            @"importe": @@(data,"#importe")
+            @"aplicadoa": @@(data,"#dcxp")
+            @"fk_dcxp_aplicadoa": fk_dcxp_aplicadoa
+            @"sys_recver": 0
+        }
+        do dbr.insert(db,"aplcxp",aplcxp)
+
+        sql = "UPDATE dcxp SET pagos = (IFNULL(pagos,0) + @importe) WHERE sys_pk = @dcxp 
+        AND ((ifnull(haber,0)+ifnull(intmoratorios,0)-ifnull(bonificaciones,0)-ifnull(pagos,0)-@importe) >= 0);"
+        
+        if not(dbr.execute(db,sql,data)) { do rise_error(0,"Documento destino no encontrado o el importe a pagar es mayor al saldo") }
+        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe) WHERE sys_pk = @proveedor;",data)
+
+        do dbr.commit(db)
+
+        exception
+        {
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            do rise_error(last_error_code(),last_error())
+        }
+    }
+
+    bonificar::&db,&data
+    {
+        do dbr.begin(db)
+        
+        idcxp = uuid()
+
+        new dcxp
+        {
+            @"sys_pk": 0
+            @"sys_guid": idcxp
+            @"sys_dtcreated*": now()
+            @"sys_timestamp*": now()
+            @"aplicable": @false
+            @"aplicacion*": str2dt(@@(data,"$fecha_aplicacion"))
+            @"auditado": @false
+            @"basecm": 0
+            @"bonificaciones": 0.0
+            @"contabilizado": @false
+            @"debe": @@(data,"#importe")
+            @"documento": @@(data,"#documento")
+            @"fecha*": str2dt(@@(data,"$fecha_documento"))
+            @"fultmoratorios*": str2dt(@@(data,"$fecha_documento"))
+            @"haber": 0.0
+            @"intfinancieros": 0.0
+            @"intmoratorios": 0.0
+            @"notas": @@(data,"$notas")
+            @"pagos": 0.0
+            @"porimpuestocap": 0.0
+            @"porimpuestofin": 0.0
+            @"porimpuestomor": 0.0
+            @"referencia": @@(data,"$referencia")
+            @"relacionadoa": 0
+            @"tasamoratorios": 0.0
+            @"tipocambio": @@(data,"#tcambio")
+            @"xaplicar": 0.0
+            @"iproveedor": @@(data,"#proveedor")
+            @"sys_recver": 0
+        }
+        do dbr.insert(db,"dcxp",dcxp)
+
+        new p { @"idcxp":idcxp }
+        fk_dcxp_aplicadoa = dbr.num(db,"SELECT sys_pk FROM dcxp WHERE sys_guid = @idcxp;",p)
+
+        new aplcxp
+        {
+            @"sys_pk": 0
+            @"sys_guid": uuid()
+            @"sys_dtcreated*": now()
+            @"sys_timestamp*": now()
+            @"destino": @@(data,"#destino")
+            @"fecha*": str2dt(@@(data,"$fecha_documento"))
+            @"importe": @@(data,"#importe")
+            @"aplicadoa": @@(data,"#dcxp")
+            @"fk_dcxp_aplicadoa": fk_dcxp_aplicadoa
+            @"sys_recver": 0
+        }
+        do dbr.insert(db,"aplcxp",aplcxp)
+
+        sql = "UPDATE dcxp SET bonificaciones = (IFNULL(bonificaciones,0) + @importe) WHERE sys_pk = @dcxp 
+        AND ((ifnull(haber,0)+ifnull(intmoratorios,0)-ifnull(bonificaciones,0)-ifnull(pagos,0)-@importe) >= 0);"
+        
+        if not(dbr.execute(db,sql,data)) { do rise_error(0,"Documento destino no encontrado o la bonificación es mayor al saldo") }
+        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe) WHERE sys_pk = @proveedor;",data)
+
+        do dbr.commit(db)
+
+        exception
+        {
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            do rise_error(last_error_code(),last_error())
+        }
+    }
+
+    financiar::&db,&data
+    {
+        do dbr.begin(db)
+        
+        idcxp = uuid()
+
+        new dcxp
+        {
+            @"sys_pk": 0
+            @"sys_guid": idcxp
+            @"sys_dtcreated*": now()
+            @"sys_timestamp*": now()
+            @"aplicable": @false
+            @"aplicacion*": str2dt(@@(data,"$fecha_aplicacion"))
+            @"auditado": @false
+            @"basecm": 0
+            @"bonificaciones": 0.0
+            @"contabilizado": @false
+            @"debe": 0.0
+            @"documento": @@(data,"#documento")
+            @"fecha*": str2dt(@@(data,"$fecha_documento"))
+            @"fultmoratorios*": str2dt(@@(data,"$fecha_documento"))
+            @"haber": @@(data,"#importe")
+            @"intfinancieros": 0.0
+            @"intmoratorios": 0.0
+            @"notas": @@(data,"$notas")
+            @"pagos": 0.0
+            @"porimpuestocap": 0.0
+            @"porimpuestofin": 0.0
+            @"porimpuestomor": 0.0
+            @"referencia": @@(data,"$referencia")
+            @"relacionadoa": 0
+            @"tasamoratorios": 0.0
+            @"tipocambio": @@(data,"#tcambio")
+            @"xaplicar": 0.0
+            @"iproveedor": @@(data,"#proveedor")
+            @"sys_recver": 0
+        }
+        do dbr.insert(db,"dcxp",dcxp)
+
+        new p { @"idcxp":idcxp }
+        fk_dcxp_aplicadoa = dbr.num(db,"SELECT sys_pk FROM dcxp WHERE sys_guid = @idcxp;",p)
+
+        new aplcxp
+        {
+            @"sys_pk": 0
+            @"sys_guid": uuid()
+            @"sys_dtcreated*": now()
+            @"sys_timestamp*": now()
+            @"destino": @@(data,"#destino")
+            @"fecha*": str2dt(@@(data,"$fecha_documento"))
+            @"importe": @@(data,"#importe")
+            @"aplicadoa": @@(data,"#dcxp")
+            @"fk_dcxp_aplicadoa": fk_dcxp_aplicadoa
+            @"sys_recver": 0
+        }
+        do dbr.insert(db,"aplcxp",aplcxp)
+
+        sql = "UPDATE dcxp SET intmoratorios = (IFNULL(intmoratorios,0) + @importe) WHERE sys_pk = @dcxp 
+        AND ((ifnull(haber,0)+ifnull(intmoratorios,0)-ifnull(bonificaciones,0)-ifnull(pagos,0)-@importe) >= 0);"
+        
+        if not(dbr.execute(db,sql,data)) { do rise_error(0,"Documento destino no encontrado o la bonificación es mayor al saldo") }
+        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) + @importe) WHERE sys_pk = @proveedor;",data)
+
+        do dbr.commit(db)
+
+        exception
+        {
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            do rise_error(last_error_code(),last_error())
+        }
+    }
+}

@@ -1,0 +1,59 @@
+#include "dkli.dkh"
+#!
+module "controller"
+{
+    #include "lib.dk"
+
+    switch @@(@_GET,"$_view")
+    {
+        case "buscar-proveedor"
+        {
+            point @list to cxp.buscarProveedor
+            break
+        }
+        case "pago"
+        {
+            point @update to cxp.pagarDocumento
+            point @read to cxp.obtenerDocumentoPorPagar
+            @form_view = "cxp.pago.dk"
+        }
+        case "bonificacion"
+        {
+            point @update to cxp.crearBonificacion
+            point @read to cxp.obtenerDocumentoPorPagar
+            @form_view = "cxp.bonificacion.dk"
+            break
+        }
+        case "intmoratorios"
+        {
+            point @update to cxp.aplicarIntMoratorios
+            point @read to cxp.obtenerDocumentoPorPagar
+            @form_view = "cxp.intereses.dk"
+            break
+        }
+        case "aplicar"
+        {
+            point @create to cxp.aplicarPagos
+            point @read to cxp.obtenerDocumentosPendientesDePago
+            @form_view = "cxp.aplicar.dk"
+            break
+        }
+        case ""
+        {
+            if contains(@@(@http_context,"request/headers/http_accept"),"html") 
+            {
+                if @@(@_GET,"$_entity_id") == "_new" 
+                {
+                    point @create to cxp.crearDocumentoPorPagar
+                    point @blank to cxp.blank
+                    @form_view = "cxp.crear.dk"
+                }
+                else 
+                {
+                    point @read to cxp.read
+                    point @list to cxp.list
+                }
+            }
+        }
+    }
+}

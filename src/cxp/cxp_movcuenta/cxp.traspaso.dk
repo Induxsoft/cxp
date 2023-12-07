@@ -1,0 +1,148 @@
+#include "dkli.dkh"
+#!
+module "form.dk"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "uielements.dkl"
+    #include "../config.dk"
+
+    do @context.begin(@crud_context)
+    
+    #$
+    div(class="container")
+    {
+        h1{$"Trasferencia"}
+
+        div(class="row")
+        {
+            div(class="col-lg-4 col-md-8 col-sm-12")
+            {
+                form(action="." method="post")
+                {
+                    label(class="form-label" "for"="sel_cuenta_origen"){$"Cuenta origen:"}
+                    ##
+                    new params
+                    {
+                        @"datatable*": ifnull(@("&./cuentas"),list.create())
+                        @"id": "sel_cuenta_origen"
+                        new member "attributes"
+                        {
+                            @"class": "form-select"
+                            @"name": "cuenta_origen"
+                        }
+                        @"value_field": "sys_pk"
+                        @"text_field": "nombre"
+                        @"selected": @("$input/cuenta_origen")
+                    }
+                    do uie.dbSelect(params)
+                    ##
+
+                    label(class="form-label" "for"="sel_cuenta_destino"){$"Cuenta destino:"}
+                    ##
+                    new params
+                    {
+                        @"datatable*": ifnull(@("&./cuentas"),list.create())
+                        @"id": "sel_cuenta_destino"
+                        new member "attributes"
+                        {
+                            @"class": "form-select"
+                            @"name": "cuenta_destino"
+                        }
+                        @"value_field": "sys_pk"
+                        @"text_field": "nombre"
+                        @"selected": @("$input/cuenta_destino")
+                    }
+                    do uie.dbSelect(params)
+                    ##
+
+                    label(class="form-label" "for"="sel_categoria"){$"Categoria:"}
+                    ##
+                    new params
+                    {
+                        @"datatable*": ifnull(@("&./categorias"),list.create())
+                        @"id": "sel_categoria"
+                        new member "attributes"
+                        {
+                            @"class": "form-select"
+                            @"name": "categoria"
+                        }
+                        @"value_field": "sys_pk"
+                        @"text_field": "descripcion"
+                        @"selected": @("$input/categoria")
+                    }
+                    do uie.dbSelect(params)
+                    ##
+
+                    label(class="form-label" "for"="sel_documento_retiro"){$"Documento Retiro:"}
+                    ##
+                    new params
+                    {
+                        @"datatable*": ifnull(@("&./documentos"),list.create())
+                        @"id": "sel_documento_retiro"
+                        new member "attributes"
+                        {
+                            @"class": "form-select"
+                            @"name": "documento_retiro"
+                        }
+                        @"value_field": "id"
+                        @"text_field": "const"
+                        @"selected": @("$input/documento_retiro")
+                    }
+                    do uie.dbSelect(params)
+                    ##
+
+                    label(class="form-label" "for"="sel_documento_deposito"){$"Documento Depósito:"}
+                    ##
+                    new params
+                    {
+                        @"datatable*": ifnull(@("&./documentos"),list.create())
+                        @"id": "sel_documento_deposito"
+                        new member "attributes"
+                        {
+                            @"class": "form-select"
+                            @"name": "documento_deposito"
+                        }
+                        @"value_field": "id"
+                        @"text_field": "const"
+                        @"selected": @("$input/documento_deposito")
+                    }
+                    do uie.dbSelect(params)
+                    ##
+
+                    label(class="form-label" "for"="txt_referencia_retiro"){$"Referencia Retiro:"}
+                    input(type="text" class="form-control form-control-sm" name="referencia_retiro" id="txt_referencia_Retiro" value="#<@('$input/referencia_retiro')>" required="")
+
+                    label(class="form-label" "for"="txt_referencia_deposito"){$"Referencia Depósito:"}
+                    input(type="text" class="form-control form-control-sm" name="referencia_deposito" id="txt_referencia_deposito" value="#<@('$input/referencia_deposito')>" required="")
+
+                    label(class="form-label" "for"="txt_fecha"){$"Fecha:"}
+                    input(type="date" class="form-control form-control-sm" name="fecha" id="txt_fecha" value="#<@('$input/fecha')>" required="")
+
+                    label(class="form-label" "for"="txt_aplicacion"){$"Fecha de aplicación:"}
+                    input(type="date" class="form-control form-control-sm" name="aplicacion" id="txt_aplicacion" value="#<@('$input/aplicacion')>" required="")
+
+                    label(class="form-label" "for"="txt_importe"){$"Importe:"}
+                    input(type="number" class="form-control form-control-sm" name="importe" min="0" id="txt_importe" value="#<@('$input/importe')>" required="")
+
+                    label(class="form-label" "for"="txt_concepto"){$"Concepto:"}
+                    textarea(class="form-control" name="concepto" id="txt_concepto")
+                    { $"#<@('$input/concepto')>" }
+
+                    div(class="form-check") {
+                        input(class="form-check-input" type="checkbox" name="conciliado" id="ch_conciliado" checked="checked")
+                        label(class="form-check-label" "for"="ch_conciliado"){$"Conciliado"}
+                    }
+
+                    div(class="mt-2 d-flex gap-1 justify-content-end")
+                    {
+                        button(type="submit" class="btn btn-primary"){$"Aceptar"}
+                        button(type="reset" class="btn btn-danger" onclick="window.location.href='#<@URL_CUENTAS>'"){$"Cancelar"}
+                    }
+                }
+            }
+        }
+
+        p{$"#<@('$error/message')>"}
+    }
+}

@@ -1,0 +1,6 @@
+"id","title","icon96x96","src","_blank","appid","cat"
+"cxp.documentos.list","Documentos por pagar","/$/cxp/img/icons/docs-96x96.png","/!/cxp/documentos/","0","cxp.documentos.v1","ges_fin"
+"cxp.proveedores.list","Proveedores y CxP","/$/cxp/img/icons/provs-96x96.png","/!/cxp/proveedores/","0","cxp.proveedores.v1","ges_fin"
+"cxp.bancos.list","Bancos","/$/cxp/img/icons/bancos-96x96.png","/!/cxp/bancos/","0","cxp.bancos.v1","ges_fin"
+"cxp.chequeras.list","Cuentas de cheque","/$/cxp/img/icons/chequeras-96x96.png","/!/cxp/cuentas/","0","cxp.chequeras.v1","ges_fin"
+"cxp.gastos.list","Gastos","/$/cxp/img/icons/gastos-96x96.png","/!/cxp/gastos/","0","cxp.gastos.v1","ges_fin"

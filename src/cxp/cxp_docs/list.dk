@@ -1,0 +1,83 @@
+#include "dkli.dkh"
+#!
+module "cxp.list"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "dbr.dkh"
+    #include "uielements.dkl"
+    #include "../icons.dk"
+    #include "../config.dk"
+    #include "lib.dk"
+    
+    do @context.begin(@crud_context)
+    
+    #$
+    div(class="container")
+    {
+        h1(class="h4"){$"Documentos por pagar"}
+
+        div(class="bg-light my-1")
+        {
+            div(class="btn-group" role="group")
+            {
+                a(href="#<@CXP_MENU>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
+                a(href="#<@ADD_BANCO>" class="btn btn-light btn-sm fw-bolder"){"Agregar"}
+                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_BONIFICACION>')"){"Aplicar bonificación"}
+                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_PAGO>')"){"Aplicar pago"}
+                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_PAGO_MORA>')"){"Aplicar cargos por mora"}
+                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@CONSULTAR_DOCUMENTO>')"){"Consultar documento"}
+                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@ESTADO_CUENTA_PROVEEDOR>')"){"Estado de cuenta"}
+                a(href="./" class="btn btn-light btn-sm fw-bolder"){$"Refrescar"}
+            }
+        }
+
+        div
+        {
+            "edit-table"(class="w-100" id="lst_dcxp" data="#<to.json(@('&.'))>")
+            {
+                "edit-thead"
+                {
+                    "edit-tr"
+                    {
+                        "edit-th"(type="NoEditable" field="cproveedor"){$"Código"}
+                        "edit-th"(type="NoEditable" field="proveedor"){$"Proveedor"}
+                        "edit-th"(type="NoEditable" field="documento"){$"Documento"}
+                        "edit-th"(type="NoEditable" field="referencia"){$"Referencia"}
+                        "edit-th"(type="NoEditable" field="emision"){$"Emisión"}
+                        "edit-th"(type="NoEditable" field="aplicacion"){$"Aplicación"}
+                        "edit-th"(type="NoEditable" field="debe"){$"Debe"}
+                        "edit-th"(type="NoEditable" field="haber"){$"Haber"}
+                        "edit-th"(type="NoEditable" field="divisa"){$"Divisa"}
+                    }
+                }
+                /* "edit-tbody"
+                {
+                    // contenido...
+                } */
+            }
+        }
+
+        p{$"#<@('$error/message')>"}
+
+
+        script
+        {
+            $'
+                var table=document.getElementById("lst_dcxp");
+
+                function aplicar(url="")
+                {
+                    if(table.CurrentRowIndex()<0)
+                    {
+                        alert("Debe seleccionar una fila");
+                        return;
+                    }
+                    var data=table.DataArray[table.CurrentRowIndex()];
+                    var url=url.includes("@doc") ? url.replace("@doc",data.sys_pk) : url.replace("@proveedor",data.pkproveedor);
+                    window.location.href=url;
+                }
+            '
+        }
+    }
+}
