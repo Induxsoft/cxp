@@ -1,9 +1,0 @@
-#include "dkli.dkh"
-#!
-module "config.dk"
-{
-    @cxp_destino_aplicacion_int_financieros = 1
-    @cxp_destino_aplicacion_int_moratorios = 2
-    @cxp_destino_aplicacion_bonificaciones = 3
-    @cxp_destino_aplicacion_pagos = 4
-}

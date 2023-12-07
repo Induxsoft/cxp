@@ -1,2 +1,0 @@
-*: /{_package}/{_program}/{_entity_id}/{_view}/ > /cxp/entry-point.dkl
-*: /{_package}/{_program}/{_entity_id?} > /cxp/entry-point.dkl
