@@ -24,7 +24,7 @@ model "erp.cxp"
     entity "divisa" : "TableModel"
     {
         @"codigo" string(5) unique required
-        @"descripcion" string(30) required
+        @"descripcion" string(30) unique required
         @"tcambio" decimal(18,8)
     }
 
@@ -230,8 +230,20 @@ model "erp.cxp"
     // Enumeración de formas de pago
     entity "cformaspago" : "EnumModel" {}
 
-    entity "sitem" : "TableModel"
+    entity "sitem" 
     {
+        @"sys_pk" int key required autoincrement
+        @"sys_guid" string(32) unique required
+        @"sys_dtcreated" datetime
+        @"sys_timestamp" datetime required
+        @"sys_info" string(32)
+        @"sys_user" string(32)
+        @"sys_lastuser" string(32)
+        @"sys_exported" bool
+        @"sys_dtexported" datetime
+        @"sys_recver" int
+        @"sys_deleted" bool
+        @"sys_lock" int
         @"description" string(250) 
         @"itemid" string(32) unique required
         @"itemparent" int ref:"sitem" ["sys_pk"] 
