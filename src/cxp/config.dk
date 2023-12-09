@@ -2,6 +2,13 @@
 #!
 module
 {
+	#include "dbext/dbr.vars.dkl"
+	#include "dbext/dbr.security.dkl"
+	#include "crudl/crudl.dk"
+	
+	ref database = crudl.database()
+	@SYS_PK_DIVISA_PREDETERMINADA = parse.num(dbr.vars.get(database,"FXCA013"))
+
 	@CXP_MENU = "/!/cxp/"
 	@DOCS_POR_PAGAR="/!/cxp/documentos/"
 	@PROVEEDORES="/!/cxp/proveedores/"

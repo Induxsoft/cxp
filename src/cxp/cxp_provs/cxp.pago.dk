@@ -11,7 +11,73 @@ module "cxp.pago.dk"
     
     do @context.begin(@crud_context)
 
-    ref info = ifnull(@("&./info_prov"),record.create())
+    ref prov = ifnull(@("&./info_prov"),record.create())
+    ref divisaPredeterminada = ifnull(@("&./dvs_pred"),record.create())
+    cDIVISA_PRED = field.dstr(divisaPredeterminada,"codigo","MXN")
+    tCAMBIO_PRED = field.dnum(divisaPredeterminada,"tcambio",1)
+
+    new sel_cuenta_retiro
+    {
+        @"datatable*": ifnull(@("&./cuentas"),list.create())
+        @"id": "sel_cuenta_retiro"
+        new member "attributes"
+        {
+            @"class": "form-select"
+            @"name": "cuenta_retiro"
+        }
+        new member "attr_options"
+        {
+            @"data-divisa": "#<@@(row,'$divisa')>"
+            @"data-tcambio": "#<@@(row,'#tcambio')>"
+        }
+        @"value_field": "sys_pk"
+        @"text_field": "nombre"
+        @"selected": @("$input/cuenta_retiro")
+    }
+
+    new sel_categoria_retiro
+    {
+        @"datatable*": ifnull(@("&./categorias"),list.create())
+        @"id": "sel_categoria_retiro"
+        new member "attributes"
+        {
+            @"class": "form-select"
+            @"name": "categoria_retiro"
+        }
+        @"value_field": "sys_pk"
+        @"text_field": "descripcion"
+        @"selected": @("$input/categoria_retiro")
+    }
+
+    new sel_documento_retiro
+    {
+        @"datatable*": ifnull(@("&./documentos_cuenta"),list.create())
+        @"id": "sel_documento_retiro"
+        new member "attributes"
+        {
+            @"class": "form-select"
+            @"name": "documento_retiro"
+        }
+        @"value_field": "id"
+        @"text_field": "const"
+        @"selected": @("$input/documento_retiro")
+    }
+
+    form::name,type
+    {
+        switch str(type)
+        {
+            case "tx" { return trim(@("$input/"+str(name))) }
+            case "nm" { return @("#input/"+str(name)) }
+            case "dt"
+            {
+                fecha = trim(@("$input/"+str(name)))
+                if fecha == "" { fecha = date_str(now(),"yyyy-MM-dd") }
+                return fecha
+            }
+            default { return "" }
+        }
+    }
 
     #$
     div(class="container")
@@ -20,15 +86,16 @@ module "cxp.pago.dk"
 
         form(action="." method="post")
         {
-            input(type="hidden" name="proveedor" value="#<@@(info,'#sys_pk')>")
+            input(type="hidden" name="proveedor" value="#<@@(prov,'#sys_pk')>")
 
             div(class="row")
             {
                 div(class="col-lg-8 col-12 d-flex gap-2") {
-                    p(class="") {
+                    p{
                         b{$"Proveedor: "}
-                        $"[#<@@(info,'$codigo')>] #<@@(info,'$nombre')>"
+                        $"[#<@@(prov,'$codigo')>] #<@@(prov,'$nombre')>"
                     }
+                    P{b{$"Divisa: "} $"#<@@(prov,'$divisa')>"}
                 }
                 div(class="col-lg-4"){$""}
             }
@@ -44,20 +111,7 @@ module "cxp.pago.dk"
                         label(class="col-auto col-form-label" "for"="sel_cuenta_retiro"){$"Cuenta:"}
                         div(class="col-6") {
                             ##
-                            new params
-                            {
-                                @"datatable*": ifnull(@("&./cuentas"),list.create())
-                                @"id": "sel_cuenta_retiro"
-                                new member "attributes"
-                                {
-                                    @"class": "form-select"
-                                    @"name": "cuenta_retiro"
-                                }
-                                @"value_field": "sys_pk"
-                                @"text_field": "nombre"
-                                @"selected": @("$input/cuenta_retiro")
-                            }
-                            do uie.dbSelect(params)
+                            do uie.dbSelect(sel_cuenta_retiro)
                             ##
                         }
                     }
@@ -66,7 +120,7 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_beneficiario"){$"Beneficiario:"}
                         div(class="col-6") {
-                            input(type="text" class="form-control form-control-sm" name="beneficiario" id="txt_beneficiario" value="#<@@(info,'$nombre')>")
+                            input(type="text" class="form-control" name="beneficiario" id="txt_beneficiario" value="#<@@(prov,'$nombre')>")
                         }
                     }
 
@@ -75,20 +129,7 @@ module "cxp.pago.dk"
                         label(class="col-auto col-form-label" "for"="sel_categoria_retiro"){$"Categoria:"}
                         div(class="col-6") {
                             ##
-                            new params
-                            {
-                                @"datatable*": ifnull(@("&./categorias"),list.create())
-                                @"id": "sel_categoria_retiro"
-                                new member "attributes"
-                                {
-                                    @"class": "form-select"
-                                    @"name": "categoria_retiro"
-                                }
-                                @"value_field": "sys_pk"
-                                @"text_field": "descripcion"
-                                @"selected": @("$input/categoria_retiro")
-                            }
-                            do uie.dbSelect(params)
+                            do uie.dbSelect(sel_categoria_retiro)
                             ##
                         }
                     }
@@ -98,27 +139,32 @@ module "cxp.pago.dk"
                         label(class="col-auto col-form-label" "for"="sel_documento_retiro"){$"Documento Retiro:"}
                         div(class="col-6") {
                             ##
-                            new params
-                            {
-                                @"datatable*": ifnull(@("&./documentos_cuenta"),list.create())
-                                @"id": "sel_documento_retiro"
-                                new member "attributes"
-                                {
-                                    @"class": "form-select"
-                                    @"name": "documento_retiro"
-                                }
-                                @"value_field": "id"
-                                @"text_field": "const"
-                                @"selected": @("$input/documento_retiro")
-                            }
-                            do uie.dbSelect(params)
+                            do uie.dbSelect(sel_documento_retiro)
                             ##
+                        }
+                    }
+
+                    div(class="row mt-2 d-flex justify-content-end align-items-center" id="div_tcambio_retiro")
+                    {
+                        label(class="col-auto col-form-label" "for"="txt_tcambio_retiro"){$"Tipo de cambio:"}
+                        div(class="col-6") {
+                            div(class="input-group") {
+                                input(type="number" class="form-control" name="tcambio_retiro" min="1" id="txt_tcambio_retiro" value="#<@('#input/tcambio')>" required="true")
+                                span(class="input-group-text"){$"#<cDIVISA_PRED>"}
+                            }
                         }
                     }
 
                     div(class="row mt-2 d-flex justify-content-end align-items-center")
                     {
-                        // label(class="col-auto col-form-label" "for"=""){$""}
+                        label(class="col-auto col-form-label" "for"="txt_importe_retiro"){$"Importe:"}
+                        div(class="col-6") {
+                            input(type="number" class="form-control" name="importe_retiro" min="1" id="txt_importe_retiro" value="#<form('importe_retiro','nm')>")
+                        }
+                    }
+
+                    div(class="row mt-2 d-flex justify-content-end align-items-center")
+                    {
                         div(class="col-6") {
                             div(class="form-check") {
                                 input(class="form-check-input" type="checkbox" name="conciliado" id="ch_conciliado" checked="checked")
@@ -143,7 +189,7 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_referencia"){$"Referencia:"}
                         div(class="col-6") {
-                            input(type="text" class="form-control" name="referencia" id="txt_referencia" value="#<@('$input/referencia')>" required="true")
+                            input(type="text" class="form-control" name="referencia" id="txt_referencia" maxlength="25" value="#<@('$input/referencia')>" required="true")
                         }
                     }
 
@@ -151,7 +197,7 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_fdoc"){$"Fecha del documento:"}
                         div(class="col-6") {
-                            input(type="date" class="form-control" name="fecha_documento" id="txt_fdoc" value="#<@('$input/fecha_documento')>" required="true")
+                            input(type="date" class="form-control" name="fecha_documento" id="txt_fdoc" value="#<form('fecha_documento','dt')>" required="true")
                         }
                     }
 
@@ -159,15 +205,18 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_faplicacion"){$"Fecha de aplicación:"}
                         div(class="col-6") {
-                            input(type="date" class="form-control" name="fecha_aplicacion" id="txt_faplicacion" value="#<@('$input/fecha_aplicacion')>" required="true")
+                            input(type="date" class="form-control" name="fecha_aplicacion" id="txt_faplicacion" value="#<form('fecha_aplicacion','dt')>" required="true")
                         }
                     }
 
-                    div(class="row mt-2 d-flex justify-content-end align-items-center")
+                    div(class="row mt-2 d-flex justify-content-end align-items-center" id="div_tcambio")
                     {
                         label(class="col-auto col-form-label" "for"="txt_tcambio"){$"Tipo de cambio:"}
                         div(class="col-6") {
-                            input(type="number" class="form-control" name="tcambio" min="0" id="txt_tcambio" value="#<@('#input/tcambio')>" required="true")
+                            div(class="input-group") {
+                                input(type="number" class="form-control" name="tcambio" min="1" id="txt_tcambio" value="#<@('#input/tcambio')>" required="true")
+                                span(class="input-group-text"){$"#<cDIVISA_PRED>"}
+                            }
                         }
                     }
 
@@ -175,7 +224,7 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_importe"){$"Importe:"}
                         div(class="col-6") {
-                            input(type="number" class="form-control" name="importe" min="0" id="txt_importe" value="#<@('#input/importe')>")
+                            input(type="number" class="form-control" name="importe" min="1" id="txt_importe" value="#<form('importe','nm')>")
                         }
                     }
 
@@ -210,9 +259,58 @@ module "cxp.pago.dk"
         {
             script
             {$'
-            window.onload = function(){
-                // code...
-            }
+            document.addEventListener("DOMContentLoaded", () => {
+                let divisa_predeterminada = #<to.json(divisaPredeterminada)>;
+                let proveedor = #<to.json(prov)>;
+                let sel_cuenta_retiro = document.getElementById("sel_cuenta_retiro");
+                let div_tcambio_retiro = document.getElementById("div_tcambio_retiro");
+                let txt_tcambio_retiro = document.getElementById("txt_tcambio_retiro");
+                let div_tcambio_prov = document.getElementById("div_tcambio");
+                let txt_tcambio_prov = document.getElementById("txt_tcambio");
+
+                function convertirDivisas() {
+                    let opt_cuenta_retiro = sel_cuenta_retiro.options[sel_cuenta_retiro.selectedIndex];
+
+                    let dvsPred = divisa_predeterminada.codigo.toUpperCase();
+                    let dvsProv = proveedor.divisa.toUpperCase();
+                    let dvsCtaR = opt_cuenta_retiro.getAttribute("data-divisa").toUpperCase();
+                    // console.log(dvsPred, dvsProv, dvsCtaR);
+
+                    if (dvsPred == dvsProv && dvsPred == dvsCtaR)
+                    {
+                        console.log("(dvsPred == dvsProv && dvsPred == dvsCtaR)");
+                        txt_tcambio_retiro.value = 1;
+                        txt_tcambio_prov.value = 1;
+
+                        div_tcambio_retiro.style.display = "none";
+                        div_tcambio_prov.style.display = "none";
+                    }
+                    else if (dvsPred == dvsProv && dvsPred != dvsCtaR)
+                    {
+                        console.log("(dvsPred == dvsProv && dvsPred != dvsCtaR)");
+                        txt_tcambio_retiro.value = 2;
+                        txt_tcambio_prov.value = 1;
+                    }
+                    else if (dvsPred != dvsProv && dvsPred == dvsCtaR)
+                    {
+                        console.log("(dvsPred != dvsProv && dvsPred == dvsCtaR)");
+                        txt_tcambio_retiro.value = 1;
+                        txt_tcambio_prov.value = 2;
+                    }
+                    else if (dvsPred != dvsProv && dvsPred != dvsCtaR)
+                    {
+                        console.log("(dvsPred != dvsProv && dvsPred != dvsCtaR)");
+                        txt_tcambio_retiro.value = 3;
+                        txt_tcambio_prov.value = 3;
+                    }
+                }
+
+                sel_cuenta_retiro.addEventListener("change", function() {
+                    convertirDivisas();
+                });
+
+                convertirDivisas();
+            });
             '}
         }
     }

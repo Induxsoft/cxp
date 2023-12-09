@@ -31,6 +31,10 @@ module "model"
 
     cxp.prepareView::&db,&params,&data
     {
+        params<"pk_dvs_pred"> : @SYS_PK_DIVISA_PREDETERMINADA
+
+        sql_divisa_predeterminada = "SELECT codigo, tcambio FROM divisa WHERE sys_pk = @pk_dvs_pred;"
+
         switch @@(params,"$_view")
         {
             case "bonificacion"
@@ -38,20 +42,22 @@ module "model"
                 data<"info_prov*"> : cxp.obtenerProveedor(db,@@(params,"_entity_id"))
                 sql = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_bonific,0);"
                 data<"documentos*"> : dbr.list(db,sql,@null)
+                data<"dvs_pred*"> : dbr.rec(db,sql_divisa_predeterminada,params)
                 break
             }
             case "pago"
             {
+                sql_documentos = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_pago,0);"
+                sql_cuentas = "SELECT c.sys_pk, d.codigo AS divisa, d.tcambio, CONCAT(c.nombre,' (',d.codigo,')') nombre FROM chequera c INNER JOIN divisa d ON d.sys_pk = c.idivisa WHERE NOT IFNULL(c.sys_deleted,0) ORDER BY c.sys_pk;"
+                sql_categorias = "SELECT sys_pk,descripcion FROM categoria WHERE tipo = 2 AND NOT IFNULL(sys_deleted,0) ORDER BY sys_pk;"
+                sql_documentos_retiro = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_chq_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.retiros,0);"
+                
                 data<"info_prov*"> : cxp.obtenerProveedor(db,@@(params,"_entity_id"))
-                sql = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_pago,0);"
-                data<"documentos*"> : dbr.list(db,sql,@null)
-                sql = "SELECT c.sys_pk,CONCAT(c.nombre,'(',d.codigo,')') nombre FROM chequera c INNER JOIN divisa d ON d.sys_pk = c.idivisa WHERE NOT IFNULL(c.sys_deleted,0) ORDER BY c.sys_pk;"
-                data<"cuentas*"> : dbr.list(db,sql,@null)
-                sql = "SELECT sys_pk,descripcion FROM categoria WHERE tipo = 2 AND NOT IFNULL(sys_deleted,0) ORDER BY sys_pk;"
-                data<"categorias*"> : dbr.list(db,sql,@null)
-
-                sql = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_chq_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.retiros,0);"
-                data<"documentos_cuenta*"> : dbr.list(db,sql,@null)
+                data<"documentos*"> : dbr.list(db,sql_documentos,@null)
+                data<"cuentas*"> : dbr.list(db,sql_cuentas,@null)
+                data<"categorias*"> : dbr.list(db,sql_categorias,@null)
+                data<"documentos_cuenta*"> : dbr.list(db,sql_documentos_retiro,@null)
+                data<"dvs_pred*"> : dbr.rec(db,sql_divisa_predeterminada,params)
 
                 break
             }
