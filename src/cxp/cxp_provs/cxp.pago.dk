@@ -144,7 +144,7 @@ module "cxp.pago.dk"
                         }
                     }
 
-                    div(class="row mt-2 d-flex justify-content-end align-items-center" id="div_tcambio_retiro")
+                    div(class="row mt-2 d-flex justify-content-end align-items-center d-none" id="div_tcambio_retiro")
                     {
                         label(class="col-auto col-form-label" "for"="txt_tcambio_retiro"){$"Tipo de cambio:"}
                         div(class="col-6") {
@@ -209,7 +209,7 @@ module "cxp.pago.dk"
                         }
                     }
 
-                    div(class="row mt-2 d-flex justify-content-end align-items-center" id="div_tcambio")
+                    div(class="row mt-2 d-flex justify-content-end align-items-center d-none" id="div_tcambio")
                     {
                         label(class="col-auto col-form-label" "for"="txt_tcambio"){$"Tipo de cambio:"}
                         div(class="col-6") {
@@ -275,34 +275,44 @@ module "cxp.pago.dk"
                     let dvsProv = proveedor.divisa.toUpperCase();
                     let dvsCtaR = opt_cuenta_retiro.getAttribute("data-divisa").toUpperCase();
                     // console.log(dvsPred, dvsProv, dvsCtaR);
+                    let hide_tcambio_retiro = false;
+                    let hide_tcambio_prov = false;
 
                     if (dvsPred == dvsProv && dvsPred == dvsCtaR)
                     {
-                        console.log("(dvsPred == dvsProv && dvsPred == dvsCtaR)");
                         txt_tcambio_retiro.value = 1;
                         txt_tcambio_prov.value = 1;
 
-                        div_tcambio_retiro.style.display = "none";
-                        div_tcambio_prov.style.display = "none";
+                        hide_tcambio_retiro = true;
+                        hide_tcambio_prov = true;
                     }
                     else if (dvsPred == dvsProv && dvsPred != dvsCtaR)
                     {
-                        console.log("(dvsPred == dvsProv && dvsPred != dvsCtaR)");
-                        txt_tcambio_retiro.value = 2;
+                        txt_tcambio_retiro.value = 0;
                         txt_tcambio_prov.value = 1;
+
+                        hide_tcambio_retiro = false;
+                        hide_tcambio_prov = true;
                     }
                     else if (dvsPred != dvsProv && dvsPred == dvsCtaR)
                     {
-                        console.log("(dvsPred != dvsProv && dvsPred == dvsCtaR)");
                         txt_tcambio_retiro.value = 1;
-                        txt_tcambio_prov.value = 2;
+                        txt_tcambio_prov.value = 0;
+
+                        hide_tcambio_retiro = true;
+                        hide_tcambio_prov = false;
                     }
                     else if (dvsPred != dvsProv && dvsPred != dvsCtaR)
                     {
-                        console.log("(dvsPred != dvsProv && dvsPred != dvsCtaR)");
-                        txt_tcambio_retiro.value = 3;
-                        txt_tcambio_prov.value = 3;
+                        txt_tcambio_retiro.value = 0;
+                        txt_tcambio_prov.value = 0;
+
+                        hide_tcambio_retiro = false;
+                        hide_tcambio_prov = false;
                     }
+
+                    div_tcambio_retiro.classList.toggle("d-none",hide_tcambio_retiro);
+                    div_tcambio_prov.classList.toggle("d-none",hide_tcambio_prov);
                 }
 
                 sel_cuenta_retiro.addEventListener("change", function() {
