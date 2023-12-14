@@ -4,7 +4,6 @@ module "Controller configs"
 {
 	#include "functions.dkh"
 	#include "serialize.dkh"
-	#include "dbr.dkh"
 	#include "config.dk"
 
 	if @@(@http_context,"$session/user/ids") == "" {
