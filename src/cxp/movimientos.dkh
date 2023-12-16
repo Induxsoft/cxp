@@ -1,0 +1,108 @@
+#include "dkli.dkh"
+#!
+module "movimientos.dkh"
+{
+    module ":erp.cxp.movimientos"
+    {
+        retiro::&db,&data
+        {
+            start_transaction = @false
+
+            if not(dbr.in_transaction(db)) {
+                do dbr.begin(db)
+                start_transaction = @true
+            }
+
+            new retiro
+            {
+                @"sys_pk": 0
+                @"sys_guid": uuid()
+                @"sys_dtcreated*": now()
+                @"sys_timestamp*": now()
+                @"sys_recver": 0
+                @"aplicacion*": str2dt(@@(data,"$faplicacion"))
+                @"auditado": @true
+                @"beneficiario": @@(data,"$beneficiario")
+                @"cancelado": @false
+                @"conciliado": parse.bool(@@(data,"$conciliado"))
+                @"contabilizado": @false
+                @"egreso": @@(data,"#importe")
+                @"fecha*": str2dt(@@(data,"$fecha"))
+                @"ingreso": 0.0
+                @"notas": @@(data,"$concepto")
+                @"referencia": @@(data,"$referencia")
+                @"tipo": @@(data,"#documento")
+                @"icategoria": @@(data,"#icategoria")
+                @"icuenta": @@(data,"#icuenta")
+            }
+            do dbr.insert(db,"movcuenta",retiro)
+
+            if start_transaction { do dbr.commit(db) }
+
+            exception
+            {
+                if dbr.in_transaction(db) { do dbr.rollback(db) }
+                do rise_error(last_error_code(),last_error())
+            }
+        }
+    }
+
+    module ":erp.cxp.documentos"
+    {
+        crear::&db,&data
+        {
+            start_transaction = @false
+
+            sql_actualizar_saldo_proveedor = "UPDATE proveedor SET saldo = (IFNULL(saldo,0) + @importe) WHERE sys_pk = @iproveedor;"
+
+            if not(dbr.in_transaction(db)) {
+                do dbr.begin(db)
+                start_transaction = @true
+            }
+
+            new dcxp
+            {
+                @"sys_pk": 0
+                @"sys_guid": uuid()
+                @"sys_dtcreated*": now()
+                @"sys_timestamp*": now()
+                @"sys_recver": 0
+                @"aplicable": @true
+                @"aplicacion*": str2dt(@@(data,"$flimite"))
+                @"auditado": @false
+                @"basecm": 0
+                @"bonificaciones": 0.0
+                @"contabilizado": @false
+                @"debe": 0.0
+                @"documento": @@(data,"#documento")
+                @"fecha*": str2dt(@@(data,"$fecha"))
+                @"fultmoratorios*": str2dt(@@(data,"$flimite"))
+                @"haber": @@(data,"#importe")
+                @"intfinancieros": 0.0
+                @"intmoratorios": 0.0
+                @"notas": @@(data,"$concepto")
+                @"pagos": 0.0
+                @"porimpuestocap": 0.0
+                @"porimpuestofin": 0.0
+                @"porimpuestomor": 0.0
+                @"referencia": @@(data,"$referencia")
+                @"relacionadoa": 0
+                @"tasamoratorios": 0.0
+                @"tipocambio": @@(data,"#tcambio")
+                @"xaplicar": 0.0
+                @"iproveedor": @@(data,"#iproveedor")
+            }
+            do dbr.insert(db,"dcxp",dcxp)
+            
+            do dbr.execute(db,sql_actualizar_saldo_proveedor,data)
+            
+            if start_transaction { do dbr.commit(db) }
+
+            exception
+            {
+                if dbr.in_transaction(db) { do dbr.rollback(db) }
+                do rise_error(last_error_code(),last_error())
+            }
+        }
+    }
+}
