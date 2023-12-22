@@ -42,7 +42,7 @@ module "list.dk"
                         "edit-th"(type="NoEditable" field="codigo"){$"Código"}
                         "edit-th"(type="NoEditable" field="nombre"){$"Nombre"}
                         "edit-th"(type="NoEditable" field="rfc"){$"RFC"}
-                        "edit-th"(type="NoEditable" field="saldo"){$"Saldo"}
+                        "edit-th"(type="NoEditable" field="saldo" textalign="end" format="true" decs="2" prefix="$" thousandssep="true"){$"Saldo"}
                         "edit-th"(type="NoEditable" field="tipo"){$"Tipo de proveedor"}
                         "edit-th"(type="NoEditable" field="divisa"){$"Divisa"}
                         "edit-th"(type="NoEditable" field="zona"){$"Zona"}

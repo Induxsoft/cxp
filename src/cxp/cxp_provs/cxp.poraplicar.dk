@@ -40,9 +40,9 @@ module "cxp.poraplicar.dk"
                 {
                     tr
                     {
-                        td{$"#<format(@('#./saldos/saldo_total'),'$ #,0.00')>"}
-                        td{$"#<format(@('#./saldos/saldo_docs'),'$ #,0.00')>"}
-                        td{$"#<format(@('#./saldos/por_aplicar'),'$ #,0.00')>"}
+                        td(class="text-end"){$"#<format(@('#./saldos/saldo_total'),'$ #,0.00')>"}
+                        td(class="text-end"){$"#<format(@('#./saldos/saldo_docs'),'$ #,0.00')>"}
+                        td(class="text-end"){$"#<format(@('#./saldos/por_aplicar'),'$ #,0.00')>"}
                     }
                 }
             }
@@ -66,9 +66,9 @@ module "cxp.poraplicar.dk"
                         "edit-th"(type="NoEditable" field="documento"){$"Documento"}
                         "edit-th"(type="NoEditable" field="referencia"){$"Referencia"}
                         "edit-th"(type="NoEditable" field="emision"){$"Fecha"}
-                        "edit-th"(type="NoEditable" field="debe"){$"Importe"}
+                        "edit-th"(type="NoEditable" field="debe" textalign="end" format="true" decs="2" prefix="$ " thousandssep="true"){$"Importe"}
                         "edit-th"(type="NoEditable" field="aplicado"){$"Aplicado"}
-                        "edit-th"(type="NoEditable" field="xaplicar"){$"Por aplicar"}
+                        "edit-th"(type="NoEditable" field="xaplicar" textalign="end" format="true" decs="2" prefix="$ " thousandssep="true"){$"Por aplicar"}
                     }
                 }
                 /* "edit-tbody"

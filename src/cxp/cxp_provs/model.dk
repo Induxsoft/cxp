@@ -117,7 +117,23 @@ module "model"
 
         return dbr.list(db,sql,params)
     }
-
+    fieldDebeHaberByDoc::doc,&obj,total
+    {
+        switch doc
+        {
+            case 4{ obj<"haber">:total }//cfactura
+            case 3{ obj<"haber">:total }//cremision
+            case 6{ obj<"haber">:total }//ctickets
+            case 5{ obj<"debe">:total}//cnota_de_credito
+            case 17{obj<"haber">:total}//cnota_de_cargo
+            case 19{obj<"debe">:total}//crecibo
+            default
+            {
+               obj<"haber">:0
+               obj<"debe">:0
+            }
+        }
+    }
     cxp.pagarProveedor::&db,&params,&data
     {
         if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado")}
@@ -156,7 +172,7 @@ module "model"
             @"basecm": 0
             @"bonificaciones": 0.0
             @"contabilizado": @false
-            @"debe": @@(data,"#importe")
+            @"debe": 0.0
             @"documento": @@(data,"#documento")
             @"fecha*": str2dt(@@(data,"$fecha_documento"))
             @"fultmoratorios*": str2dt(@@(data,"$fecha_documento"))
@@ -177,6 +193,7 @@ module "model"
             @"iproveedor": @@(data,"#proveedor")
             @"sys_recver": 0
         }
+        do fieldDebeHaberByDoc(@@(data,"#documento"),dcxp,@@(data,"#importe"))
 
         do dbr.begin(db)
         do dbr.insert(db,"movcuenta",retiro)
@@ -210,7 +227,7 @@ module "model"
             @"basecm": 0
             @"bonificaciones": 0.0
             @"contabilizado": @false
-            @"debe": @@(data,"#importe")
+            @"debe": 0.0
             @"documento": @@(data,"#documento")
             @"fecha*": str2dt(@@(data,"$fecha_documento"))
             @"fultmoratorios*": str2dt(@@(data,"$fecha_documento"))
@@ -230,12 +247,13 @@ module "model"
             @"iproveedor": @@(data,"#proveedor")
             @"sys_recver": 0
         }
+        do fieldDebeHaberByDoc(@@(data,"#documento"),dcxp,@@(data,"#importe"))
 
         do dbr.begin(db)
         do dbr.insert(db,"dcxp",dcxp)
         do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe) WHERE sys_pk = @proveedor;",data)
         do dbr.commit(db)
-
+        @url_redir=@PROVEEDORES
         exception
         {
             if dbr.in_transaction(db) { do dbr.rollback(db) }

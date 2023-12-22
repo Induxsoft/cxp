@@ -58,12 +58,12 @@ module "cxp.balance.dk"
                 {
                     tr
                     {
-                        td{$"#<format(@('#./saldos/saldo_inicial'),'$ #,0.00')>"}
-                        td{$"#<format(@('#./saldos/debe'),'$ #,0.00')>"}
-                        td{$"#<format(@('#./saldos/haber'),'$ #,0.00')>"}
-                        td{$"#<format(@('#./saldos/saldo_alfinal'),'$ #,0.00')>"}
-                        td{$"#<format(@('#./saldos/saldo_docs'),'$ #,0.00')>"}
-                        td{$"#<format(@('#./saldos/por_aplicar'),'$ #,0.00')>"}
+                        td(class="text-end"){$"#<format(@('#./saldos/saldo_inicial'),'$ #,0.00')>"}
+                        td(class="text-end"){$"#<format(@('#./saldos/debe'),'$ #,0.00')>"}
+                        td(class="text-end"){$"#<format(@('#./saldos/haber'),'$ #,0.00')>"}
+                        td(class="text-end"){$"#<format(@('#./saldos/saldo_alfinal'),'$ #,0.00')>"}
+                        td(class="text-end"){$"#<format(@('#./saldos/saldo_docs'),'$ #,0.00')>"}
+                        td(class="text-end"){$"#<format(@('#./saldos/por_aplicar'),'$ #,0.00')>"}
                     }
                 }
             }
@@ -88,8 +88,8 @@ module "cxp.balance.dk"
                         "edit-th"(type="NoEditable" field="referencia"){$"Referencia"}
                         "edit-th"(type="NoEditable" field="emision"){$"Emisión"}
                         "edit-th"(type="NoEditable" field="aplicacion"){$"Aplicación"}
-                        "edit-th"(type="NoEditable" field="debe"){$"Debe"}
-                        "edit-th"(type="NoEditable" field="haber"){$"Haber"}
+                        "edit-th"(type="NoEditable" field="debe" textalign="end" format="true" decs="2" prefix="$ " thousandssep="true"){$"Debe"}
+                        "edit-th"(type="NoEditable" field="haber" textalign="end" format="true" decs="2" prefix="$ " thousandssep="true"){$"Haber"}
                         "edit-th"(type="NoEditable" field="notas"){$"Concepto"}
                     }
                 }
