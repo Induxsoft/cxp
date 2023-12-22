@@ -79,7 +79,11 @@ model "erp.cxp"
         @"notas" string(3200)           // Notas generales
         @"pagos" decimal(18,8)          // Importe de los pagos realizados al documento
         @"partida" string(32)           // Relación a una partida presupuestal
-        @"poliza" string(32)            // Relación a una póliza contable       
+        @"poliza" string(32)            // Relación a una póliza contable
+
+        @"porimpuestocap" decimal(18,8)
+        @"porimpuestofin" decimal(18,8)
+        @"porimpuestomor" decimal(18,8)
         
         @"tasamoratorios" decimal(18,8) // Porcentaje de interés mensual por mora
         @"tipocambio" decimal(18,8)     // tipo de cambio en la divisa del proveedor al momento de la operación
