@@ -138,6 +138,14 @@ module "model"
     {
         if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado")}
 
+        new p{@"referencia":@@(data,"$referencia")}
+        if trim(@@(data,"$referencia"))==""{do rise_error(500,"Debe indicar una referencia")}
+        if trim(@@(data,"$referencia"))!=""
+        {
+            ref rec=dbr.rec(db,"select * from movcuenta where referencia=@referencia",p)
+            if not(isnull(rec)){do rise_error(500,"El valor de la referencia ya existe")}
+        }
+
         new retiro
         {
             @"sys_pk": 0
@@ -214,7 +222,7 @@ module "model"
     cxp.bonificarProveedor::&db,&params,&data
     {
         if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado")}
-            
+        if trim(@@(data,"$referencia"))==""{do rise_error(500,"Debe indicar una referencia")}
         new dcxp
         {
             @"sys_pk": 0
