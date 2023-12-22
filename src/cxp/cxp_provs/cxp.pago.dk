@@ -80,7 +80,7 @@ module "cxp.pago.dk"
     }
 
     #$
-    div(class="container")
+    div(class="container" style="padding-bottom:10rem")
     {
         h1(class="h4"){$"Pago a proveedor"}
 
@@ -149,7 +149,7 @@ module "cxp.pago.dk"
                         label(class="col-auto col-form-label" "for"="txt_tcambio_retiro"){$"Tipo de cambio:"}
                         div(class="col-6") {
                             div(class="input-group") {
-                                input(type="number" class="form-control" name="tcambio_retiro" min="1" id="txt_tcambio_retiro" value="#<@('#input/tcambio')>" required="true")
+                                input(type="number" class="form-control" name="tcambio_retiro" min="1" step="0.000001" id="txt_tcambio_retiro" value="#<@('#input/tcambio')>" required="true")
                                 span(class="input-group-text"){$"#<cDIVISA_PRED>"}
                             }
                         }
@@ -159,7 +159,7 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_importe_retiro"){$"Importe:"}
                         div(class="col-6") {
-                            input(type="number" class="form-control" name="importe_retiro" min="1" id="txt_importe_retiro" value="#<form('importe_retiro','nm')>")
+                            input(type="number" class="form-control" name="importe_retiro" step="0.000001" min="1" id="txt_importe_retiro" value="#<form('importe_retiro','nm')>")
                         }
                     }
 
@@ -214,7 +214,7 @@ module "cxp.pago.dk"
                         label(class="col-auto col-form-label" "for"="txt_tcambio"){$"Tipo de cambio:"}
                         div(class="col-6") {
                             div(class="input-group") {
-                                input(type="number" class="form-control" name="tcambio" min="1" id="txt_tcambio" value="#<@('#input/tcambio')>" required="true")
+                                input(type="number" class="form-control" name="tcambio" min="1" id="txt_tcambio" step="0.000001" value="#<@('#input/tcambio')>" required="true")
                                 span(class="input-group-text"){$"#<cDIVISA_PRED>"}
                             }
                         }
@@ -224,7 +224,7 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_importe"){$"Importe:"}
                         div(class="col-6") {
-                            input(type="number" class="form-control" name="importe" min="1" id="txt_importe" value="#<form('importe','nm')>")
+                            input(type="number" class="form-control" name="importe" min="1" step="0.000001" id="txt_importe" value="#<form('importe','nm')>")
                         }
                     }
 
@@ -271,8 +271,8 @@ module "cxp.pago.dk"
                 function convertirDivisas() {
                     let opt_cuenta_retiro = sel_cuenta_retiro.options[sel_cuenta_retiro.selectedIndex];
 
-                    let dvsPred = divisa_predeterminada.codigo.toUpperCase();
-                    let dvsProv = proveedor.divisa.toUpperCase();
+                     let dvsPred = (divisa_predeterminada.codigo??"").toUpperCase();
+                    let dvsProv = (proveedor.divisa??"").toUpperCase();
                     let dvsCtaR = opt_cuenta_retiro.getAttribute("data-divisa").toUpperCase();
                     // console.log(dvsPred, dvsProv, dvsCtaR);
                     let hide_tcambio_retiro = false;

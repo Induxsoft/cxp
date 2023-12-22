@@ -13,7 +13,7 @@ module "cxp.crear"
     ref infoProv = ifnull(@("&./info_proveedor"),record.create())
 
     #$
-    div(class="container")
+    div(class="container" style="padding-bottom:10rem")
     {
         h1(class="h4"){$"Agregar documento por pagar"}
 
@@ -42,7 +42,7 @@ module "cxp.crear"
                 }
                 div(class="col-lg-4") {
                     label(class="form-label" "for"="txt_tcambio"){$"Tipo de cambio:"}
-                    input(type="number" class="form-control" name="tcambio" id="txt_tcambio" value="#<@@(infoProv,'#tcambio')>")
+                    input(type="number" class="form-control" name="tcambio" id="txt_tcambio" step="0.000001" value="#<@@(infoProv,'#tcambio')>")
                 }
                 div(class="col-lg-4") {
                     label(class="form-label" "for"="sel_tdoc"){$"Tipo de documento:"}
@@ -83,7 +83,7 @@ module "cxp.crear"
                 div(class="mt-2 d-flex gap-1 justify-content-end align-items-center")
                 {
                     label(class="form-label" "for"="txt_importe"){$"Importe:"}
-                    input(type="number" class="form-control rounded-0 w-25" name="importe" min="0" id="txt_importe" value="#<@('#input/importe')>" required="true")
+                    input(type="number" class="form-control rounded-0 w-25" name="importe" min="0" step="0.000001" id="txt_importe" value="#<@('#input/importe')>" required="true")
                 }
             }
 

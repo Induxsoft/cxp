@@ -37,36 +37,39 @@ module "cxp.aplicar.dk"
                 b(id="lbl_xaplicar"){$"#<format(@@(xaplicar,'#xaplicar'),fmoneda)>"}
                 button(type="button" class="btn btn-primary btn-sm" onclick="aplicar()"){$"Aplicar"}
             }
-
-            "edit-table"(class="w-100" id="tbl_docs_pendientes" data="#<to.json(pendientes)>")
+            div(class="table-responsive")
             {
-                "edit-thead"
+                "edit-table"(class="w-100" id="tbl_docs_pendientes" data="#<to.json(pendientes)>")
                 {
-                    "edit-tr"
+                    "edit-thead"
                     {
-                        "edit-th"(type="NoEditable" field="documento"){$"Documento"}
-                        "edit-th"(type="NoEditable" field="referencia"){$"Referencia"}
-                        "edit-th"(type="NoEditable" field="emision"){$"Fecha"}
-                        "edit-th"(type="NoEditable" field="aplicacion"){$"Vencimiento"}
-                        "edit-th"(type="NoEditable" field="saldo"){$"Saldo"}
-                        "edit-th"(type="Number" field="aplicar"){$"Aplicar"}
-                        "edit-th"(type="NoEditable" field="sfinal"){$"Saldo Final"}
+                        "edit-tr"
+                        {
+                            "edit-th"(type="NoEditable" field="documento"){$"Documento"}
+                            "edit-th"(type="NoEditable" field="referencia"){$"Referencia"}
+                            "edit-th"(type="NoEditable" field="emision"){$"Fecha"}
+                            "edit-th"(type="NoEditable" field="aplicacion"){$"Vencimiento"}
+                            "edit-th"(type="NoEditable" field="saldo"){$"Saldo"}
+                            "edit-th"(type="Number" field="aplicar"){$"Aplicar"}
+                            "edit-th"(type="NoEditable" field="sfinal"){$"Saldo Final"}
+                        }
                     }
+                    /* "edit-tbody"
+                    {
+                        "edit-tr"
+                        {
+                            "edit-td"{$""}
+                            "edit-td"{$""}
+                            "edit-td"{$""}
+                            "edit-td"{$""}
+                            "edit-td"{$""}
+                            "edit-td"{$""}
+                            "edit-td"{$""}
+                        }
+                    } */
                 }
-                /* "edit-tbody"
-                {
-                    "edit-tr"
-                    {
-                        "edit-td"{$""}
-                        "edit-td"{$""}
-                        "edit-td"{$""}
-                        "edit-td"{$""}
-                        "edit-td"{$""}
-                        "edit-td"{$""}
-                        "edit-td"{$""}
-                    }
-                } */
             }
+            
         }
 
         p{$"#<@('$error/message')>"}
@@ -149,7 +152,7 @@ module "cxp.aplicar.dk"
                 // });
 
 
-                model.invoke_service("./",data,
+            InduxsoftCrudlModel.InvokeService("./",data,
               function(data)
               {
                   window.location.reload();

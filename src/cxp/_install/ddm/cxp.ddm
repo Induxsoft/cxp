@@ -266,6 +266,12 @@ model "erp.cxp"
         @"idivisa" ref:"divisa" required
         @"tipocambio" decimal(18,8) 
         @"imovchequera" ref:"movcuenta"
+
+        @"subtotal" decimal(18,8) 
+        @"iva" decimal(18,8) 
+        @"retiva" decimal(18,8) 
+        @"retisr" decimal(18,8)
+        
         @"total" decimal(18,8) 
         @"deducibilidad" int 
         @"formapago" ref:"cformaspago" required

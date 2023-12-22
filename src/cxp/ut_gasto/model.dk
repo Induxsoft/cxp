@@ -68,6 +68,7 @@ module "model"
             ref rec=dbr.rec(db,"select * from movcuenta where referencia=@referencia",p)
             if not(isnull(rec)){do rise_error(500,"El valor de la referencia ya existe")}
         }
+
         new retiro
         {
             @"sys_pk": 0

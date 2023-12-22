@@ -137,7 +137,7 @@ module "model"
     cxp.pagarProveedor::&db,&params,&data
     {
         if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado")}
-
+        
         new p{@"referencia":@@(data,"$referencia")}
         if trim(@@(data,"$referencia"))==""{do rise_error(500,"Debe indicar una referencia")}
         if trim(@@(data,"$referencia"))!=""
@@ -222,7 +222,9 @@ module "model"
     cxp.bonificarProveedor::&db,&params,&data
     {
         if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado")}
+
         if trim(@@(data,"$referencia"))==""{do rise_error(500,"Debe indicar una referencia")}
+        
         new dcxp
         {
             @"sys_pk": 0
