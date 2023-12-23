@@ -2,8 +2,6 @@
 #!
 module "model"
 {
-    #include "lib.dk"
-
     @table_name = "movcuenta"
 
     mov.prepareView::&db,&params,&data

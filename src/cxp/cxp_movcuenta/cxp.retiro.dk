@@ -5,7 +5,8 @@ module "form.dk"
     #include "functions.dkh"
     #include "serialize.dkh"
     #include "uielements.dkl"
-    #include "../config.dk"
+    #include "../_lib/icons.dk"
+    #include "../_lib/config.dk"
     #include "lib.dk"
 
     do @context.begin(@crud_context)

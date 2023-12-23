@@ -2,7 +2,85 @@
 #!
 module "model"
 {
-    #include "lib.dk"
+    @table_name = "proveedor"
+    
+    cxp.buscarContacto::&db,&params
+    {
+        sql = "
+        SELECT
+            sys_pk,
+            sys_guid,
+            IFNULL(apellidos,'') apellidos,
+            IFNULL(nombre,'') nombre,
+            IFNULL(empresa,'') empresa,
+            IFNULL(tratamiento,'') tratamiento
+        FROM contacto
+        WHERE (apellidos LIKE CONCAT('%',@search,'%') OR nombre LIKE CONCAT('%',@search,'%') OR empresa LIKE CONCAT('%',@search,'%'))
+        "
+        return dbr.list(db,sql,params)
+    }
+
+    cxp.buscarEstado::&db,&params
+    {
+        sql = "
+        SELECT
+            sys_pk,
+            sys_guid,
+            sys_recver,
+            codigo,
+            nombre,
+            ipais,
+            CONCAT('[',codigo,'] ',nombre) AS `text`
+        FROM edoprov 
+        WHERE NOT IFNULL(sys_deleted,0) #<condition>
+        ORDER BY sys_pk ASC;"
+
+        if trim(@@(params,"$id")) != "" {
+            condition = "AND (sys_pk = @id OR sys_guid = @id)"
+            return dbr.rec(db,ftext(sql),params)
+        }
+        if @@(params,"#ipais") > 0 {
+            condition = "AND ipais = @ipais"
+            return dbr.list(db,ftext(sql),params)
+        }
+        if trim(@@(params,"$search")) != {
+            condition = "AND (codigo LIKE CONCAT('%',@search,'%') OR nombre LIKE CONCAT('%',@search,'%'))"
+            return dbr.list(db,ftext(sql),params)
+        }
+        return list.create()
+    }
+
+    cxp.buscarCiudad::&db,params
+    {
+        sql = "
+        SELECT
+            sys_pk,
+            sys_guid,
+            sys_recver,
+            codigo,
+            nombre,
+            codigotel,
+            estado,
+            CONCAT('[',codigo,'] ',nombre,' (',codigotel,')') AS `text`
+        FROM ciudad
+        WHERE NOT IFNULL(sys_deleted,0) #<condition>
+        ORDER BY sys_pk ASC;
+        "
+
+        if trim(@@(params,"$id")) != "" {
+            condition = "AND (sys_pk = @id OR sys_guid = @id)"
+            return dbr.rec(db,ftext(sql),params)
+        }
+        if @@(params,"#iestado") > 0 {
+            condition = "AND estado = @iestado"
+            return dbr.list(db,ftext(sql),params)
+        }
+        if trim(@@(params,"$search")) != {
+            condition = "AND (codigo LIKE CONCAT('%',@search,'%') OR nombre LIKE CONCAT('%',@search,'%'))"
+            return dbr.list(db,ftext(sql),params)
+        }
+        return list.create()
+    }
 
     cxp.obtenerProveedor::&db,id
     {
@@ -61,62 +139,55 @@ module "model"
 
                 break
             }
+            case ""
+            {
+                sql_tipos_proveedores = "SELECT sys_pk, CONCAT('[',codigo,'] ',descripcion) AS `text` FROM tipoproveedor ORDER BY sys_pk ASC;"
+                sql_divisas = "SELECT sys_pk, codigo, tcambio, CONCAT('[',codigo,'] ',descripcion) AS `text` FROM divisa ORDER BY sys_pk ASC;"
+                sql_pais = "SELECT sys_pk, codigo, CONCAT('[',codigo,'] ',nombre,' (',codigotel,')') AS `text` FROM pais WHERE NOT IFNULL(sys_deleted,0) ORDER BY sys_pk ASC;"
+                sql_estado = "SELECT sys_pk, codigo, ipais, CONCAT('[',codigo,'] ',nombre) AS `text` FROM edoprov WHERE NOT IFNULL(sys_deleted,0) AND ipais = @ipais ORDER BY sys_pk ASC;"
+                sql_ciudad = "SELECT sys_pk, codigo, estado, CONCAT('[',codigo,'] ',nombre,' (',codigotel,')') AS `text` FROM ciudad WHERE NOT IFNULL(sys_deleted,0) AND estado = @iestado ORDER BY sys_pk ASC;"
+                sql_toperacion = "SELECT sys_pk, CONCAT('[',id,'] ',descripcion) AS `text` FROM tipooperacion ORDER BY sys_pk ASC;"
+                sql_zona = "SELECT sys_pk, nombre AS `text` FROM zona WHERE NOT IFNULL(sys_deleted,0) ORDER BY sys_pk ASC;"
+                sql_status = "SELECT id, const FROM cstatusorg ORDER BY id ASC;"
+                sql_tasasiva = "SELECT id, const FROM ctasasiva ORDER BY id ASC;"
+                sql_domicilio = "SELECT sys_pk, sys_guid, sys_recver, IFNULL(codpos,'') codpos, IFNULL(colonia,'') colonia, IFNULL(direccion,'') direccion, IFNULL(notas,'') notas, IFNULL(telefonos,'') telefonos, iciudad FROM domicilio WHERE #<condition>"
+
+                new p {}
+                ref list_pais = dbr.list(db,sql_pais,@null)
+                ref list_estado = @null
+                ref list_ciudad = @null
+
+                if @@(params,"#_entity_id") > 0
+                {
+                    using p
+                    {
+                        @"domicilio1": @@(data,"#domicilio1")
+                        @"domicilio2": @@(data,"#domicilio2")
+                        @"domicilio3": @@(data,"#domicilio3")
+                    }
+                    
+                    condition = "sys_pk = @domicilio1"
+                    data<"domicilio1*"> : dbr.rec(db,ftext(sql_domicilio),p)
+                    condition = "sys_pk = @domicilio2"
+                    data<"domicilio2*"> : dbr.rec(db,ftext(sql_domicilio),p)
+                    condition = "sys_pk = @domicilio3"
+                    data<"domicilio3*"> : dbr.rec(db,ftext(sql_domicilio),p)
+                }
+
+                data<"list_tproveedores*"> : dbr.list(db,sql_tipos_proveedores,@null)
+                data<"list_divisas*"> : dbr.list(db,sql_divisas,@null)
+                data<"list_pais*"> : list_pais
+                data<"list_estado*"> : list_estado
+                data<"list_ciudad*"> : list_ciudad
+                data<"list_toperacion*"> : dbr.list(db,sql_toperacion,@null)
+                data<"list_zona*"> : dbr.list(db,sql_zona,@null)
+                data<"list_status*"> : dbr.list(db,sql_status,@null)
+                data<"list_tasasiva*"> : dbr.list(db,sql_tasasiva,@null)
+                break
+            }
         }
     }
 
-    cxp.read::&db,&params
-    {   
-        switch @@(params,"$_view")
-        {
-            case "bonificacion"{if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado")}}
-            case "pago"{if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado")}}
-        }
-        
-           
-        ref data = cxp.obtenerProveedor(db,@@(params,"_entity_id"))
-        do cxp.prepareView(db,params,data)
-        return data
-    }
-
-    cxp.list::&db,&params
-    {
-        buscar = trim(@@(params,"$buscar"))
-        tipo = trim(@@(params,"$tipo"))
-
-        sql = "
-        SELECT 
-            pdr.sys_pk,
-            pdr.codigo,
-            IFNULL(pdr.rfc,'') AS rfc,
-            pdr.nombre,
-            tpp.descripcion AS tipo,
-            IFNULL(pdr.saldo,0) AS saldo,
-            IFNULL(zna.nombre,'') AS zona,
-            dvs.codigo AS divisa,
-            dvs.tcambio
-        FROM proveedor AS pdr 
-            INNER JOIN tipoproveedor AS tpp ON tpp.sys_pk = pdr.tipo
-            INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
-            LEFT JOIN zona AS zna ON zna.sys_pk = pdr.izona
-        WHERE TRUE"
-
-        if buscar != "" {
-            sql = sql + " AND (
-                pdr.codigo LIKE CONCAT('%',@buscar,'%')
-                OR pdr.nombre LIKE CONCAT('%',@buscar,'%')
-                OR pdr.rfc LIKE CONCAT('%',@buscar,'%')
-            )"
-        }
-        if tipo != "" {
-            sql = sql + " AND (
-                tpp.sys_pk = @tipo
-                OR tpp.codigo = @tipo
-                OR tpp.descripcion LIKE CONCAT('%',@tipo,'%')
-            )"
-        }
-
-        return dbr.list(db,sql,params)
-    }
     fieldDebeHaberByDoc::doc,&obj,total
     {
         switch doc
@@ -134,6 +205,7 @@ module "model"
             }
         }
     }
+
     cxp.pagarProveedor::&db,&params,&data
     {
         if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado")}
@@ -209,7 +281,7 @@ module "model"
         do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe) WHERE sys_pk = @proveedor;",data)
         do dbr.commit(db)
 
-        @url_redir=@PROVEEDORES
+        @url_redir=@CXP_PROVS
 
         exception
         {
@@ -263,7 +335,7 @@ module "model"
         do dbr.insert(db,"dcxp",dcxp)
         do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe) WHERE sys_pk = @proveedor;",data)
         do dbr.commit(db)
-        @url_redir=@PROVEEDORES
+        @url_redir=@CXP_PROVS
         exception
         {
             if dbr.in_transaction(db) { do dbr.rollback(db) }
@@ -395,8 +467,195 @@ module "model"
         return data
     }
 
-    @table_name = "proveedor"
+    pdr.list::&db,&params
+    {
+        buscar = trim(@@(params,"$buscar"))
+        tipo = trim(@@(params,"$tipo"))
 
-    point @read     to cxp.read
-    point @list     to cxp.list
+        sql = "
+        SELECT 
+            pdr.sys_pk,
+            pdr.codigo,
+            IFNULL(pdr.rfc,'') AS rfc,
+            pdr.nombre,
+            tpp.descripcion AS tipo,
+            IFNULL(pdr.saldo,0) AS saldo,
+            IFNULL(zna.nombre,'') AS zona,
+            dvs.codigo AS divisa,
+            dvs.tcambio
+        FROM proveedor AS pdr 
+            INNER JOIN tipoproveedor AS tpp ON tpp.sys_pk = pdr.tipo
+            INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
+            LEFT JOIN zona AS zna ON zna.sys_pk = pdr.izona
+        WHERE TRUE"
+
+        if buscar != "" {
+            sql = sql + " AND (
+                pdr.codigo LIKE CONCAT('%',@buscar,'%')
+                OR pdr.nombre LIKE CONCAT('%',@buscar,'%')
+                OR pdr.rfc LIKE CONCAT('%',@buscar,'%')
+            )"
+        }
+        if tipo != "" {
+            sql = sql + " AND (
+                tpp.sys_pk = @tipo
+                OR tpp.codigo = @tipo
+                OR tpp.descripcion LIKE CONCAT('%',@tipo,'%')
+            )"
+        }
+
+        return dbr.list(db,sql,params)
+    }
+
+    pdr.read::&db,&params
+    {   
+        switch @@(params,"$_view")
+        {
+            case "bonificacion"{if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado")}}
+            case "pago"{if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado")}}
+        }
+        
+           
+        ref data = cxp.obtenerProveedor(db,@@(params,"_entity_id"))
+        do cxp.prepareView(db,params,data)
+        return data
+    }
+
+    pdr.blank::&db,&params
+    {
+        new data {}
+        do cxp.prepareView(db,params,data)
+        return data
+    }
+
+    rec.init::
+    {
+        new record
+        {
+            @"sys_pk": 0
+            @"sys_dtcreated*": now()
+            @"sys_timestamp*": now()
+            @"sys_recver": 0
+        }
+        return record
+    }
+
+    cleanFormData::&fields,&data,&output
+    {
+        for i = 0; i < list.count(fields)
+        {
+            field = trim(list.str(fields,i))
+            // 1 - $ | 2 - # | 3 - * | 0 - not exist
+            switch field.typeof(data,field)
+            {
+                case 1
+                {
+                    str = trim(field.str(data,field))
+                    if str != "" { output<field> : str }
+                    break
+                }
+                case 2
+                {
+                    output<field> : field.num(data,field)
+                    break
+                }
+                case 3
+                {
+                    ref obj = field.obj(data,field)
+                    if not(isnull(obj)) { output<field+"*"> : obj }
+                    break
+                }
+            }
+        }
+    }
+
+    pdr.create::&db,&params,&data
+    {
+        do errordet(@false)
+        @use_transaction = @false
+
+        ref fieldsProveedor = split("codcuenta,codigo,curp,diascredito,diasentrega,email,fax,limitecredito,nombre,notas,rfc,saldo,status,tasaiva,telefonos,website,contacto1,contacto2,contacto3,idivisa,izona,tipo,uf_vueltaviajero,uf_tipoop",",")
+
+        ref proveedor = rec.init()
+        ref domicilio1 = @null
+        ref domicilio2 = @null
+        ref domicilio3 = @null
+
+        chq_domicilio1 = parse.bool(@@(data,"$chq_domicilio1"))
+        chq_domicilio2 = parse.bool(@@(data,"$chq_domicilio2"))
+        chq_domicilio3 = parse.bool(@@(data,"$chq_domicilio3"))
+
+        // Datos del nuevo proveedor
+        if trim(@@(data,"$codigo")) == "" {
+            sql_gen_code = "SELECT (IF(COUNT(*) >= 1,CONCAT('PV',LPAD(CAST(MAX(SUBSTR(codigo,4,4))+1 AS CHAR),'4','0')),'PV0001')) AS codigo FROM proveedor WHERE codigo LIKE 'PV%';"
+            proveedor<"codigo"> : dbr.str(db,sql_gen_code,@null)
+        }
+        do cleanFormData(fieldsProveedor,data,proveedor)
+
+        do dbr.begin(db)
+        // Datos de domicilios
+        if chq_domicilio1
+        {
+            ref domicilio1 = rec.init()
+            using domicilio1
+            {
+                @"codpos": trim(@@(data,"$codpos"))
+                @"colonia": trim(@@(data,"$colonia"))
+                @"direccion": "||" + trim(@@(data,"$calle")) + "|" + trim(@@(data,"$numext")) + "|" + trim(@@(data,"$numint")) + "||"
+                @"notas": trim(@@(data,"$dm_notas"))
+                @"telefonos": trim(@@(data,"$dm_telefonos"))
+                @"iciudad": @@(data,"#iciudad")
+            }
+            
+            proveedor<"domicilio1"> : @@(dbr.save(db,"domicilio",domicilio1),"#sys_pk")
+        }
+        if chq_domicilio2
+        {
+            ref domicilio2 = rec.init()
+            using domicilio2
+            {
+                @"codpos": trim(@@(data,"$codpos2"))
+                @"colonia": trim(@@(data,"$colonia2"))
+                @"direccion": "||" + trim(@@(data,"$calle2")) + "|" + trim(@@(data,"$numext2")) + "|" + trim(@@(data,"$numint2")) + "||"
+                @"notas": trim(@@(data,"$dm_notas2"))
+                @"telefonos": trim(@@(data,"$dm_telefonos2"))
+                @"iciudad": @@(data,"#iciudad2")
+            }
+
+            proveedor<"domicilio2"> : @@(dbr.save(db,"domicilio",domicilio2),"#sys_pk")
+        }
+        if chq_domicilio3
+        {
+            ref domicilio3 = rec.init()
+            using domicilio3
+            {
+                @"codpos": trim(@@(data,"$codpos3"))
+                @"colonia": trim(@@(data,"$colonia3"))
+                @"direccion": "||" + trim(@@(data,"$calle3")) + "|" + trim(@@(data,"$numext3")) + "|" + trim(@@(data,"$numint3")) + "||"
+                @"notas": trim(@@(data,"$dm_notas3"))
+                @"telefonos": trim(@@(data,"$dm_telefonos3"))
+                @"iciudad": @@(data,"#iciudad3")
+            }
+
+            proveedor<"domicilio3"> : @@(dbr.save(db,"domicilio",domicilio3),"#sys_pk")
+        }
+
+        ref entity = entity.create(db,params,proveedor)
+        do dbr.commit(db)
+
+        exception
+        {
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+
+            ref formData = record.copy(data,"*")
+            code = last_error_code()
+            error = last_error()
+
+            do record.clear(data)
+            data<"form*"> : formData
+            
+            do cte.prepareView(db,params,data)
+            do rise_error(code,error)
+        }
+    }
 }

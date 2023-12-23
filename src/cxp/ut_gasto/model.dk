@@ -2,9 +2,6 @@
 #!
 module "model"
 {
-    #include "../config.dk"
-    #include "lib.dk"
-
     @read_query="SELECT 
             ut.sys_pk,pdr.sys_pk pkproveedor,ut.subtotal importe,
             cat.descripcion AS categoria,

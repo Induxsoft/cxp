@@ -6,6 +6,21 @@ module "controller"
 
     switch @@(@_GET,"$_view")
     {
+        case "buscar-contacto"
+        {
+            point @list to cxp.buscarContacto
+            break
+        }
+        case "buscar-edoprov"
+        {
+            point @list to cxp.buscarEstado
+            break
+        }
+        case "buscar-ciudad"
+        {
+            point @list to cxp.buscarCiudad
+            break
+        }
         case "bonificacion"
         {
             point @update to cxp.bonificarProveedor
@@ -34,6 +49,15 @@ module "controller"
         {
             point @read to cxp.obtenerPagosPorAplicar
             @form_view = "cxp.poraplicar.dk"
+            break
+        }
+        case ""
+        {
+            point @list to pdr.list
+            point @read to pdr.read
+            point @blank to pdr.blank
+
+            point @create to pdr.create
             break
         }
     }

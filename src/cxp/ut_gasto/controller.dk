@@ -2,8 +2,6 @@
 #!
 module "controller"
 {
-    #include "lib.dk"
-
     point @blank to ut.blank
     point @list to ut.list
     point @create to ut.agregarGasto

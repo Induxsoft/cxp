@@ -2,7 +2,6 @@
 #!
 module "model"
 {
-    #include "lib.dk"
     #include "erp.cxp.documentos.dk"
 
     cxp.buscarProveedor::&db,&params
@@ -11,13 +10,17 @@ module "model"
             pdr.sys_pk,
             pdr.codigo,
             pdr.nombre,
+            IFNULL(pdr.rfc,'') AS rfc,
             tpp.descripcion AS tipo,
+            IFNULL(pdr.saldo,0) AS saldo,
+            IFNULL(zna.nombre,'') AS zona,
             dvs.codigo AS divisa,
             dvs.tcambio
         FROM proveedor AS pdr 
             INNER JOIN tipoproveedor AS tpp ON tpp.sys_pk = pdr.tipo
             INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
-        WHERE (pdr.codigo LIKE CONCAT('%',@search,'%') OR pdr.nombre LIKE CONCAT('%',@search,'%'));"
+            LEFT JOIN zona AS zna ON zna.sys_pk = pdr.izona
+        WHERE (pdr.codigo LIKE CONCAT('%',@search,'%') OR pdr.nombre LIKE CONCAT('%',@search,'%') OR pdr.rfc LIKE CONCAT('%',@search,'%'));"
 
         return dbr.list(db,sql,params)
     }

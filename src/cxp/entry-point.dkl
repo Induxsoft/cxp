@@ -4,7 +4,8 @@ module "Controller configs"
 {
 	#include "functions.dkh"
 	#include "serialize.dkh"
-	#include "config.dk"
+	#include "_lib/config.dk"
+	#include "_lib/lib.dk"
 
 	if @@(@http_context,"$session/user/ids") == "" {
 		@http_context<"response/headers/location"> : "/"

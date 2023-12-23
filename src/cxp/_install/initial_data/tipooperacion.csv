@@ -1,0 +1,5 @@
+﻿"Sys_PK","ID","Descripcion","sys_recver","sys_lock","sys_deleted"
+"1","00","Seleccione...",\N,\N,\N
+"2","03","Prestación de servicios profesionales",\N,\N,\N
+"3","06","Arrendamiento de inmuebles",\N,\N,\N
+"4","85","Otros",\N,\N,\N

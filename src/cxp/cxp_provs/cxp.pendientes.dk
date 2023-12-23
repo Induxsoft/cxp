@@ -4,11 +4,8 @@ module "cxp.pendientes.dk"
 {
     #include "functions.dkh"
     #include "serialize.dkh"
-    #include "dbr.dkh"
-    #include "uielements.dkl"
-    #include "../icons.dk"
-    #include "../config.dk"
-    #include "lib.dk"
+    #include "../_lib/icons.dk"
+    #include "../_lib/config.dk"
     
     do @context.begin(@crud_context)
 
@@ -51,7 +48,7 @@ module "cxp.pendientes.dk"
             {
                 div(class="btn-group" role="group")
                 {
-                    a(href="#<@PROVEEDORES>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
+                    a(href="#<@CXP_PROVS>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
                     button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_BONIFICACION>')"){"Aplicar bonificación"}
                     button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_PAGO>')"){"Aplicar pago"}
                     button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_PAGO_MORA>')"){"Aplicar cargos por mora"}

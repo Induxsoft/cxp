@@ -10,15 +10,49 @@ model "erp.cxp"
 
     // Tipos de documentos comerciales
     entity "cdocumentos" : "EnumModel" {}
-
     // Base de cálculo para intereses moratorios
     entity "cbcimoratorios" : "EnumModel" {}
-
+    // Enumeración de formas de pago
+    entity "cformaspago" : "EnumModel" {}
     // Estados posibles para un cliente, proveedor u organización
     entity "cstatusorg" : "EnumModel" {}
-
+    // Enumeración de estados administrativos para documentos
+    entity "cstatusadministrativos" : "EnumModel" {}
     // Tasas de IVA aplicables por razón de ubicación geográfica
     entity "ctasasiva" : "EnumModel" {}
+
+    //#region Domicilio
+    entity "pais" : "TableModel"
+    {
+        @"codigo" string(8) unique required
+        @"codigotel" string(5)
+        @"nombre" string(100) unique required
+    }
+    entity "edoprov" : "TableModel"
+    {
+        @"codigo" string(8) unique required
+        @"nombre" string(50) required
+        @"ipais" int ref:"pais" ["sys_pk"] required
+    }
+    entity "ciudad" : "TableModel"
+    {
+        @"codigo" string(8) unique required
+        @"codigotel" string(5)
+        @"nombre" string(100) required
+        @"estado" int ref:"edoprov" ["sys_pk"] required
+    }
+    entity "domicilio" : "TableModel"
+    {
+        @"codpos" string(10)
+        @"colonia" string(150)
+        @"direccion" string(1024)
+        @"notas" string(150)
+        @"telefonos" string(150)
+        @"iciudad" int ref:"ciudad" ["sys_pk"]
+        @"numint" string(1024)
+        @"numext" string(1024)
+    }
+    //#endregion
 
     // Catálogo de monedas o divisas
     entity "divisa" : "TableModel"
@@ -27,37 +61,38 @@ model "erp.cxp"
         @"descripcion" string(30) unique required
         @"tcambio" decimal(18,8)
     }
-
-    // Tipo (clasificación) del proveedor
-    entity "tipoproveedor" : "TableModel"
-    {
-        @"codigo" string(15) unique required
-        @"descripcion" string(50) unique required
-        @"notas" string(4096) 
-    }
-
     // Datos de un proveedor
     entity "proveedor" : "TableModel"
     {
-        @"codigo" string(35) unique required    // Código o identificador del proveedor
-        @"nombre" string(150) unique required   // Nombre o razón social
-        @"idivisa" ref:"divisa" required        // Divisa del proveedor
-        @"tipo" ref:"tipoproveedor" required    // Tipo de proveedor
         @"codcuenta" string(50) unique          // Código de cuenta contable asociado
+        @"codigo" string(35) unique required    // Código o identificador del proveedor
+        @"curp" string(35) unique
         @"diascredito" int                      // Días acordados de crédito comercial
+        @"diasentrega" int
+        @"email" string(50)                     // Correo electrónico
+        @"fax" string(50)
         @"limitecredito" decimal(18,8)          // Importe máximo de crédito con el proveedor
+        @"nombre" string(150) unique required   // Nombre o razón social
         @"notas" string(32000)                  // Notas generales
         @"rfc" string(15)                       // RFC
         @"saldo" decimal(18,8)                  // Saldo por pagar acumulado
         @"status" ref:"cstatusorg"              // Status del proveedor (normal o bloqueado)
         @"tasaiva" ref:"ctasasiva" required     // Tipo de tasa de IVA aplicable por razón de su zona económica
-        @"email" string(50)                     // Correo electrónico
         @"telefonos" string(50)                 // Teléfonos de contacto
         @"website" string(150)                  // Sitio Web
+        @"contacto1" ref:"contacto"
+        @"contacto2" ref:"contacto"
+        @"contacto3" ref:"contacto"
+        @"domicilio1" ref:"domicilio"
+        @"domicilio2" ref:"domicilio"
+        @"domicilio3" ref:"domicilio"
+        @"idivisa" ref:"divisa" required        // Divisa del proveedor
+        @"izona" ref:"zona"
+        @"tipo" ref:"tipoproveedor" required    // Tipo de proveedor
         @"uf_sys_baja" bool                     // Si es true, el proveedor está dado de baja
-        @"izona" int ref:"zona" ["sys_pk"]
+        @"uf_vueltaviajero" int
+        @"uf_tipoop" ref:"tipooperacion"
     }
-
     // Documentos comerciales que afectan la cuenta por pagar de un proveedor
     entity "dcxp" : "TableModel"
     {
@@ -94,7 +129,6 @@ model "erp.cxp"
         // Saldo por pagar del documento por pagar
         // Saldo = (Haber + intmoratorios - bonificaciones - pagos)
     }
-
     // Detalle de pagos aplicados
     entity "aplcxp" : "TableModel"
     {
@@ -104,15 +138,29 @@ model "erp.cxp"
         @"fk_dcxp_aplicadoa" ref:"dcxp" required    // Referencia al documento desde el que se aplica (pago o bonificación)
         @"aplicadoa" ref:"dcxp" required            // Referencia al documento al que se aplicó
     }
-
+    // tipooperacion
+    entity "tipooperacion"
+    {
+        @"sys_pk" int key required autoincrement
+        @"id" string(2) unique required
+        @"descripcion" string(50)
+        @"sys_recver" int
+        @"sys_lock" int
+        @"sys_deleted" bool
+    }
+    // Tipo (clasificación) del proveedor
+    entity "tipoproveedor" : "TableModel"
+    {
+        @"codigo" string(15) unique required
+        @"descripcion" string(50) unique required
+        @"notas" string(4096) 
+    }
+    // zona
     entity "zona" : "TableModel"
     {
         @"nombre" string(30) unique required
         @"notas" string(255) 
     }
-
-    // -------------------------------------------------------
-
     // Enumeración de tipos de categorías de propósito general
     entity "ctiposcategorias" : "EnumModel"
     {
@@ -122,7 +170,6 @@ model "erp.cxp"
         * 3 = cInventario
         */
     }
-
     // Categorías de propósito general para clasificar operaciones
     entity "categoria" : "TableModel"
     {
@@ -135,7 +182,6 @@ model "erp.cxp"
         @"uf_inhabilitado" bool
         @"uf_fechainhabilitacion" datetime
     }
-    
     // Configuración de documentos por pagar
     entity "cfg_cxp_docs"
     {
@@ -146,7 +192,6 @@ model "erp.cxp"
         @"apl_bonific" bool // si es true, puede usarse para aplicarse como bonificación
         @"apl_pago" bool    // si es true, puede usarse para aplicarse como pago
     }
-
     // Datos de una institución financiera
     entity "banco" : "TableModel"
     {
@@ -155,7 +200,7 @@ model "erp.cxp"
         @"website" string(150)
         @"contacto" int ref:"contacto" ["sys_pk"]
     }
-
+    // contacto
     entity "contacto" : "TableModel"
     {
         @"apellidos" string(50) required
@@ -172,10 +217,9 @@ model "erp.cxp"
         @"tel3" string(50)
         @"tratamiento" string(5)
         @"website" string(150)
-        @"domicilio1" int //ref:"domicilio" ["sys_pk"]
-        @"domicilio2" int //ref:"domicilio" ["sys_pk"]
+        @"domicilio1" int ref:"domicilio" ["sys_pk"]
+        @"domicilio2" int ref:"domicilio" ["sys_pk"]
     }
-
     // Datos de una cuenta en una institución financiera
     entity "chequera" : "TableModel"
     {
@@ -189,7 +233,6 @@ model "erp.cxp"
         @"credito" bool // Si es true, la cuenta es crédito revolvente
         @"limite" decimal(18,4) // Límite de crédito, si es null no hay límite de crédito
     }
-
     // Movimientos de una cuenta en una institución financiera
     entity "movcuenta" : "TableModel"
     {
@@ -219,7 +262,6 @@ model "erp.cxp"
             field "referencia"
         }
     }
-
     // Configuración de documentos por pagar
     entity "cfg_chq_docs"
     {
@@ -228,13 +270,7 @@ model "erp.cxp"
         @"retiros" bool
         @"traspasos" bool
     }
-
-    // Enumeración de estados administrativos para documentos
-    entity "cstatusadministrativos" : "EnumModel" {}
-
-    // Enumeración de formas de pago
-    entity "cformaspago" : "EnumModel" {}
-
+    // Permisos disponibles
     entity "sitem" 
     {
         @"sys_pk" int key required autoincrement
@@ -253,7 +289,6 @@ model "erp.cxp"
         @"itemid" string(32) unique required
         @"itemparent" int ref:"sitem" ["sys_pk"] 
     }
-
     /* Gasto, un pago realizado a un proveedor sin pasar por CxP */
     entity "ut_gasto" : "TableModel"
     {
@@ -279,9 +314,7 @@ model "erp.cxp"
         @"uf_color" int 
         @"uuid_fiscal" string(45)       // UUID de un comprobante fiscal digital
     }
-
     // -------------------------------------------------------
-
     // Información de la aplicación
     entity "sys_app_catalog"
     {

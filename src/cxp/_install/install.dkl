@@ -25,6 +25,9 @@ program
     init_files = '
         ctiposcategorias.csv,
         categoria.csv,
+        pais.csv,
+        edoprov.csv,
+        ciudad.csv,
         cbcimoratorios.csv,
         cdocumentos.csv,
         cfg_chq_docs.csv,
@@ -36,11 +39,11 @@ program
         divisa.csv,
         sitem.csv,
         tipoproveedor.csv,
+        tipooperacion.csv,
         sys_app_catalog.csv,
         sys_app_category.csv,
         sys_app_shortcut.csv
     '
-	
 	
 	ref priv_ids=from.json('[
 		"FX1-60-10-000",

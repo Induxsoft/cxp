@@ -4,9 +4,9 @@ module "cxp.pago.dk"
 {
     #include "functions.dkh"
     #include "serialize.dkh"
-    #include "dbr.dkh"
     #include "uielements.dkl"
-    #include "../config.dk"
+    #include "../_lib/icons.dk"
+    #include "../_lib/config.dk"
     #include "lib.dk"
     
     do @context.begin(@crud_context)
@@ -247,7 +247,7 @@ module "cxp.pago.dk"
                     {
                         button(type="submit" class="btn btn-primary"){$"Aceptar"}
                         // button(type="reset" class="btn btn-danger"){$"Cancelar"}
-                        a(href="#<@PROVEEDORES>" class="btn btn-danger"){"Cancelar"}
+                        a(href="#<@CXP_PROVS>" class="btn btn-danger"){"Cancelar"}
                     }
                 }
             }

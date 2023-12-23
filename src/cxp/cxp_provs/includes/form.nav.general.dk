@@ -1,0 +1,156 @@
+#include "dkli.dkh"
+#$
+section(class="" id="")
+{
+    div(class="row")
+    {
+        div(class="col-12")
+        {
+            label(class="form-label" "for"="txt_codigo"){$"Código:" sup{$"*"}}
+            input(class="form-control form-control-sm rounded-0" type="text" name="codigo" maxlength="35" value="" id="txt_codigo" placeholder="<A>")
+        }
+        div(class="col-lg-6 col-md-6 col-sm-6")
+        {
+            label(class="form-label" "for"="txt_nombre"){$"Nombre:" sup{$"*"}}
+            input(class="form-control form-control-sm rounded-0" type="text" name="nombre" maxlength="150" value="" id="txt_nombre" required="")
+        }
+        div(class="col-lg-6 col-md-6 col-sm-6")
+        {
+            label(class="form-label" "for"="sel_tipo"){$"Tipo:" sup{$"*"}}
+            div(class="input-group")
+            {
+                ##
+                do uie.dbSelect(sel_tipo)
+                ##
+                button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_EDIT>"}
+            }
+        }
+        div(class="col-lg-6 col-md-6 col-sm-6")
+        {
+            label(class="form-label" "for"="txt_rfc"){$"RFC:"}
+            input(class="form-control form-control-sm rounded-0 text-uppercase" type="text" name="rfc" minlength="12" maxlength="13" value="" id="txt_rfc")
+        }
+        div(class="col-lg-6 col-md-6 col-sm-6")
+        {
+            label(class="form-label" "for"="txt_curp"){$"CURP:"}
+            input(class="form-control form-control-sm rounded-0 text-uppercase" type="text" name="curp" minlength="18" maxlength="18" value="" id="txt_curp")
+        }
+    }
+}
+
+section(class="my-2" id="")
+{
+    div(class="card")
+    {
+        div(class="card-header bg-transparent")
+        {
+            div(class="form-check") {
+                input(type="checkbox" class="form-check-input" name="chq_domicilio1" id="chq_domicilio1")
+                label(class="form-check-label h6 text-muted mb-0" "for"="chq_domicilio1"){$"Domicilio Fiscal"}
+            }
+        }
+        div(class="card-body disable-form" id="cbody_domicilio1")
+        {
+            div(class="row")
+            {
+                div(class="col-lg-4 col-md-4 col-sm-12")
+                {
+                    label(class="form-label" "for"="sel_pais"){$"País:"}
+                    div(class="input-group")
+                    {
+                        ##
+                        do uie.dbSelect(sel_pais)
+                        ##
+                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                    }
+                }
+                div(class="col-lg-4 col-md-4 col-sm-12")
+                {
+                    label(class="form-label" "for"="sel_estado"){$"Estado:"}
+                    div(class="input-group")
+                    {
+                        ##
+                        do uie.dbSelect(sel_estado)
+                        ##
+                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                    }
+                }
+                div(class="col-lg-4 col-md-4 col-sm-12")
+                {
+                    label(class="form-label" "for"="sel_ciudad"){$"Ciudad:"}
+                    div(class="input-group")
+                    {
+                        ##
+                        do uie.dbSelect(sel_ciudad)
+                        ##
+                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                    }
+                }
+            }
+            
+            h6(class="card-subtitle my-2"){$"Dirección"}
+
+            div(class="row")
+            {
+                div(class="col-lg-8 col-md-6 col-sm-12")
+                {
+                    label(class="form-label" "for"="txt_calle"){$"Calle:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="calle" value="" id="txt_calle")
+                }
+                div(class="col-lg-2 col-md-3 col-sm-6")
+                {
+                    label(class="form-label" "for"="txt_numext"){$"No. Ext:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="numext" value="" id="txt_numext")
+                }
+                div(class="col-lg-2 col-md-3 col-sm-6")
+                {
+                    label(class="form-label" "for"="txt_numint"){$"No. Int:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="numint" value="" id="txt_numint")
+                }
+                div(class="col-12")
+                {
+                    label(class="form-label" "for"="txt_colonia"){$"Colonia:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="colonia" maxlength="150" value="" id="txt_colonia")
+                }
+                div(class="col-lg-4 col-md-4 col-sm-4")
+                {
+                    label(class="form-label" "for"="txt_codpos"){$"Código postal:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="codpos" minlength="5" maxlength="10" value="" id="txt_codpos")
+                }
+                div(class="col-lg-8 col-md-8 col-sm-8")
+                {
+                    label(class="form-label" "for"="txt_dm_telefonos"){$"Tel:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="dm_telefonos" maxlength="150" value="" id="txt_dm_telefonos")
+                }
+            }
+        }
+    }
+}
+
+section(class="" id="")
+{
+    div(class="row")
+    {
+        div(class="col-lg-6 col-md-6 col-sm-6")
+        {
+            label(class="form-label" "for"="txt_email"){$"E-mail:"}
+            input(class="form-control form-control-sm rounded-0" type="text" name="email" maxlength="80" value="" id="txt_email")
+        }
+        div(class="col-lg-6 col-md-6 col-sm-6")
+        {
+            label(class="form-label" "for"="txt_telefonos"){$"Telefonos:"}
+            input(class="form-control form-control-sm rounded-0" type="text" name="telefonos" maxlength="150" value="" id="txt_telefonos")
+        }
+        div(class="col-lg-6 col-md-6 col-sm-6")
+        {
+            label(class="form-label" "for"="txt_website"){$"Sitio web:"}
+            input(class="form-control form-control-sm rounded-0" type="text" name="website" maxlength="150" value="" id="txt_website")
+        }
+        div(class="col-lg-6 col-md-6 col-sm-6")
+        {
+            label(class="form-label" "for"="txt_fax"){$"Fax:"}
+            input(class="form-control form-control-sm rounded-0" type="text" name="fax" maxlength="150" value="" id="txt_fax")
+        }
+    }
+}

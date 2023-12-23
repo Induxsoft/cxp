@@ -5,7 +5,8 @@ module "form.dk"
     #include "functions.dkh"
     #include "serialize.dkh"
     #include "uielements.dkl"
-    #include "../config.dk"
+    #include "../_lib/icons.dk"
+    #include "../_lib/config.dk"
 
     do @context.begin(@crud_context)
     ref infoProv = ifnull(@("&./info_proveedor"),record.create())
@@ -73,7 +74,7 @@ module "form.dk"
                         "data-search"="codigo"
                         "data-text"="nombre"
                         "data-value"="#<to.json(infoProv)>"
-                        "data-source"="#<@url_buscar_proveedor>"
+                        "data-source"="#<@URL_BUSCAR_PROVEEDOR>"
                         columns="codigo,nombre,tipo"
                         colcaptions="Código,Nombre,Tipo"
                         "box-title-text"="Seleccione un proveedor"

@@ -1,0 +1,293 @@
+#include "dkli.dkh"
+#$
+section(class="" id="")
+{
+    label(class="form-label" "for"="ik_contacto1"){$"Contacto1:"}
+    "input-key"(id="ik_contacto1" name="contacto1" "data-key"="sys_pk" "data-search"="nombre" "data-text"="apellidos"
+        "data-value"="{}" "data-source"="#<@URL_BUSCAR_CONTACTO>"
+        columns="nombre,apellidos,tratamiento"
+        colcaptions="Nombre,Apellidos,Tratamiento"
+        "box-title-text"="Seleccione un contacto"
+        "box-placeholder-text"="Nombre, Apellidos, Empresa"
+        "box-nodata-text"="No se encontraron contactos para mostrar"
+        required="false"
+        "control-styles"="
+            #input_search_container, #input_description_container,
+            #button_search_container, #button_clear_container {
+                height: calc(1.5em + .5rem + 2px) !important;
+                padding: .25rem .5rem !important;
+                font-size: .875rem !important;
+            }
+        "
+    ){$""}
+
+    label(class="form-label" "for"="txt_contacto2"){$"Contacto2:"}
+    "input-key"(id="ik_contacto2" name="contacto2" "data-key"="sys_pk" "data-search"="nombre" "data-text"="apellidos"
+        "data-value"="{}" "data-source"="#<@URL_BUSCAR_CONTACTO>"
+        columns="nombre,apellidos,tratamiento"
+        colcaptions="Nombre,Apellidos,Tratamiento"
+        "box-title-text"="Seleccione un contacto"
+        "box-placeholder-text"="Nombre, Apellidos, Empresa"
+        "box-nodata-text"="No se encontraron contactos para mostrar"
+        required="false"
+        "control-styles"="
+            #input_search_container, #input_description_container,
+            #button_search_container, #button_clear_container {
+                height: calc(1.5em + .5rem + 2px) !important;
+                padding: .25rem .5rem !important;
+                font-size: .875rem !important;
+            }
+        "
+    ){$""}
+
+    label(class="form-label" "for"="txt_contacto3"){$"Contacto3:"}
+    "input-key"(id="ik_contacto3" name="contacto3" "data-key"="sys_pk" "data-search"="nombre" "data-text"="apellidos"
+        "data-value"="{}" "data-source"="#<@URL_BUSCAR_CONTACTO>"
+        columns="nombre,apellidos,tratamiento"
+        colcaptions="Nombre,Apellidos,Tratamiento"
+        "box-title-text"="Seleccione un contacto"
+        "box-placeholder-text"="Nombre, Apellidos, Empresa"
+        "box-nodata-text"="No se encontraron contactos para mostrar"
+        required="false"
+        "control-styles"="
+            #input_search_container, #input_description_container,
+            #button_search_container, #button_clear_container {
+                height: calc(1.5em + .5rem + 2px) !important;
+                padding: .25rem .5rem !important;
+                font-size: .875rem !important;
+            }
+        "
+    ){$""}
+}
+
+section(class="my-2" id="")
+{
+    div(class="card")
+    {
+        div(class="card-header bg-transparent")
+        {
+            div(class="form-check") {
+                input(type="checkbox" class="form-check-input" name="chq_domicilio2" id="chq_domicilio2")
+                label(class="form-check-label h6 text-muted mb-0" "for"="chq_domicilio2"){$"Domicilio 2 (alterno)"}
+            }
+        }
+        div(class="card-body disable-form" id="cbody_domicilio2")
+        {
+            div(class="row")
+            {
+                div(class="col-lg-4 col-md-4 col-sm-12")
+                {
+                    label(class="form-label" "for"="sel_pais2"){$"País:"}
+                    div(class="input-group")
+                    {
+                        ##
+                        using sel_pais
+                        {
+                            @"id": "sel_pais2"
+                            member "attributes"
+                            {
+                                @"name": "ipais2"
+                            }
+                            @"selected": form("ipais2","nm",@null)
+                        }
+                        do uie.dbSelect(sel_pais)
+                        ##
+                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                    }
+                }
+                div(class="col-lg-4 col-md-4 col-sm-12")
+                {
+                    label(class="form-label" "for"="sel_estado"){$"Estado:"}
+                    div(class="input-group")
+                    {
+                        ##
+                        using sel_estado
+                        {
+                            @"id": "sel_estado2"
+                            member "attributes"
+                            {
+                                @"name": "iestado2"
+                            }
+                            @"selected": form("iestado2","nm",@null)
+                        }
+                        do uie.dbSelect(sel_estado)
+                        ##
+                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                    }
+                }
+                div(class="col-lg-4 col-md-4 col-sm-12")
+                {
+                    label(class="form-label" "for"="sel_ciudad"){$"Ciudad:"}
+                    div(class="input-group")
+                    {
+                        ##
+                        using sel_ciudad
+                        {
+                            @"id": "sel_ciudad2"
+                            member "attributes"
+                            {
+                                @"name": "iciudad2"
+                            }
+                            @"selected": form("iciudad2","nm",@null)
+                        }
+                        do uie.dbSelect(sel_ciudad)
+                        ##
+                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                    }
+                }
+            }
+            
+            h6(class="card-subtitle my-2"){$"Dirección"}
+
+            div(class="row")
+            {
+                div(class="col-lg-8 col-md-6 col-sm-12")
+                {
+                    label(class="form-label" "for"="txt_calle2"){$"Calle:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="calle2" value="" id="txt_calle2")
+                }
+                div(class="col-lg-2 col-md-3 col-sm-6")
+                {
+                    label(class="form-label" "for"="txt_numext2"){$"No. Ext:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="numext2" value="" id="txt_numext2")
+                }
+                div(class="col-lg-2 col-md-3 col-sm-6")
+                {
+                    label(class="form-label" "for"="txt_numint2"){$"No. Int:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="numint2" value="" id="txt_numint2")
+                }
+                div(class="col-12")
+                {
+                    label(class="form-label" "for"="txt_colonia2"){$"Colonia:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="colonia2" maxlength="150" value="" id="txt_colonia2")
+                }
+                div(class="col-lg-4 col-md-4 col-sm-4")
+                {
+                    label(class="form-label" "for"="txt_codpos2"){$"Código postal:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="codpos2" minlength="5" maxlength="10" value="" id="txt_codpos2")
+                }
+                div(class="col-lg-8 col-md-8 col-sm-8")
+                {
+                    label(class="form-label" "for"="txt_dm_telefonos2"){$"Tel:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="dm_telefonos2" maxlength="150" value="" id="txt_dm_telefonos2")
+                }
+            }
+        }
+    }
+}
+
+section(class="" id="")
+{
+    div(class="card")
+    {
+        div(class="card-header bg-transparent")
+        {
+            div(class="form-check") {
+                input(type="checkbox" class="form-check-input" name="chq_domicilio3" id="chq_domicilio3")
+                label(class="form-check-label h6 text-muted mb-0" "for"="chq_domicilio3"){$"Domicilio 3 (alterno)"}
+            }
+        }
+        div(class="card-body disable-form" id="cbody_domicilio3")
+        {
+            div(class="row")
+            {
+                div(class="col-lg-4 col-md-4 col-sm-12")
+                {
+                    label(class="form-label" "for"="sel_pais3"){$"País:"}
+                    div(class="input-group")
+                    {
+                        ##
+                        using sel_pais
+                        {
+                            @"id": "sel_pais3"
+                            member "attributes"
+                            {
+                                @"name": "ipais3"
+                            }
+                            @"selected": form("ipais3","nm",@null)
+                        }
+                        do uie.dbSelect(sel_pais)
+                        ##
+                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                    }
+                }
+                div(class="col-lg-4 col-md-4 col-sm-12")
+                {
+                    label(class="form-label" "for"="sel_estado3"){$"Estado:"}
+                    div(class="input-group")
+                    {
+                        ##
+                        using sel_estado
+                        {
+                            @"id": "sel_estado3"
+                            member "attributes"
+                            {
+                                @"name": "iestado3"
+                            }
+                            @"selected": form("iestado3","nm",@null)
+                        }
+                        do uie.dbSelect(sel_estado)
+                        ##
+                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                    }
+                }
+                div(class="col-lg-4 col-md-4 col-sm-12")
+                {
+                    label(class="form-label" "for"="sel_ciudad3"){$"Ciudad:"}
+                    div(class="input-group")
+                    {
+                        ##
+                        using sel_ciudad
+                        {
+                            @"id": "sel_ciudad3"
+                            member "attributes"
+                            {
+                                @"name": "iciudad3"
+                            }
+                            @"selected": form("iciudad3","nm",@null)
+                        }
+                        do uie.dbSelect(sel_ciudad)
+                        ##
+                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                    }
+                }
+            }
+            
+            h6(class="card-subtitle my-2"){$"Dirección"}
+
+            div(class="row")
+            {
+                div(class="col-lg-8 col-md-6 col-sm-12")
+                {
+                    label(class="form-label" "for"="txt_calle3"){$"Calle:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="calle3" value="" id="txt_calle3")
+                }
+                div(class="col-lg-2 col-md-3 col-sm-6")
+                {
+                    label(class="form-label" "for"="txt_numext3"){$"No. Ext:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="numext3" value="" id="txt_numext3")
+                }
+                div(class="col-lg-2 col-md-3 col-sm-6")
+                {
+                    label(class="form-label" "for"="txt_numint3"){$"No. Int:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="numint3" value="" id="txt_numint3")
+                }
+                div(class="col-12")
+                {
+                    label(class="form-label" "for"="txt_colonia3"){$"Colonia:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="colonia3" maxlength="150" value="" id="txt_colonia3")
+                }
+                div(class="col-lg-4 col-md-4 col-sm-4")
+                {
+                    label(class="form-label" "for"="txt_codpos3"){$"Código postal:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="codpos3" minlength="5" maxlength="10" value="" id="txt_codpos3")
+                }
+                div(class="col-lg-8 col-md-8 col-sm-8")
+                {
+                    label(class="form-label" "for"="txt_dm_telefonos3"){$"Tel:"}
+                    input(class="form-control form-control-sm rounded-0" type="text" name="dm_telefonos3" maxlength="150" value="" id="txt_dm_telefonos3")
+                }
+            }
+        }
+    }
+}

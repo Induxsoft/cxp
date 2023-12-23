@@ -4,11 +4,8 @@ module "cxp.balance.dk"
 {
     #include "functions.dkh"
     #include "serialize.dkh"
-    #include "dbr.dkh"
-    #include "uielements.dkl"
-    #include "../icons.dk"
-    #include "../config.dk"
-    #include "lib.dk"
+    #include "../_lib/icons.dk"
+    #include "../_lib/config.dk"
     
     do @context.begin(@crud_context)
     
@@ -24,11 +21,11 @@ module "cxp.balance.dk"
                 div(class="btn-group" role="group")
                 {
                     a(href="#<@CXP_MENU>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
-                    a(href="#<replace(@DOCS_POR_PAGAR_PROVEEDOR,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Documentos por pagar"}
+                    a(href="#<replace(@PDR_XPAGAR,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Documentos por pagar"}
                     a(href="#<@ADD_DOCS_POR_PAGAR>" class="btn btn-light btn-sm fw-bolder"){"Agregar"}
-                    a(href="#<replace(@PAGOS_POR_APLICAR,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Pagos por aplicar"}
-                    a(href="#<replace(@PAGOS_PROVEEDOR,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Pago a proveedor"}
-                    a(href="#<replace(@BONIFICACION_PROVEEDOR,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Bonificación a proveedor"}
+                    a(href="#<replace(@PDR_XAPLICAR,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Pagos por aplicar"}
+                    a(href="#<replace(@PDR_PAGOS,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Pago a proveedor"}
+                    a(href="#<replace(@PDR_BONIFICACION,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Bonificación a proveedor"}
                     a(href="#<@ADD_GASTO>?proveedor=#<@('$parameters/_entity_id')>" class="btn btn-light btn-sm fw-bolder"){"Agregar gasto"}
                     a(href="./" class="btn btn-light btn-sm fw-bolder"){$"Refrescar"}
                 }

@@ -4,36 +4,52 @@ module "list.dk"
 {
     #include "functions.dkh"
     #include "serialize.dkh"
-    #include "dbr.dkh"
-    #include "uielements.dkl"
-    #include "../icons.dk"
-    #include "../config.dk"
-    #include "lib.dk"
+    #include "../_lib/icons.dk"
+    #include "../_lib/config.dk"
     
     do @context.begin(@crud_context)
     
     #$
     div(class="container")
     {
-        h1(class="h4"){$"Proveedores"}
+        div(class="row container-section m-0 px-0 py-2 my-2 border-bottom sticky-top" id="main_action_bar")
+        {
+            div(class="col-4 d-flex align-items-center p-0") { h1(class="h5 text-primary tex-no-break m-0"){$"Proveedores"} }
+            div(class="col-8 d-flex justify-content-end align-items-center p-0 gap-2")
+            {
+                a(href="./" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Refrescar"){$"#<@ICON_ARROW_CLOCKWISE>"}
+
+                div(class="dropdown")
+                {
+                    button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action dropdown-toggle" id="btn_menu_add" "data-bs-toggle"="dropdown" "aria-expanded"="false"){$"Agregar"}
+                    ul(class="dropdown-menu" "aria-labelledby"="btn_menu_add")
+                    {
+                        li{ a(class="dropdown-item" href="#<@PDR_NEW>"){$"Proveedor"} }
+                        li{ a(class="dropdown-item" href="#"){$"Tipo de proveedor"} }
+                    }
+                }
+
+                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="proveedor.goTo('#<@PDR_EDO_CTA>')"){$"Estado de cuenta"}
+                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="proveedor.goTo('#<@PDR_XPAGAR>')"){$"Documentos por pagar"}
+                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="proveedor.goTo('#<@PDR_XAPLICAR>')"){$"Pagos por aplicar"}
+                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="proveedor.goTo('#<@PDR_PAGOS>')"){$"Pago a proveedor"}
+                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="proveedor.goTo('#<@PDR_BONIFICACION>')"){$"Bonificaciones"}
+            }
+        }
 
         div
         {
             div(class="bg-light my-1")
             {
-                div(class="btn-group" role="group")
+                div(class="input-group")
                 {
-                    a(href="#<@CXP_MENU>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
-                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@ESTADO_CUENTA_PROVEEDOR>')"){"Estado de cuenta"}
-                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@DOCS_POR_PAGAR_PROVEEDOR>')"){"Documentos por pagar"}
-                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@PAGOS_POR_APLICAR>')"){"Pagos por aplicar"}
-                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@PAGOS_PROVEEDOR>')"){"Pago a proveedor"}
-                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@BONIFICACION_PROVEEDOR>')"){"Bonificación a proveedor"}
-                    a(href="./" class="btn btn-light btn-sm fw-bolder"){$"Refrescar"}
+                    input(type="text" class="form-control form-control-sm" id="txt_search_proveedor" "data-url-search"="#<@URL_BUSCAR_PROVEEDOR>" placeholder="Código, Nombre, RFC")
+                    a(href="#<@PDR_NEW>" class="btn btn-light btn-sm border" type="button" id="btn_new_proveedor" title="Nuevo proveedor"){$"#<@ICON_USER_ADD>"}
+                    button(class="btn btn-primary btn-sm" type="button" id="btn_search_proveedor"){$"Buscar #<@ICON_SEARCH>"}
                 }
             }
-            
-            "edit-table"(class="w-100" id="lst_prov" data="#<to.json(@('&.'))>")
+
+            "edit-table"(class="w-100" id="tbl_proveedores")
             {
                 "edit-thead"
                 {
@@ -52,24 +68,18 @@ module "list.dk"
         }
 
         p{$"#<@('$error/message')>"}
-        script
+
+        div
         {
-            $'
-                var table=document.getElementById("lst_prov");
-
-                function aplicar(url="")
-                {
-                    if(table.CurrentRowIndex()<0)
-                    {
-                        alert("Debe seleccionar una fila");
-                        return;
-                    }
-                    var data=table.DataArray[table.CurrentRowIndex()];
-
-                    var url= url.replace("@proveedor",data.sys_pk);
-                    window.location.href=url;
-                }
-            '
+            script(src="#<@JS_PROVEEDORES>"){$""}
+            script(type="text/javascript")
+            {$'
+                document.addEventListener("DOMContentLoaded", () => {
+                    proveedor.tableId = "tbl_proveedores";
+                    proveedor.init();
+                    proveedor.list.init();
+                });
+            '}
         }
     }
 }

@@ -4,23 +4,235 @@ module "form.dk"
 {
     #include "functions.dkh"
     #include "serialize.dkh"
+    #include "uielements.dkl"
+    #include "../_lib/icons.dk"
+    #include "../_lib/config.dk"
+    #include "../_lib/lib.dk"
 
     do @context.begin(@crud_context)
+    ref listTipoProveedor = ifnull(@("&./list_tproveedores"),list.create())
+    ref listDivisas = ifnull(@("&./list_divisas"),list.create())
+    ref listPais = ifnull(@("&./list_pais"),list.create())
+    ref listEstado = ifnull(@("&./list_estado"),list.create())
+    ref listCiudad = ifnull(@("&./list_ciudad"),list.create())
+    ref listTipoOperacion = ifnull(@("&./list_toperacion"),list.create())
+    ref listZona = ifnull(@("&./list_zona"),list.create())
+    ref listStatus = ifnull(@("&./list_status"),list.create())
+    ref listZonaImpuesto = ifnull(@("&./list_tasasiva"),list.create())
+    ref formData = ifnull(@("&./form"),record.create())
+
+    // do rise_error(0,to.json(@("&.")))
+
+    new sel_tipo
+    {
+        @"datatable*": listTipoProveedor
+        @"id": "sel_tipo"
+        new member "attributes"
+        {
+            @"class": "form-select form-select-sm rounded-0"
+            @"name": "tipo"
+            @"required": ""
+        }
+        @"value_field": "sys_pk"
+        @"text_field": "text"
+        @"selected": form("tipo","nm",@null)
+    }
+
+    new sel_pais
+    {
+        @"datatable*": listPais
+        @"id": "sel_pais"
+        new member "attributes"
+        {
+            @"class": "form-select form-select-sm rounded-0"
+            @"name": "ipais"
+        }
+        @"value_field": "sys_pk"
+        @"text_field": "text"
+        new member "attr_options"
+        {
+            @"data-codigo": "#<@@(row,'codigo')>"
+        }
+        @"selected": form("ipais","nm",@null)
+    }
+
+    new sel_estado
+    {
+        @"datatable*": listEstado
+        @"id": "sel_estado"
+        new member "attributes"
+        {
+            @"class": "form-select form-select-sm rounded-0"
+            @"name": "iestado"
+        }
+        @"value_field": "sys_pk"
+        @"text_field": "text"
+        new member "attr_options"
+        {
+            @"data-codigo": "#<@@(row,'codigo')>"
+            @"data-ipais": "#<@@(row,'ipais')>"
+        }
+        @"selected": form("iestado","nm",@null)
+    }
+
+    new sel_ciudad
+    {
+        @"datatable*": listCiudad
+        @"id": "sel_ciudad"
+        new member "attributes"
+        {
+            @"class": "form-select form-select-sm rounded-0"
+            @"name": "iciudad"
+        }
+        @"value_field": "sys_pk"
+        @"text_field": "text"
+        new member "attr_options"
+        {
+            @"data-codigo": "#<@@(row,'codigo')>"
+            @"data-iestado": "#<@@(row,'estado')>"
+        }
+        @"selected": form("iciudad","nm",@null)
+    }
+
+    new sel_divisa
+    {
+        @"datatable*": listDivisas
+        @"id": "sel_divisa"
+        new member "attributes"
+        {
+            @"class": "form-select form-select-sm rounded-0"
+            @"name": "idivisa"
+            @"required": ""
+        }
+        @"value_field": "sys_pk"
+        @"text_field": "text"
+        new member "attr_options"
+        {
+            @"data-codigo": "#<@@(row,'codigo')>"
+            @"data-tcambio": "#<@@(row,'tcambio')>"
+        }
+        @"selected": form("idivisa","nm",@null)
+    }
+
+    new sel_toperacion
+    {
+        @"datatable*": listTipoOperacion
+        @"id": "sel_toperacion"
+        new member "attributes"
+        {
+            @"class": "form-select form-select-sm rounded-0"
+            @"name": "uf_tipoop"
+        }
+        @"value_field": "sys_pk"
+        @"text_field": "text"
+        @"selected": form("uf_tipoop","nm",@null)
+    }
+
+    new sel_zona
+    {
+        @"datatable*": listZona
+        @"id": "sel_zona"
+        new member "attributes"
+        {
+            @"class": "form-select form-select-sm rounded-0"
+            @"name": "izona"
+        }
+        @"value_field": "sys_pk"
+        @"text_field": "text"
+        @"selected": form("izona","nm",@null)
+    }
+
+    new sel_status
+    {
+        @"datatable*": listStatus
+        @"id": "sel_status"
+        new member "attributes"
+        {
+            @"class": "form-select form-select-sm rounded-0"
+            @"name": "status"
+        }
+        @"value_field": "id"
+        @"text_field": "const"
+        @"selected": form("status","nm",@null)
+    }
+
+    new sel_zimpuesto
+    {
+        @"datatable*": listZonaImpuesto
+        @"id": "sel_zimpuesto"
+        new member "attributes"
+        {
+            @"class": "form-select form-select-sm rounded-0"
+            @"name": "tasaiva"
+            @"required": ""
+        }
+        @"value_field": "id"
+        @"text_field": "const"
+        @"selected": form("tasaiva","nm",@null)
+    }
     
     #$
     div(class="container")
     {
-        h1{$"Form"}
+        link(href="#<@CSS_MAIN>" rel="stylesheet")
 
-        p{"ERROR:"}
-        p{$"#<@('$error/message')>"}
-        hr{}
+        div(class="row container-section m-0 px-0 py-2 my-2 border-bottom sticky-top bg-white" id="main_action_bar")
+        {
+            div(class="col-4 d-flex align-items-center p-0") { h1(class="h5 text-primary tex-no-break m-0"){$"Nuevo proveedor"} }
+            div(class="col-8 d-flex justify-content-end align-items-center p-0 gap-2")
+            {
+                a(href="./" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Refrescar"){$"#<@ICON_ARROW_CLOCKWISE>"}
+                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" id="btn_save"){$"#<@ICON_SAVE> Guardar"}
+                a(href="#<@CXP_PROVS>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Salir"){$"#<@ICON_X_LG>"}
+            }
+        }
 
-        p{"PARÁMETROS:"}
-        p{$"#<to.json(@('&parameters'))>"}
-        hr{}
+        div
+        {
+            nav
+            {
+                div(class="nav nav-tabs mb-2" id="nav-tab" role="tablist")
+                {
+                    button(class="nav-link active" id="nav-general-tab" "data-bs-toggle"="tab" "data-bs-target"="#nav-general" type="button" role="tab" "aria-controls"="nav-general" "aria-selected"="true"){$"General"}
+                    button(class="nav-link" id="nav-administracion-tab" "data-bs-toggle"="tab" "data-bs-target"="#nav-administracion" type="button" role="tab" "aria-controls"="nav-administracion" "aria-selected"="false"){$"Administración"}
+                    button(class="nav-link" id="nav-adicionales-tab" "data-bs-toggle"="tab" "data-bs-target"="#nav-adicionales" type="button" role="tab" "aria-controls"="nav-adicionales" "aria-selected"="false"){$"Adicionales"}
+                    button(class="nav-link" id="nav-notas-tab" "data-bs-toggle"="tab" "data-bs-target"="#nav-notas" type="button" role="tab" "aria-controls"="nav-notas" "aria-selected"="false"){$"Notas"}
+                }
+            }
 
-        p{"DATA (.):"}
-        p{$"#<to.json(@('&.'))>"}
+            form(class="" action="./" method="POST" id="form_proveedor")
+            {
+                input(type="hidden" name="sys_pk" value="")
+                Input(type="hidden" name="sys_recver" value="")
+
+                div(class="overflow-auto"){ span(class="text-danger" id="err-msg"){$"#<@('$error/message')>"} }
+
+                div(class="tab-content")
+                {
+                    div(class="tab-pane fade show active" id="nav-general" role="tabpanel" "aria-labelledby"="nav-general-tab"){#! #include "./includes/form.nav.general.dk" #$}
+                    div(class="tab-pane fade" id="nav-administracion" role="tabpanel" "aria-labelledby"="nav-administracion-tab"){#! #include "./includes/form.nav.administracion.dk" #$}
+                    div(class="tab-pane fade" id="nav-adicionales" role="tabpanel" "aria-labelledby"="nav-adicionales-tab"){#! #include "./includes/form.nav.adicionales.dk" #$}
+                    div(class="tab-pane fade" id="nav-notas" role="tabpanel" "aria-labelledby"="nav-notas-tab")
+                    {
+                        textarea(class="form-control" maxlength="32000" name="notas" id="txt_notas" rows="20"){$""}
+                    }
+                }
+            }
+        }
+
+        // div{ span(class="text-danger" id="err-msg"){$"#<@('$error/message')>"} }
+
+        div
+        {
+            script(src="#<@JS_PROVEEDORES>"){$""}
+            script(type="text/javascript")
+            {$'
+                document.addEventListener("DOMContentLoaded", () => {
+                    proveedor.form.url_buscar_edoprov = "#<@URL_BUSCAR_EDOPROV>";
+                    proveedor.form.url_buscar_ciudad = "#<@URL_BUSCAR_CIUDAD>";
+                    proveedor.form.init();
+                });
+            '}
+        }
     }
 }

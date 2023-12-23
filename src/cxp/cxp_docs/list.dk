@@ -4,11 +4,8 @@ module "cxp.list"
 {
     #include "functions.dkh"
     #include "serialize.dkh"
-    #include "dbr.dkh"
-    #include "uielements.dkl"
-    #include "../icons.dk"
-    #include "../config.dk"
-    #include "lib.dk"
+    #include "../_lib/icons.dk"
+    #include "../_lib/config.dk"
     
     do @context.begin(@crud_context)
     
@@ -27,7 +24,7 @@ module "cxp.list"
                 button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_PAGO>')"){"Aplicar pago"}
                 button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_PAGO_MORA>')"){"Aplicar cargos por mora"}
                 button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@CONSULTAR_DOCUMENTO>')"){"Consultar documento"}
-                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@ESTADO_CUENTA_PROVEEDOR>')"){"Estado de cuenta"}
+                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@PDR_EDO_CTA>')"){"Estado de cuenta"}
                 a(href="./" class="btn btn-light btn-sm fw-bolder"){$"Refrescar"}
             }
         }

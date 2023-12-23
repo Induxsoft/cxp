@@ -8,43 +8,11 @@ module
 	#include "dbr.events.dkl"
 	#include "crudl/crudl.dk"
 	
+	//* ======================================== [ CONSTANTS ]
 	ref database = crudl.database()
 	@SYS_PK_DIVISA_PREDETERMINADA = parse.num(dbr.vars.get(database,"FXCA013"))
 
-	@CXP_MENU = "/!/cxp/"
-	@DOCS_POR_PAGAR="/!/cxp/documentos/"
-	@PROVEEDORES="/!/cxp/proveedores/"
-	@GASTOS="/!/cxp/gastos/"
-	@ADD_BANCO="./_new/"
-	@URL_BANCOS="/!/cxp/bancos/"
-	@URL_CUENTAS="/!/cxp/cuentas/"
-	@URL_MOVCUENTAS="/!/cxp/movcuenta/"
-	@URL_MOVCUENTAS_ROW=@URL_MOVCUENTAS + "@cuenta/movimientos/"
-	@AGREGAR_DEPOSITO="../../_new/deposito/"
-	@AGREGAR_RETIRO="../../_new/retiro/"
-	@REALIZAR_TRANSFERENCIA="../../_new/traspaso/"
-
-	@APLICAR_BONIFICACION="/!/cxp/documentos/@doc/bonificacion/"
-	@APLICAR_PAGO="/!/cxp/documentos/@doc/pago/"
-	@APLICAR_PAGO_MORA="/!/cxp/documentos/@doc/intmoratorios/"
-	@CONSULTAR_DOCUMENTO="/!/cxp/documentos/@doc/"
-	@ESTADO_CUENTA_PROVEEDOR="/!/cxp/proveedores/@proveedor/balance/"
-
-	//proveedor
-	@DOCS_POR_PAGAR_PROVEEDOR="/!/cxp/proveedores/@proveedor/pendientes/"
-	@PAGOS_POR_APLICAR="/!/cxp/proveedores/@proveedor/xaplicar/"
-	@PAGOS_PROVEEDOR="/!/cxp/proveedores/@proveedor/pago/"
-	@BONIFICACION_PROVEEDOR="/!/cxp/proveedores/@proveedor/bonificacion/"
-
-	@ADD_DOCS_POR_PAGAR="/!/cxp/documentos/_new/"
-
-	@ADD_GASTO="/!/cxp/gastos/_new/"
-	@CONSULTAR_GASTO="/!/cxp/gastos/@id/"
-	@APLICAR_PAGOS="/!/cxp/documentos/@id/aplicar/"
-
-	@url_buscar_proveedor = "/!/cxp/documentos/?_view=buscar-proveedor&search=@search"
-
-    @cxp_destino_aplicacion_int_financieros = 1
+	@cxp_destino_aplicacion_int_financieros = 1
     @cxp_destino_aplicacion_int_moratorios = 2
     @cxp_destino_aplicacion_bonificaciones = 3
     @cxp_destino_aplicacion_pagos = 4
@@ -59,7 +27,57 @@ module
     @cTransferencias = 30
     //#endregion
 
-	//Permisos para cada operación
+	// Ubicacion predeterminada
+	@PAIS = "México"
+	@ESTADO = "Chiapas"
+	@CIUDAD = "Tuxtla Gutiérrez"
+
+	//* ======================================== [ _STATIC RESOURCES ]
+	@CSS_MAIN = "/$/cxp/css/main.css"
+	@JS_PROVEEDORES = "/$/cxp/js/proveedores.js"
+
+	//* ======================================== [ _PACKAGE ]
+	@CXP_MENU = "/!/cxp/"
+
+	@URL_BUSCAR_PROVEEDOR = "/!/cxp/documentos/?_view=buscar-proveedor&search=@search"
+	@URL_BUSCAR_CONTACTO = "/!/cxp/proveedores/?_view=buscar-contacto&search=@search"
+	@URL_BUSCAR_EDOPROV = "/!/cxp/proveedores/?_view=buscar-edoprov&search=@search"
+	@URL_BUSCAR_CIUDAD = "/!/cxp/proveedores/?_view=buscar-ciudad&search=@search"
+
+	//#region cxp_provs
+	@CXP_PROVS="/!/cxp/proveedores/"
+	@PDR_NEW="/!/cxp/proveedores/_new/"
+	@PDR_EDO_CTA="/!/cxp/proveedores/@proveedor/balance/"
+	@PDR_BONIFICACION="/!/cxp/proveedores/@proveedor/bonificacion/"
+	@PDR_PAGOS="/!/cxp/proveedores/@proveedor/pago/"
+	@PDR_XPAGAR="/!/cxp/proveedores/@proveedor/pendientes/"
+	@PDR_XAPLICAR="/!/cxp/proveedores/@proveedor/xaplicar/"
+	//#endregion
+
+	@DOCS_POR_PAGAR="/!/cxp/documentos/"
+	
+	@GASTOS="/!/cxp/gastos/"
+	@ADD_BANCO="./_new/"
+	@URL_BANCOS="/!/cxp/bancos/"
+	@URL_CUENTAS="/!/cxp/cuentas/"
+	@URL_MOVCUENTAS="/!/cxp/movcuenta/"
+	@URL_MOVCUENTAS_ROW=@URL_MOVCUENTAS + "@cuenta/movimientos/"
+	@AGREGAR_DEPOSITO="../../_new/deposito/"
+	@AGREGAR_RETIRO="../../_new/retiro/"
+	@REALIZAR_TRANSFERENCIA="../../_new/traspaso/"
+
+	@APLICAR_BONIFICACION="/!/cxp/documentos/@doc/bonificacion/"
+	@APLICAR_PAGO="/!/cxp/documentos/@doc/pago/"
+	@APLICAR_PAGO_MORA="/!/cxp/documentos/@doc/intmoratorios/"
+	@CONSULTAR_DOCUMENTO="/!/cxp/documentos/@doc/"
+	
+	@ADD_DOCS_POR_PAGAR="/!/cxp/documentos/_new/"
+
+	@ADD_GASTO="/!/cxp/gastos/_new/"
+	@CONSULTAR_GASTO="/!/cxp/gastos/@id/"
+	@APLICAR_PAGOS="/!/cxp/documentos/@id/aplicar/"
+
+	//* ======================================== [ AUTHORIZATIONS ]
 	
 	//********************* Documentos **********************
 	@CXP_SEC_PRIVID_AGREGAR_DCXP="FX1-60-10-000"//Agregar documento por pagar
@@ -149,5 +167,4 @@ module
 			- Verificar si el código del permiso es correcto
 	*/
 	@CXP_SEC_PRIVID_ESTADO_CUENTA_BANCARIA="FX1-72-00-000"
-	
 }

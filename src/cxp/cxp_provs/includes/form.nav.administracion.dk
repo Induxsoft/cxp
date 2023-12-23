@@ -1,0 +1,105 @@
+#include "dkli.dkh"
+#$
+section(class="" id="")
+{
+    div(class="row")
+    {
+        div(class="col-lg-4 col-md-4 col-sm-12")
+        {
+            label(class="form-label" "for"="sel_divisa"){$"Divisa:" sup{$"*"}}
+            div(class="input-group")
+            {
+                ##
+                do uie.dbSelect(sel_divisa)
+                ##
+                button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_EDIT>"}
+            }
+        }
+        div(class="col-lg-4 col-md-4 col-sm-6")
+        {
+            label(class="form-label" "for"="sel_zimpuesto"){$"Tasa IVA:" sup{$"*"}}
+            ##
+            do uie.dbSelect(sel_zimpuesto)
+            ##
+        }
+        div(class="col-lg-4 col-md-4 col-sm-6")
+        {
+            label(class="form-label" "for"="sel_toperacion"){$"Tipo de operación:"}
+            ##
+            do uie.dbSelect(sel_toperacion)
+            ##
+        }
+
+        div(class="col-lg-6 col-md-6 col-sm-6")
+        {
+            div(class="form-check") {
+                input(type="checkbox" class="form-check-input" name="chq_otorgar_credito" id="chq_otorgar_credito")
+                label(class="form-check-label" "for"="chq_otorgar_credito"){$"Otorgar crédito"}
+            }
+            hr(class="my-1"){}
+            div(class="bg-light disable-form" id="div_otorgar_credito")
+            {
+                div(class="form-check form-check-inline")
+                {
+                    label(class="form-check-label") {
+                        input(class="form-check-input" type="radio" name="rd_limitar_credito" id="rd_credito_ilimitado" checked="")
+                        $"Ilimitado"
+                    }
+                }
+                div(class="form-check form-check-inline")
+                {
+                    label(class="form-check-label") {
+                        input(class="form-check-input" type="radio" name="rd_limitar_credito" id="rd_credito_limitado" value="1")
+                        $"Limite"
+                    }
+                }
+                div(class="form-check form-check-inline ps-0")
+                {
+                    input(type="hidden" class="form-control form-control-sm rounded-0" name="limitecredito" min="0" value="" id="txt_limite_credito" placeholder="0.00")
+                }
+            }
+        }
+        div(class="col-lg-6 col-md-6 col-sm-6")
+        {
+            label(class="form-label" "for"="txt_dias_credito"){$"Dias de crédito:"}
+            input(class="form-control form-control-sm rounded-0" type="number" name="diascredito" min="0" value="" id="txt_dias_credito")
+        }
+
+        div(class="col-lg-4 col-md-4 col-sm-4")
+        {
+            label(class="form-label" "for"="txt_cuenta_contable"){$"Cuenta contable:"}
+            input(class="form-control form-control-sm rounded-0" type="text" name="codcuenta" maxlength="50" value="" id="txt_cuenta_contable")
+        }
+        div(class="col-lg-4 col-md-4 col-sm-4")
+        {
+            label(class="form-label" "for"="sel_zona"){$"Zona:"}
+            ##
+            do uie.dbSelect(sel_zona)
+            ##
+        }
+        div(class="col-lg-4 col-md-4 col-sm-4")
+        {
+            label(class="form-label" "for"="sel_status"){$"Status:"}
+            ##
+            do uie.dbSelect(sel_status)
+            ##
+        }
+
+        div(class="col-lg-4 col-md-4 col-sm-4")
+        {
+            label(class="form-label" "for"="txt_dias_entrega"){$"Días de entrega:"}
+            input(class="form-control form-control-sm rounded-0" type="number" name="diasentrega" min="0" value="" id="txt_dias_entrega")
+        }
+        div(class="col-lg-4 col-md-4 col-sm-4")
+        {
+            label(class="form-label" "for"="txt_vuelta_viajero"){$"Vuelta de viajero (días):"}
+            input(class="form-control form-control-sm rounded-0" type="number" name="uf_vueltaviajero" min="0" value="" id="txt_vuelta_viajero")
+        }
+        div(class="col-lg-4 col-md-4 col-sm-4")
+        {
+            label(class="form-label" "for"="txt_saldo"){$"Saldo:"}
+            input(class="form-control form-control-sm rounded-0" type="number" name="saldo" value="" id="txt_saldo" disabled="" readonly="")
+        }
+    }
+}
