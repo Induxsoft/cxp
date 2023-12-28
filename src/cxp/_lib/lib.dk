@@ -51,23 +51,39 @@ module "lib.dk"
             case "tx"
             {
                 text = trim(@("$input/"+name))
+                if text == "" { text = trim(@("$./form/"+name)) }
                 if text == "" { text = trim(@@(obj,"$"+name)) }
                 return text
             }
             case "nm"
             {
                 value = @("#input/"+name)
+                if value <= 0 { value = @("#./form/"+name) }
                 if value <= 0 { value = @@(obj,"#"+name) }
                 return value
             }
             case "dt"
             {
                 fecha = trim(@("$input/"+name))
+                if fecha == "" { fecha = trim(@("$./form/"+name)) }
                 if fecha == "" { fecha = trim(@@(obj,"$"+name)) }
                 if fecha == "" { fecha = date_str(now(),"yyyy-MM-dd") }
                 return fecha
             }
             default { return "" }
         }
+    }
+
+    function new_rec()
+    {
+        new record
+        {
+            @"sys_pk": 0
+            @"sys_guid": uuid()
+            @"sys_dtcreated*": now()
+            @"sys_timestamp*": now()
+            @"sys_recver": 0
+        }
+        return record
     }
 }

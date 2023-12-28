@@ -4,6 +4,7 @@ module "Controller configs"
 {
 	#include "functions.dkh"
 	#include "serialize.dkh"
+	#include "./movimientos.dkh"
 	#include "_lib/config.dk"
 	#include "_lib/lib.dk"
 

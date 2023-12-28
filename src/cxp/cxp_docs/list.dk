@@ -19,11 +19,11 @@ module "cxp.list"
             div(class="btn-group" role="group")
             {
                 a(href="#<@CXP_MENU>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
-                a(href="#<@ADD_BANCO>" class="btn btn-light btn-sm fw-bolder"){"Agregar"}
-                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_BONIFICACION>')"){"Aplicar bonificación"}
-                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_PAGO>')"){"Aplicar pago"}
-                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_PAGO_MORA>')"){"Aplicar cargos por mora"}
-                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@CONSULTAR_DOCUMENTO>')"){"Consultar documento"}
+                a(href="#<@BNC_AGREGAR>" class="btn btn-light btn-sm fw-bolder"){"Agregar"}
+                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@DOC_BONIFICACION>')"){"Aplicar bonificación"}
+                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@DOC_PAGOS>')"){"Aplicar pago"}
+                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@DOC_INTMORATORIOS>')"){"Aplicar cargos por mora"}
+                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@DOC_GET>')"){"Consultar documento"}
                 button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@PDR_EDO_CTA>')"){"Estado de cuenta"}
                 a(href="./" class="btn btn-light btn-sm fw-bolder"){$"Refrescar"}
             }

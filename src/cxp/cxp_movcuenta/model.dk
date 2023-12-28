@@ -160,7 +160,7 @@ module "model"
         }
         do dbr.insert(db,"movcuenta",deposito)
 
-        @url_redir=@URL_MOVCUENTAS + @@(deposito,"$icuenta") +"/movimientos/" 
+        @url_redir=@CXP_MOVCUENTA + @@(deposito,"$icuenta") +"/movimientos/" 
 
         exception
         {
@@ -203,7 +203,7 @@ module "model"
             @"icuenta": @@(data,"#cuenta")
         }
         do dbr.insert(db,"movcuenta",retiro)
-        @url_redir=@URL_MOVCUENTAS + @@(retiro,"$icuenta") +"/movimientos/" 
+        @url_redir=@CXP_MOVCUENTA + @@(retiro,"$icuenta") +"/movimientos/" 
 
         exception
         {
@@ -250,7 +250,7 @@ module "model"
 
         do dbr.commit(db)
 
-        @url_redir=@URL_MOVCUENTAS + @@(deposito,"$cuenta") +"/movimientos/"
+        @url_redir=@CXP_MOVCUENTA + @@(deposito,"$cuenta") +"/movimientos/"
         
         exception
         {

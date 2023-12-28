@@ -49,7 +49,7 @@ module "cxp.poraplicar.dk"
                 div(class="btn-group" role="group")
                 {
                     a(href="#<@CXP_PROVS>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
-                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicarPago('#<@APLICAR_PAGOS>')"){"Aplicar"}
+                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicarPago('#<@DOC_APLICAR>')"){"Aplicar"}
                     a(href="./" class="btn btn-light btn-sm fw-bolder"){$"Refrescar"}
                 }
             }

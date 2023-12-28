@@ -3,6 +3,75 @@
 module "model"
 {
     @table_name = "proveedor"
+    @read_query = "
+    SELECT
+        sys_pk,
+        sys_guid,
+        sys_recver,
+        IFNULL(codcuenta,'') codcuenta,
+        codigo,
+        IFNULL(curp,'') curp,
+        IFNULL(diascredito,0) diascredito,
+        IFNULL(diasentrega,0) diasentrega,
+        IFNULL(email,'') email,
+        IFNULL(fax,'') fax,
+        IFNULL(limitecredito,0) limitecredito,
+        nombre,
+        IFNULL(notas,'') notas,
+        IFNULL(rfc,'') rfc,
+        IFNULL(saldo,0) saldo,
+        status,
+        tasaiva,
+        IFNULL(telefonos,'') telefonos,
+        IFNULL(website,'') website,
+        contacto1,
+        contacto2,
+        contacto3,
+        domicilio1,
+        domicilio2,
+        domicilio3,
+        idivisa,
+        izona,
+        tipo,
+        IFNULL(uf_sys_baja,0) uf_sys_baja,
+        IFNULL(uf_vueltaviajero,0) uf_vueltaviajero,
+        uf_tipoop
+    FROM proveedor
+    WHERE #<@keyfield> = @_entity_id
+    "
+
+    cxp.buscarProveedor::&db,&params
+    {
+        sql = "
+        SELECT
+            pdr.sys_pk,
+            pdr.sys_guid,
+            pdr.sys_recver,
+            pdr.codigo,
+            pdr.nombre,
+            IFNULL(pdr.rfc,'') AS rfc,
+            IFNULL(pdr.saldo,0) AS saldo,
+            tpp.descripcion AS tipo,
+            dvs.codigo AS divisa,
+            dvs.tcambio,
+            IFNULL(zna.nombre,'') AS zona
+        FROM proveedor AS pdr
+            INNER JOIN tipoproveedor AS tpp ON tpp.sys_pk = pdr.tipo
+            INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
+            LEFT JOIN zona AS zna ON zna.sys_pk = pdr.izona
+        WHERE #<condition>
+        "
+        
+        if trim(@@(params,"$id")) != "" {
+            condition = "(pdr.sys_pk = @id OR pdr.sys_guid = @id)"
+            return dbr.rec(db,ftext(sql),params)
+        }
+        if trim(@@(params,"$search")) != "" {
+            condition = "(pdr.codigo LIKE CONCAT('%',@search,'%') OR pdr.nombre LIKE CONCAT('%',@search,'%') OR pdr.rfc LIKE CONCAT('%',@search,'%'))"
+            return dbr.list(db,ftext(sql),params)
+        }
+        return list.create()
+    }
     
     cxp.buscarContacto::&db,&params
     {
@@ -85,46 +154,32 @@ module "model"
     cxp.obtenerProveedor::&db,id
     {
         new params { @"id": id }
-
-        sql = "
-        SELECT 
-            pdr.sys_pk,
-            pdr.codigo,
-            pdr.nombre,
-            tpp.descripcion AS tipo,
-            IFNULL(pdr.saldo,0) AS saldo,
-            dvs.codigo AS divisa,
-            dvs.tcambio
-        FROM proveedor AS pdr 
-            INNER JOIN tipoproveedor AS tpp ON tpp.sys_pk = pdr.tipo
-            INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
-        WHERE (
-            pdr.sys_pk = @id
-            OR pdr.sys_guid = @id
-            OR pdr.codigo = @id
-        );"
-
-        return dbr.rec(db,sql,params)
+        return cxp.buscarProveedor(db,params)
     }
 
     cxp.prepareView::&db,&params,&data
     {
         params<"pk_dvs_pred"> : @SYS_PK_DIVISA_PREDETERMINADA
 
-        sql_divisa_predeterminada = "SELECT codigo, tcambio FROM divisa WHERE sys_pk = @pk_dvs_pred;"
+        sql_divisa_predeterminada = "SELECT sys_pk, codigo, tcambio FROM divisa WHERE sys_pk = @pk_dvs_pred;"
 
         switch @@(params,"$_view")
         {
             case "bonificacion"
             {
+                if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado") }
+
+                sql_documentos = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_bonific,0);"
+
                 data<"info_prov*"> : cxp.obtenerProveedor(db,@@(params,"_entity_id"))
-                sql = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_bonific,0);"
-                data<"documentos*"> : dbr.list(db,sql,@null)
+                data<"documentos*"> : dbr.list(db,sql_documentos,@null)
                 data<"dvs_pred*"> : dbr.rec(db,sql_divisa_predeterminada,params)
                 break
             }
             case "pago"
             {
+                if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado") }
+
                 sql_documentos = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_pago,0);"
                 sql_cuentas = "SELECT c.sys_pk, d.codigo AS divisa, d.tcambio, CONCAT(c.nombre,' (',d.codigo,')') nombre FROM chequera c INNER JOIN divisa d ON d.sys_pk = c.idivisa WHERE NOT IFNULL(c.sys_deleted,0) ORDER BY c.sys_pk;"
                 sql_categorias = "SELECT sys_pk,descripcion FROM categoria WHERE tipo = 2 AND NOT IFNULL(sys_deleted,0) ORDER BY sys_pk;"
@@ -208,86 +263,87 @@ module "model"
 
     cxp.pagarProveedor::&db,&params,&data
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado")}
+        do errordet(@false)
+        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado") }
         
-        new p{@"referencia":@@(data,"$referencia")}
-        if trim(@@(data,"$referencia"))==""{do rise_error(500,"Debe indicar una referencia")}
-        if trim(@@(data,"$referencia"))!=""
+        referencia = trim(@@(data,"$referencia"))
+        if referencia == "" { do rise_error(500,"Debe indicar una referencia") }
+
+        new p
         {
-            ref rec=dbr.rec(db,"select * from movcuenta where referencia=@referencia",p)
-            if not(isnull(rec)){do rise_error(500,"El valor de la referencia ya existe")}
+            @"icuenta": @@(data,"#cuenta_retiro")
+            @"referencia": referencia
         }
+
+        regs = dbr.num(db,"SELECT COUNT(sys_pk) regs FROM movcuenta WHERE icuenta = @icuenta && referencia = @referencia;",p)
+        if regs > 0 { do rise_error(99,"La referencia proporcionada ya se encuentra en uso.") }
+
+
+        tcambio_pdr = @@(data,"#tcambio")
+        tcambio_ret = @@(data,"#tcambio_retiro")
+        
+        importe_pdr = @@(data,"#importe")
+        importe_ret = (importe_pdr * tcambio_pdr)
+        importe_ret = (importe_ret / tcambio_ret)
+
+        p<"iproveedor"> : @@(data,"#iproveedor")
+        p<"importe_pdr"> : importe_pdr
 
         new retiro
         {
-            @"sys_pk": 0
-            @"sys_guid": uuid()
-            @"sys_dtcreated*": now()
-            @"sys_timestamp*": now()
-            @"aplicacion*": str2dt(@@(data,"$fecha_aplicacion"))
-            @"auditado": @true
-            @"beneficiario": @@(data,"$beneficiario")
-            @"cancelado": @false
+            @"faplicacion": trim(@@(data,"$fecha_aplicacion"))
+            @"beneficiario": trim(@@(data,"$beneficiario"))
             @"conciliado": parse.bool(@@(data,"$conciliado"))
-            @"contabilizado": @false
-            @"egreso": @@(data,"#importe")
-            @"fecha*": str2dt(@@(data,"$fecha_documento"))
-            @"ingreso": 0.0
-            @"notas": @@(data,"$notas")
-            @"referencia": @@(data,"$referencia")
-            @"tipo": @@(data,"#documento_retiro")
+            @"importe": importe_ret
+            @"fecha": trim(@@(data,"$fecha_documento"))
+            @"concepto": trim(@@(data,"$notas"))
+            @"referencia": referencia
+            @"documento": @@(data,"#documento_retiro")
             @"icategoria": @@(data,"#categoria_retiro")
             @"icuenta": @@(data,"#cuenta_retiro")
+            @"iproveedor": @@(data,"#iproveedor")
         }
 
         new dcxp
         {
-            @"sys_pk": 0
-            @"sys_guid": uuid()
-            @"sys_dtcreated*": now()
-            @"sys_timestamp*": now()
             @"aplicable": @false
-            @"aplicacion*": str2dt(@@(data,"$fecha_aplicacion"))
-            @"auditado": @false
-            @"basecm": 0
-            @"bonificaciones": 0.0
-            @"contabilizado": @false
-            @"debe": 0.0
+            @"aplicacion": @@(data,"$fecha_aplicacion")
             @"documento": @@(data,"#documento")
-            @"fecha*": str2dt(@@(data,"$fecha_documento"))
-            @"fultmoratorios*": str2dt(@@(data,"$fecha_documento"))
-            @"haber": 0.0
-            @"intfinancieros": 0.0
-            @"intmoratorios": 0.0
+            @"fecha": @@(data,"$fecha_documento")
+            @"fultmoratorios": @@(data,"$fecha_aplicacion")
             @"notas": @@(data,"$notas")
-            @"pagos": 0.0
-            @"porimpuestocap": 0.0
-            @"porimpuestofin": 0.0
-            @"porimpuestomor": 0.0
-            @"referencia": @@(data,"$referencia")
-            @"relacionadoa": 0
-            @"tasamoratorios": 0.0
+            @"referencia": referencia
             @"tipocambio": @@(data,"#tcambio")
-            @"xaplicar": @@(data,"#importe")
-            @"imovchequera": @@(data,"#cuenta_retiro")
-            @"iproveedor": @@(data,"#proveedor")
-            @"sys_recver": 0
+            @"xaplicar": importe_pdr
+            @"iproveedor": @@(data,"#iproveedor")
+            @"importe": importe_pdr
         }
-        do fieldDebeHaberByDoc(@@(data,"#documento"),dcxp,@@(data,"#importe"))
 
         do dbr.begin(db)
-        do dbr.insert(db,"movcuenta",retiro)
-        do dbr.insert(db,"dcxp",dcxp)
-        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe) WHERE sys_pk = @proveedor;",data)
+        
+        // Realizar retiro a la cuenta.
+        dcxp<"imovchequera"> : erp.cxp.movimientos.retiro(db,retiro)
+        // Generar documento por pagar (dcxp).
+        do erp.cxp.movimientos.crearCxP(db,dcxp)
+        // Afectar saldo del proveedor.
+        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe_pdr) WHERE sys_pk = @iproveedor;",p)
+        
         do dbr.commit(db)
-
-        @url_redir=@CXP_PROVS
+        @url_redir = @CXP_PROVS
 
         exception
         {
             if dbr.in_transaction(db) { do dbr.rollback(db) }
+
+            ref formData = record.copy(data,"*")
+            code = last_error_code()
+            error = last_error()
+
+            do record.clear(data)
+            data<"form*"> : formData
+            
             do cxp.prepareView(db,params,data)
-            do rise_error(last_error_code(),last_error())
+            do rise_error(code,error)
         }
     }
 
@@ -508,15 +564,8 @@ module "model"
     }
 
     pdr.read::&db,&params
-    {   
-        switch @@(params,"$_view")
-        {
-            case "bonificacion"{if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado")}}
-            case "pago"{if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado")}}
-        }
-        
-           
-        ref data = cxp.obtenerProveedor(db,@@(params,"_entity_id"))
+    {
+        ref data = entity.read(db,params)
         do cxp.prepareView(db,params,data)
         return data
     }
@@ -526,18 +575,6 @@ module "model"
         new data {}
         do cxp.prepareView(db,params,data)
         return data
-    }
-
-    rec.init::
-    {
-        new record
-        {
-            @"sys_pk": 0
-            @"sys_dtcreated*": now()
-            @"sys_timestamp*": now()
-            @"sys_recver": 0
-        }
-        return record
     }
 
     cleanFormData::&fields,&data,&output
@@ -576,7 +613,7 @@ module "model"
 
         ref fieldsProveedor = split("codcuenta,codigo,curp,diascredito,diasentrega,email,fax,limitecredito,nombre,notas,rfc,saldo,status,tasaiva,telefonos,website,contacto1,contacto2,contacto3,idivisa,izona,tipo,uf_vueltaviajero,uf_tipoop",",")
 
-        ref proveedor = rec.init()
+        ref proveedor = new_rec()
         ref domicilio1 = @null
         ref domicilio2 = @null
         ref domicilio3 = @null
@@ -596,7 +633,7 @@ module "model"
         // Datos de domicilios
         if chq_domicilio1
         {
-            ref domicilio1 = rec.init()
+            ref domicilio1 = new_rec()
             using domicilio1
             {
                 @"codpos": trim(@@(data,"$codpos"))
@@ -611,7 +648,7 @@ module "model"
         }
         if chq_domicilio2
         {
-            ref domicilio2 = rec.init()
+            ref domicilio2 = new_rec()
             using domicilio2
             {
                 @"codpos": trim(@@(data,"$codpos2"))
@@ -626,7 +663,7 @@ module "model"
         }
         if chq_domicilio3
         {
-            ref domicilio3 = rec.init()
+            ref domicilio3 = new_rec()
             using domicilio3
             {
                 @"codpos": trim(@@(data,"$codpos3"))

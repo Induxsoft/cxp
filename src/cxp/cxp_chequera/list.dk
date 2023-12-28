@@ -20,8 +20,8 @@ module "list.dk"
             div(class="btn-group" role="group")
             {
                 a(href="#<@CXP_MENU>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
-                a(href="#<@ADD_BANCO>" class="btn btn-light btn-sm fw-bolder"){$"Agregar"}
-                a(href="#<@URL_BANCOS>" class="btn btn-light btn-sm fw-bolder"){$"Bancos"}
+                a(href="#<@BNC_AGREGAR>" class="btn btn-light btn-sm fw-bolder"){$"Agregar"}
+                a(href="#<@CXP_BANCO>" class="btn btn-light btn-sm fw-bolder"){$"Bancos"}
                 a(href="./" class="btn btn-light btn-sm fw-bolder"){$"Refrescar"}
             }
         }
@@ -54,7 +54,7 @@ module "list.dk"
                         tr
                         {
                             td{$"#<row>"}
-                            td{a(href="#<replace(@URL_MOVCUENTAS_ROW,'@cuenta',@@(cheque,'$sys_pk'))>"){$"#<@@(cheque,'$nombre')>"}}
+                            td{a(href="#<replace(@MOV_MOVIMIENTOS,'@cuenta',@@(cheque,'$sys_pk'))>"){$"#<@@(cheque,'$nombre')>"}}
                             td{$"#<@@(cheque,'$banco')>"}
                             td{$"#<@@(cheque,'$numcuenta')>"}
                             td{$"#<@@(cheque,'$clabe')>"}

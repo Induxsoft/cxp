@@ -45,38 +45,48 @@ module
 	@URL_BUSCAR_CIUDAD = "/!/cxp/proveedores/?_view=buscar-ciudad&search=@search"
 
 	//#region cxp_provs
-	@CXP_PROVS="/!/cxp/proveedores/"
-	@PDR_NEW="/!/cxp/proveedores/_new/"
-	@PDR_EDO_CTA="/!/cxp/proveedores/@proveedor/balance/"
-	@PDR_BONIFICACION="/!/cxp/proveedores/@proveedor/bonificacion/"
-	@PDR_PAGOS="/!/cxp/proveedores/@proveedor/pago/"
-	@PDR_XPAGAR="/!/cxp/proveedores/@proveedor/pendientes/"
-	@PDR_XAPLICAR="/!/cxp/proveedores/@proveedor/xaplicar/"
+	@CXP_PROVS = "/!/cxp/proveedores/"
+	@PDR_NEW = "/!/cxp/proveedores/_new/"
+	@PDR_EDO_CTA = "/!/cxp/proveedores/@proveedor/balance/"
+	@PDR_BONIFICACION = "/!/cxp/proveedores/@proveedor/bonificacion/"
+	@PDR_PAGOS = "/!/cxp/proveedores/@proveedor/pago/"
+	@PDR_XPAGAR = "/!/cxp/proveedores/@proveedor/pendientes/"
+	@PDR_XAPLICAR = "/!/cxp/proveedores/@proveedor/xaplicar/"
 	//#endregion
 
-	@DOCS_POR_PAGAR="/!/cxp/documentos/"
+	//#region cxp_docs
+	@CXP_DOCS = "/!/cxp/documentos/"
+	@DOC_NEW = "/!/cxp/documentos/_new/"
+	@DOC_GET = "/!/cxp/documentos/@doc/"
+	@DOC_BONIFICACION = "/!/cxp/documentos/@doc/bonificacion/"
+	@DOC_PAGOS = "/!/cxp/documentos/@doc/pago/"
+	@DOC_INTMORATORIOS = "/!/cxp/documentos/@doc/intmoratorios/"
+	@DOC_APLICAR = "/!/cxp/documentos/@id/aplicar/"
+	//#endregion
+
+	//#region ut_gasto
+	@UT_GASTO = "/!/cxp/gastos/"
+	@GST_AGREGAR = "/!/cxp/gastos/_new/"
+	@GST_CONSULTAR = "/!/cxp/gastos/@id/"
+	//#endregion
+
+	//#region cxp_banco
+	@CXP_BANCO = "/!/cxp/bancos/"
+	@BNC_AGREGAR = "/!/cxp/bancos/_new/"
+	//#endregion
+
+	//#region cxp_chequera
+	@CXP_CHEQUERA = "/!/cxp/cuentas/"
+	//#endregion
+
+	//#region cxp_movcuenta
+	@CXP_MOVCUENTA = "/!/cxp/movcuenta/"
+	@MOV_MOVIMIENTOS = "/!/cxp/movcuenta/@cuenta/movimientos/"
+	@MOV_DEPOSITO = "/!/cxp/movcuenta/_new/deposito/"
+	@MOV_RETIRO = "/!/cxp/movcuenta/_new/retiro/"
+	@MOV_TRASPASO = "/!/cxp/movcuenta/_new/traspaso/"
+	//#endregion
 	
-	@GASTOS="/!/cxp/gastos/"
-	@ADD_BANCO="./_new/"
-	@URL_BANCOS="/!/cxp/bancos/"
-	@URL_CUENTAS="/!/cxp/cuentas/"
-	@URL_MOVCUENTAS="/!/cxp/movcuenta/"
-	@URL_MOVCUENTAS_ROW=@URL_MOVCUENTAS + "@cuenta/movimientos/"
-	@AGREGAR_DEPOSITO="../../_new/deposito/"
-	@AGREGAR_RETIRO="../../_new/retiro/"
-	@REALIZAR_TRANSFERENCIA="../../_new/traspaso/"
-
-	@APLICAR_BONIFICACION="/!/cxp/documentos/@doc/bonificacion/"
-	@APLICAR_PAGO="/!/cxp/documentos/@doc/pago/"
-	@APLICAR_PAGO_MORA="/!/cxp/documentos/@doc/intmoratorios/"
-	@CONSULTAR_DOCUMENTO="/!/cxp/documentos/@doc/"
-	
-	@ADD_DOCS_POR_PAGAR="/!/cxp/documentos/_new/"
-
-	@ADD_GASTO="/!/cxp/gastos/_new/"
-	@CONSULTAR_GASTO="/!/cxp/gastos/@id/"
-	@APLICAR_PAGOS="/!/cxp/documentos/@id/aplicar/"
-
 	//* ======================================== [ AUTHORIZATIONS ]
 	
 	//********************* Documentos **********************

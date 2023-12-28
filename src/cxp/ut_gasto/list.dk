@@ -19,8 +19,8 @@ module "form.dk"
             div(class="btn-group" role="group")
             {
                 a(href="#<@CXP_MENU>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
-                a(href="#<@ADD_GASTO>" class="btn btn-light btn-sm fw-bolder"){$"Agregar"}
-                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@CONSULTAR_GASTO>')"){$"Consultar gasto"}
+                a(href="#<@GST_AGREGAR>" class="btn btn-light btn-sm fw-bolder"){$"Agregar"}
+                button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@GST_CONSULTAR>')"){$"Consultar gasto"}
                 a(href="./" class="btn btn-light btn-sm fw-bolder"){$"Refrescar"}
             }
         }

@@ -54,11 +54,11 @@ module "list.dk"
             {
                 div(class="btn-group" role="group")
                 {
-                    a(href="#<@URL_CUENTAS>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
-                    a(href="#<@AGREGAR_DEPOSITO>" class="btn btn-light btn-sm fw-bolder"){"Agregar depósito"}
-                    a(href="#<@AGREGAR_RETIRO>" class="btn btn-light btn-sm fw-bolder"){"Agregar retiro"}
-                    a(href="#<@REALIZAR_TRANSFERENCIA>" class="btn btn-light btn-sm fw-bolder"){"Realizar transferencia"}
-                    a(href="#<@ADD_GASTO>" class="btn btn-light btn-sm fw-bolder"){"Agregar gasto"}
+                    a(href="#<@CXP_CHEQUERA>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
+                    a(href="#<@MOV_DEPOSITO>" class="btn btn-light btn-sm fw-bolder"){"Agregar depósito"}
+                    a(href="#<@MOV_RETIRO>" class="btn btn-light btn-sm fw-bolder"){"Agregar retiro"}
+                    a(href="#<@MOV_TRASPASO>" class="btn btn-light btn-sm fw-bolder"){"Realizar transferencia"}
+                    a(href="#<@GST_AGREGAR>" class="btn btn-light btn-sm fw-bolder"){"Agregar gasto"}
                     a(href="./" class="btn btn-light btn-sm fw-bolder"){$"Refrescar"}
                 }
             }

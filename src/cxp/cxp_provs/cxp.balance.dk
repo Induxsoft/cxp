@@ -22,11 +22,11 @@ module "cxp.balance.dk"
                 {
                     a(href="#<@CXP_MENU>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
                     a(href="#<replace(@PDR_XPAGAR,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Documentos por pagar"}
-                    a(href="#<@ADD_DOCS_POR_PAGAR>" class="btn btn-light btn-sm fw-bolder"){"Agregar"}
+                    a(href="#<@DOC_NEW>" class="btn btn-light btn-sm fw-bolder"){"Agregar"}
                     a(href="#<replace(@PDR_XAPLICAR,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Pagos por aplicar"}
                     a(href="#<replace(@PDR_PAGOS,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Pago a proveedor"}
                     a(href="#<replace(@PDR_BONIFICACION,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Bonificación a proveedor"}
-                    a(href="#<@ADD_GASTO>?proveedor=#<@('$parameters/_entity_id')>" class="btn btn-light btn-sm fw-bolder"){"Agregar gasto"}
+                    a(href="#<@GST_AGREGAR>?proveedor=#<@('$parameters/_entity_id')>" class="btn btn-light btn-sm fw-bolder"){"Agregar gasto"}
                     a(href="./" class="btn btn-light btn-sm fw-bolder"){$"Refrescar"}
                 }
             }
@@ -69,9 +69,9 @@ module "cxp.balance.dk"
             {
                 div(class="btn-group" role="group")
                 {
-                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_BONIFICACION>')"){"Aplicar bonificación"}
-                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_PAGO>')"){"Aplicar pago"}
-                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@APLICAR_PAGO_MORA>')"){"Aplicar cargos por mora"}
+                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@DOC_BONIFICACION>')"){"Aplicar bonificación"}
+                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@DOC_PAGOS>')"){"Aplicar pago"}
+                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@DOC_INTMORATORIOS>')"){"Aplicar cargos por mora"}
                 }
             }
 

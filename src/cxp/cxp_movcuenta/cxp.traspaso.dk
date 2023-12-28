@@ -138,7 +138,7 @@ module "form.dk"
                     div(class="mt-2 d-flex gap-1 justify-content-end")
                     {
                         button(type="submit" class="btn btn-primary"){$"Aceptar"}
-                        button(type="reset" class="btn btn-danger" onclick="window.location.href='#<@URL_CUENTAS>'"){$"Cancelar"}
+                        button(type="reset" class="btn btn-danger" onclick="window.location.href='#<@CXP_CHEQUERA>'"){$"Cancelar"}
                     }
                 }
             }

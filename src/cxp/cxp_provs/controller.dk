@@ -4,7 +4,7 @@ module "controller"
 {
     #include "lib.dk"
 
-    switch @@(@_GET,"$_view")
+    switch @@(@http_context,"$request/get/_view")
     {
         case "buscar-contacto"
         {
@@ -23,12 +23,14 @@ module "controller"
         }
         case "bonificacion"
         {
+            point @read to pdr.blank
             point @update to cxp.bonificarProveedor
             @form_view = "cxp.bonificacion.dk"
             break
         }
         case "pago"
         {
+            point @read to pdr.blank
             point @update to cxp.pagarProveedor
             @form_view = "cxp.pago.dk"
             break

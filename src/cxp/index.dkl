@@ -23,11 +23,11 @@ module "index"
 				// 	span(class="flex-grow-1"){""}
 				// 	a(href="/logout.dk"){"Cerrar sesión"}
 				// }
-				a(href="#<@DOCS_POR_PAGAR>"){"Documentos por pagar"}br{}
+				a(href="#<@CXP_DOCS>"){"Documentos por pagar"}br{}
 				a(href="#<@CXP_PROVS>"){"Proveedores"}br{}
-				a(href="#<@GASTOS>"){"Gastos"}br{}
-				a(href="#<@URL_BANCOS>"){"Bancos"}br{}
-				a(href="#<@URL_CUENTAS>"){"Cuentas"}br{}
+				a(href="#<@UT_GASTO>"){"Gastos"}br{}
+				a(href="#<@CXP_BANCO>"){"Bancos"}br{}
+				a(href="#<@CXP_CHEQUERA>"){"Cuentas"}br{}
 			}
 		}
 	}
