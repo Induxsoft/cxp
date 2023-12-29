@@ -24,7 +24,7 @@ module "list.dk"
                     button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action dropdown-toggle" id="btn_menu_add" "data-bs-toggle"="dropdown" "aria-expanded"="false"){$"Agregar"}
                     ul(class="dropdown-menu" "aria-labelledby"="btn_menu_add")
                     {
-                        li{ a(class="dropdown-item" href="#<@PDR_NEW>"){$"Proveedor"} }
+                        li{ a(class="dropdown-item" href="#<@PDR_AGREGAR>"){$"Proveedor"} }
                         li{ a(class="dropdown-item" href="#"){$"Tipo de proveedor"} }
                     }
                 }
@@ -44,7 +44,7 @@ module "list.dk"
                 div(class="input-group")
                 {
                     input(type="text" class="form-control form-control-sm" id="txt_search_proveedor" "data-url-search"="#<@URL_BUSCAR_PROVEEDOR>" placeholder="Código, Nombre, RFC")
-                    a(href="#<@PDR_NEW>" class="btn btn-light btn-sm border" type="button" id="btn_new_proveedor" title="Nuevo proveedor"){$"#<@ICON_USER_ADD>"}
+                    a(href="#<@PDR_AGREGAR>" class="btn btn-light btn-sm border" type="button" id="btn_new_proveedor" title="Nuevo proveedor"){$"#<@ICON_USER_ADD>"}
                     button(class="btn btn-primary btn-sm" type="button" id="btn_search_proveedor"){$"Buscar #<@ICON_SEARCH>"}
                 }
             }

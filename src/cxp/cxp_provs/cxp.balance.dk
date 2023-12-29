@@ -8,6 +8,8 @@ module "cxp.balance.dk"
     #include "../_lib/config.dk"
     
     do @context.begin(@crud_context)
+
+    _entity_id = @('$parameters/_entity_id')
     
     #$
     div(class="container")
@@ -20,13 +22,13 @@ module "cxp.balance.dk"
             {
                 div(class="btn-group" role="group")
                 {
-                    a(href="#<@CXP_MENU>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
-                    a(href="#<replace(@PDR_XPAGAR,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Documentos por pagar"}
-                    a(href="#<@DOC_NEW>" class="btn btn-light btn-sm fw-bolder"){"Agregar"}
-                    a(href="#<replace(@PDR_XAPLICAR,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Pagos por aplicar"}
-                    a(href="#<replace(@PDR_PAGOS,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Pago a proveedor"}
-                    a(href="#<replace(@PDR_BONIFICACION,'@proveedor',@('$parameters/_entity_id'))>" class="btn btn-light btn-sm fw-bolder"){"Bonificación a proveedor"}
-                    a(href="#<@GST_AGREGAR>?proveedor=#<@('$parameters/_entity_id')>" class="btn btn-light btn-sm fw-bolder"){"Agregar gasto"}
+                    a(href="#<@CXP_PROVS>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
+                    a(href="#<@DOC_AGREGAR>" class="btn btn-light btn-sm fw-bolder"){"Agregar"}
+                    a(href="#<@GST_AGREGAR>" class="btn btn-light btn-sm fw-bolder"){"Agregar gasto"}
+                    a(href="#<replace(@PDR_XPAGAR,'@proveedor',_entity_id)>" class="btn btn-light btn-sm fw-bolder"){"Documentos por pagar"}
+                    a(href="#<replace(@PDR_XAPLICAR,'@proveedor',_entity_id)>" class="btn btn-light btn-sm fw-bolder"){"Pagos por aplicar"}
+                    a(href="#<replace(@PDR_PAGOS,'@proveedor',_entity_id)>" class="btn btn-light btn-sm fw-bolder"){"Pago a proveedor"}
+                    a(href="#<replace(@PDR_BONIFICACION,'@proveedor',_entity_id)>" class="btn btn-light btn-sm fw-bolder"){"Bonificación a proveedor"}
                     a(href="./" class="btn btn-light btn-sm fw-bolder"){$"Refrescar"}
                 }
             }

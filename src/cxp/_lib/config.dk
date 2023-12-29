@@ -12,10 +12,10 @@ module
 	ref database = crudl.database()
 	@SYS_PK_DIVISA_PREDETERMINADA = parse.num(dbr.vars.get(database,"FXCA013"))
 
-	@cxp_destino_aplicacion_int_financieros = 1
-    @cxp_destino_aplicacion_int_moratorios = 2
-    @cxp_destino_aplicacion_bonificaciones = 3
-    @cxp_destino_aplicacion_pagos = 4
+	@CXP_DESTINO_APLICACION_INT_FINANCIEROS = 1
+    @CXP_DESTINO_APLICACION_INT_MORATORIOS = 2
+    @CXP_DESTINO_APLICACION_BONIFICACIONES = 3
+    @CXP_DESTINO_APLICACION_PAGOS = 4
 
     @STATUS_ADMINISTRATIVO = 3 // cProcesado
     @FORMA_PAGO = 1 // cContado
@@ -27,6 +27,11 @@ module
     @cTransferencias = 30
     //#endregion
 
+	// Formato de presentación
+	@THOUSANDS_SEPARATOR = ","
+	@DECIMAL_SEPARATOR = "."
+	@DECIMAL_PRECISION = 2
+
 	// Ubicacion predeterminada
 	@PAIS = "México"
 	@ESTADO = "Chiapas"
@@ -35,18 +40,19 @@ module
 	//* ======================================== [ _STATIC RESOURCES ]
 	@CSS_MAIN = "/$/cxp/css/main.css"
 	@JS_PROVEEDORES = "/$/cxp/js/proveedores.js"
+	@JS_DOCUMENTOS = "/$/cxp/js/documentos.js"
 
 	//* ======================================== [ _PACKAGE ]
 	@CXP_MENU = "/!/cxp/"
 
-	@URL_BUSCAR_PROVEEDOR = "/!/cxp/documentos/?_view=buscar-proveedor&search=@search"
+	@URL_BUSCAR_PROVEEDOR = "/!/cxp/proveedores/?_view=buscar-proveedor&search=@search"
 	@URL_BUSCAR_CONTACTO = "/!/cxp/proveedores/?_view=buscar-contacto&search=@search"
 	@URL_BUSCAR_EDOPROV = "/!/cxp/proveedores/?_view=buscar-edoprov&search=@search"
 	@URL_BUSCAR_CIUDAD = "/!/cxp/proveedores/?_view=buscar-ciudad&search=@search"
 
 	//#region cxp_provs
 	@CXP_PROVS = "/!/cxp/proveedores/"
-	@PDR_NEW = "/!/cxp/proveedores/_new/"
+	@PDR_AGREGAR = "/!/cxp/proveedores/_new/"
 	@PDR_EDO_CTA = "/!/cxp/proveedores/@proveedor/balance/"
 	@PDR_BONIFICACION = "/!/cxp/proveedores/@proveedor/bonificacion/"
 	@PDR_PAGOS = "/!/cxp/proveedores/@proveedor/pago/"
@@ -56,8 +62,8 @@ module
 
 	//#region cxp_docs
 	@CXP_DOCS = "/!/cxp/documentos/"
-	@DOC_NEW = "/!/cxp/documentos/_new/"
-	@DOC_GET = "/!/cxp/documentos/@doc/"
+	@DOC_AGREGAR = "/!/cxp/documentos/_new/"
+	@DOC_CONSULTAR = "/!/cxp/documentos/@doc/"
 	@DOC_BONIFICACION = "/!/cxp/documentos/@doc/bonificacion/"
 	@DOC_PAGOS = "/!/cxp/documentos/@doc/pago/"
 	@DOC_INTMORATORIOS = "/!/cxp/documentos/@doc/intmoratorios/"

@@ -11,7 +11,8 @@ module "cxp.bonificacion.dk"
     
     do @context.begin(@crud_context)
 
-    ref info = ifnull(@("&./info_prov"),record.create())
+    ref dtprov = ifnull(@("&./info_prov"),record.create())
+    ref formData = ifnull(@("&./form"),record.create())
 
     new sel_documento
     {
@@ -24,33 +25,49 @@ module "cxp.bonificacion.dk"
         }
         @"value_field": "id"
         @"text_field": "const"
-        @"selected": @("$input/documento")
+        @"selected": form("documento","nm",@null)
     }
 
     #$
-    div(class="container" style="padding-bottom:10rem")
+    div(class="container")
     {
-        h1(class="h4"){$"Bonificar Proveedor"}
-
-        form(action="." method="post")
+        div(class="row container-section m-0 px-0 py-2 my-2 border-bottom sticky-top bg-white" id="main_action_bar")
         {
-            input(type="hidden" name="proveedor" value="#<@@(info,'#sys_pk')>")
-
-            div(class="row")
+            div(class="col-4 d-flex align-items-center p-0") { h1(class="h5 text-primary tex-no-break m-0"){$"Bonificar Proveedor"} }
+            div(class="col-8 d-flex justify-content-end align-items-center p-0 gap-2")
             {
-                div(class="col-lg-8 col-12 d-flex gap-2") {
-                    p(class="") {
-                        b{$"Proveedor: "}
-                        $"[#<@@(info,'$codigo')>] #<@@(info,'$nombre')>"
-                    }
-                }
-                div(class="col-lg-4"){$""}
+                a(href="./" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Refrescar"){$"#<@ICON_ARROW_CLOCKWISE>"}
+                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" id="btn_save"){$"#<@ICON_SAVE> Guardar"}
+                a(href="#<@CXP_PROVS>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Salir"){$"#<@ICON_X_LG>"}
             }
+        }
+
+        form(action="." method="POST" id="form_bonificacion_prov")
+        {
+            input(type="hidden" name="iproveedor" value="#<@@(dtprov,'#sys_pk')>")
 
             div(class="row")
             {
                 div(class="col-lg-8")
                 {
+                    div(class="row d-flex justify-content-end align-items-center")
+                    {
+                        label(class="col-auto col-form-label"){$"Proveedor:"}
+                        div(class="col-6") {
+                            $"[#<@@(dtprov,'$codigo')>] #<@@(dtprov,'$nombre')>"
+                        }
+                    }
+
+                    div(class="row d-flex justify-content-end align-items-center")
+                    {
+                        label(class="col-auto col-form-label"){$"Divisa:"}
+                        div(class="col-6") {
+                            $"#<@@(dtprov,'$divisa')>"
+                        }
+                    }
+
+                    hr{}
+                    
                     div(class="row mt-2 d-flex justify-content-end align-items-center")
                     {
                         label(class="col-auto col-form-label" "for"="sel_documento"){$"Tipo de documento:"}
@@ -65,7 +82,7 @@ module "cxp.bonificacion.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_referencia"){$"Referencia:"}
                         div(class="col-6") {
-                            input(type="text" class="form-control" name="referencia" id="txt_referencia" value="#<@('$input/referencia')>" required="true")
+                            input(type="text" class="form-control rounded-0" name="referencia" id="txt_referencia" value="#<form('referencia','tx',@null)>" required="true")
                         }
                     }
 
@@ -73,7 +90,7 @@ module "cxp.bonificacion.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_fdoc"){$"Fecha del documento:"}
                         div(class="col-6") {
-                            input(type="date" class="form-control" name="fecha_documento" id="txt_fdoc" value="#<@('$input/fecha_documento')>" required="true")
+                            input(type="date" class="form-control rounded-0" name="fecha_documento" id="txt_fdoc" value="#<form('fecha_documento','dt',@null)>" required="true")
                         }
                     }
 
@@ -81,7 +98,7 @@ module "cxp.bonificacion.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_faplicacion"){$"Fecha de aplicación:"}
                         div(class="col-6") {
-                            input(type="date" class="form-control" name="fecha_aplicacion" id="txt_faplicacion" value="#<@('$input/fecha_aplicacion')>" required="true")
+                            input(type="date" class="form-control rounded-0" name="fecha_aplicacion" id="txt_faplicacion" value="#<form('fecha_aplicacion','dt',@null)>" required="true")
                         }
                     }
 
@@ -89,7 +106,7 @@ module "cxp.bonificacion.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_tcambio"){$"Tipo de cambio:"}
                         div(class="col-6") {
-                            input(type="number" class="form-control" name="tcambio" min="0" step="0.000001" id="txt_tcambio" value="#<@('#input/tcambio')>" required="true")
+                            input(type="number" class="form-control rounded-0" name="tcambio" min="1" step="0.000001" id="txt_tcambio" value="#<form('tcambio','nm',@null)>" required="true")
                         }
                     }
 
@@ -97,7 +114,7 @@ module "cxp.bonificacion.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_importe"){$"Importe:"}
                         div(class="col-6") {
-                            input(type="number" class="form-control" name="importe" min="0" step="0.000001" id="txt_importe" value="#<@('#input/importe')>")
+                            input(type="number" class="form-control rounded-0" name="importe" min="1" step="0.000001" id="txt_importe" value="#<form('importe','nm',@null)>" required="")
                         }
                     }
 
@@ -105,21 +122,9 @@ module "cxp.bonificacion.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_notas"){$"Notas:"}
                         div(class="col-6") {
-                            textarea(class="form-control" name="notas" id="txt_notas" required="true")
-                            { $"#<@('$input/notas')>" }
+                            textarea(class="form-control rounded-0" name="notas" id="txt_notas" required="true")
+                            { $"#<form('notas','tx',@null)>" }
                         }
-                    }
-                }
-            }
-
-            div(class="row")
-            {
-                div(class="col-lg-8")
-                {
-                    div(class="mt-2 d-flex gap-1 justify-content-end")
-                    {
-                        button(type="submit" class="btn btn-primary"){$"Aceptar"}
-                        a(href="../../" class="btn btn-danger"){"Salir"}
                     }
                 }
             }
@@ -129,11 +134,12 @@ module "cxp.bonificacion.dk"
 
         div
         {
-            script
+            script(src="#<@JS_PROVEEDORES>"){$""}
+            script(type="text/javascript")
             {$'
-            window.onload = function(){
-                // code...
-            }
+                document.addEventListener("DOMContentLoaded", () => {
+                    proveedor.bonificacion.init();
+                });
             '}
         }
     }

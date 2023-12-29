@@ -243,24 +243,6 @@ module "model"
         }
     }
 
-    fieldDebeHaberByDoc::doc,&obj,total
-    {
-        switch doc
-        {
-            case 4{ obj<"haber">:total }//cfactura
-            case 3{ obj<"haber">:total }//cremision
-            case 6{ obj<"haber">:total }//ctickets
-            case 5{ obj<"debe">:total}//cnota_de_credito
-            case 17{obj<"haber">:total}//cnota_de_cargo
-            case 19{obj<"debe">:total}//crecibo
-            default
-            {
-               obj<"haber">:0
-               obj<"debe">:0
-            }
-        }
-    }
-
     cxp.pagarProveedor::&db,&params,&data
     {
         do errordet(@false)
@@ -277,7 +259,6 @@ module "model"
 
         regs = dbr.num(db,"SELECT COUNT(sys_pk) regs FROM movcuenta WHERE icuenta = @icuenta && referencia = @referencia;",p)
         if regs > 0 { do rise_error(99,"La referencia proporcionada ya se encuentra en uso.") }
-
 
         tcambio_pdr = @@(data,"#tcambio")
         tcambio_ret = @@(data,"#tcambio_retiro")
@@ -349,54 +330,48 @@ module "model"
 
     cxp.bonificarProveedor::&db,&params,&data
     {
+        do errordet(@false)
         if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado")}
-
-        if trim(@@(data,"$referencia"))==""{do rise_error(500,"Debe indicar una referencia")}
+        if trim(@@(data,"$referencia")) == "" { do rise_error(99,"Debe indicar una referencia") }
         
         new dcxp
         {
-            @"sys_pk": 0
-            @"sys_guid": uuid()
-            @"sys_dtcreated*": now()
-            @"sys_timestamp*": now()
             @"aplicable": @false
-            @"aplicacion*": str2dt(@@(data,"$fecha_aplicacion"))
-            @"auditado": @false
-            @"basecm": 0
-            @"bonificaciones": 0.0
-            @"contabilizado": @false
-            @"debe": 0.0
+            @"aplicacion": @@(data,"$fecha_aplicacion")
             @"documento": @@(data,"#documento")
-            @"fecha*": str2dt(@@(data,"$fecha_documento"))
-            @"fultmoratorios*": str2dt(@@(data,"$fecha_documento"))
-            @"haber": 0.0
-            @"intfinancieros": 0.0
-            @"intmoratorios": 0.0
+            @"fecha": @@(data,"$fecha_documento")
+            @"fultmoratorios": @@(data,"$fecha_documento")
             @"notas": @@(data,"$notas")
-            @"pagos": 0.0
-            @"porimpuestocap": 0.0
-            @"porimpuestofin": 0.0
-            @"porimpuestomor": 0.0
             @"referencia": @@(data,"$referencia")
-            @"relacionadoa": 0
-            @"tasamoratorios": 0.0
             @"tipocambio": @@(data,"#tcambio")
             @"xaplicar": @@(data,"#importe")
-            @"iproveedor": @@(data,"#proveedor")
-            @"sys_recver": 0
+            @"iproveedor": @@(data,"#iproveedor")
+            @"importe": @@(data,"#importe")
         }
-        do fieldDebeHaberByDoc(@@(data,"#documento"),dcxp,@@(data,"#importe"))
 
         do dbr.begin(db)
-        do dbr.insert(db,"dcxp",dcxp)
-        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe) WHERE sys_pk = @proveedor;",data)
+        
+        // Generar documento por pagar (dcxp).
+        do erp.cxp.movimientos.crearCxP(db,dcxp)
+        // Afectar saldo del proveedor.
+        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe) WHERE sys_pk = @iproveedor;",dcxp)
+        
         do dbr.commit(db)
-        @url_redir=@CXP_PROVS
+        @url_redir = @CXP_PROVS
+
         exception
         {
             if dbr.in_transaction(db) { do dbr.rollback(db) }
+
+            ref formData = record.copy(data,"*")
+            code = last_error_code()
+            error = last_error()
+
+            do record.clear(data)
+            data<"form*"> : formData
+            
             do cxp.prepareView(db,params,data)
-            do rise_error(last_error_code(),last_error())
+            do rise_error(code,error)
         }
     }
 

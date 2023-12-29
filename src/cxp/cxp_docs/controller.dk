@@ -4,13 +4,8 @@ module "controller"
 {
     #include "lib.dk"
 
-    switch @@(@_GET,"$_view")
+    switch @@(@http_context,"$request/get/_view")
     {
-        case "buscar-proveedor"
-        {
-            point @list to cxp.buscarProveedor
-            break
-        }
         case "pago"
         {
             point @update to cxp.pagarDocumento
@@ -42,7 +37,7 @@ module "controller"
         {
             if contains(@@(@http_context,"request/headers/http_accept"),"html") 
             {
-                if @@(@_GET,"$_entity_id") == "_new" 
+                if @@(@http_context,"$request/get/_entity_id") == "_new" 
                 {
                     point @create to cxp.crearDocumentoPorPagar
                     point @blank to cxp.blank

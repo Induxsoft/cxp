@@ -6,6 +6,11 @@ module "controller"
 
     switch @@(@http_context,"$request/get/_view")
     {
+        case "buscar-proveedor"
+        {
+            point @list to cxp.buscarProveedor
+            break
+        }
         case "buscar-contacto"
         {
             point @list to cxp.buscarContacto
