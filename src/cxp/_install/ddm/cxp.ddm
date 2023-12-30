@@ -19,6 +19,12 @@ model "erp.cxp"
     entity "cstatusorg" : "EnumModel" {}
     // Enumeración de estados administrativos para documentos
     entity "cstatusadministrativos" : "EnumModel" {}
+    // Enumeración de estados de entrega
+    entity "cstatusentrega" : "EnumModel" {}
+    // Enumeración de estados de facturación
+    entity "cstatusfacturacion" : "EnumModel" {}
+    // Enumeración de estados financieros
+    entity "cstatusfinancieros" : "EnumModel" {}
     // Tasas de IVA aplicables por razón de ubicación geográfica
     entity "ctasasiva" : "EnumModel" {}
     // Enumeración de tipos de categorías de propósito general
@@ -45,7 +51,7 @@ model "erp.cxp"
     // Configuración de documentos por pagar
     entity "cfg_cxp_docs"
     {
-        @"documento" ref: "cdocumentos" key
+        @"documento" ref:"cdocumentos" key
         @"pagable" bool     // Si es true, puede agregarse como documento por pagar al que se le pueden aplicar cargos, bonificaciones y pagos
         @"apl_int_fin" bool // Si es true, puede usarse para aplicarse como intereses financieros
         @"apl_int_mor" bool // si es true, puede usarse para aplicarse como intereses moratorios
@@ -55,7 +61,7 @@ model "erp.cxp"
     // Configuración de documentos por pagar
     entity "cfg_chq_docs"
     {
-        @"documento" ref: "cdocumentos" key
+        @"documento" ref:"cdocumentos" key
         @"depositos" bool
         @"retiros" bool
         @"traspasos" bool
@@ -71,14 +77,14 @@ model "erp.cxp"
     {
         @"codigo" string(8) unique required
         @"nombre" string(50) required
-        @"ipais" int ref:"pais" ["sys_pk"] required
+        @"ipais" ref:"pais" required
     }
     entity "ciudad" : "TableModel"
     {
         @"codigo" string(8) unique required
         @"codigotel" string(5)
         @"nombre" string(100) required
-        @"estado" int ref:"edoprov" ["sys_pk"] required
+        @"estado" ref:"edoprov" required
     }
     entity "domicilio" : "TableModel"
     {
@@ -87,7 +93,7 @@ model "erp.cxp"
         @"direccion" string(1024)
         @"notas" string(150)
         @"telefonos" string(150)
-        @"iciudad" int ref:"ciudad" ["sys_pk"]
+        @"iciudad" ref:"ciudad"
         @"numint" string(1024)
         @"numext" string(1024)
     }
@@ -148,8 +154,8 @@ model "erp.cxp"
         @"tel3" string(50)
         @"tratamiento" string(5)
         @"website" string(150)
-        @"domicilio1" int ref:"domicilio" ["sys_pk"]
-        @"domicilio2" int ref:"domicilio" ["sys_pk"]
+        @"domicilio1" ref:"domicilio"
+        @"domicilio2" ref:"domicilio"
     }
     // Datos de una institución financiera
     entity "banco" : "TableModel"
@@ -157,7 +163,7 @@ model "erp.cxp"
         @"nombre" string(50) unique required
         @"notas" string(2048)
         @"website" string(150)
-        @"contacto" int ref:"contacto" ["sys_pk"]
+        @"contacto" ref:"contacto"
     }
     // Datos de una cuenta en una institución financiera
     entity "chequera" : "TableModel"
@@ -200,6 +206,160 @@ model "erp.cxp"
             field "icuenta"
             field "referencia"
         }
+    }
+    // Catálogo de almacenes
+    entity "almacen" : "TableModel"
+    {
+        @"codcuenta" string(50) unique
+        @"codigo" string(10) unique required
+        @"descripcion" string(50) unique required
+        @"email" string(50)
+        @"fax" string(150)
+        @"telefonos" string(150)
+        @"website" string(150)
+        @"domicilio1" ref:"domicilio"
+        @"uf_movremoto" bool
+        @"uf_inhabilitado" bool
+        @"uf_fechainhabilitacion" datetime
+        @"uf_formaproduccion" int
+    }
+    // cconsumo
+    entity "cconsumo" : "TableModel"
+    {
+        @"codigo" string(5) unique required
+        @"descripcion" string(50) unique required
+        @"notas" string(2048)
+        @"precio" int
+        @"ialmacen" ref:"almacen"
+        @"porcentaje_esperado" decimal(19,8)
+        @"uf_domiciliocfd" int
+        @"uf_expedicioncxc" int
+        @"uf_inhabilitado" bool
+        @"uf_fechainhabilitacion" datetime
+        @"uf_grupoprod" int
+    }
+    // caja
+    entity "caja" : "TableModel"
+    {
+        @"codcuenta" string(50) unique
+        @"codigo" string(5) unique required
+        @"descripcion" string(50) unique
+        @"notas" string(2048)
+        @"centroconsumo" ref:"cconsumo" required
+        @"uf_limefectivo" decimal(18,8)
+        @"uf_lime_vntadic" int
+        @"uf_lime_aviso" decimal(18,8)
+        @"uf_lime_alerta" string(500)
+        @"uf_lime_pkprimerventa" int
+        @"uf_corte_req" bool
+        @"uf_horacorte1" time
+        @"uf_horacorte2" time
+        @"uf_horacorte3" time
+        @"uf_horacorte4" time
+        @"uf_horacorte5" time
+        @"uf_cortereq_vntadic" int
+        @"uf_lim_vntliber" int
+    }
+    // cajero
+    entity "cajero" : "TableModel"
+    {
+        @"codigo" string(10) unique required
+        @"codnomina" string(50) unique
+        @"contrasena" string(32) required
+        @"email" string(50)
+        @"nombre" string(50) unique required
+        @"notas" string(2048)
+        @"telefono" string(25)
+        @"domicilio1" ref:"domicilio"
+        @"uf_sys_baja" bool
+    }
+    // corte
+    entity "corte" : "TableModel"
+    {
+        @"cerrado" bool
+        @"fapertura" date required
+        @"fcierre" date
+        @"hapertura" datetime required
+        @"hcierre" datetime
+        @"icaja" ref:"caja" required
+        @"icajero" ref:"cajero"
+    }
+    // Catálogo de cajas
+    entity "movcaja" : "TableModel"
+    {
+        @"auditado" bool
+        @"cheques" decimal(18,8)
+        @"contabilizado" bool
+        @"depositos" decimal(18,8)
+        @"documento" ref:"cdocumentos" required
+        @"efectivo" decimal(18,8)
+        @"fecha" date required
+        @"hora" datetime required
+        @"notas" string(255)
+        @"partida" string(32)
+        @"poliza" string(32)
+        @"referencia" string(50) required
+        @"tarjetas" decimal(18,8)
+        @"tipocambio" decimal(18,8)
+        @"vales" decimal(18,8)
+        @"icategoria" ref:"categoria" required
+        @"icorte" ref:"corte" required
+        @"idivisa" ref:"divisa" required
+
+        index "idx_movcaja" unique
+        {
+            field "cheques"
+            field "efectivo"
+            field "fecha"
+            field "notas"
+            field "referencia"
+            field "tarjetas"
+            field "vales"
+        }
+    }
+    // Registro de las compras
+    entity "compra" : "TableModel"
+    {
+        @"auditado" bool
+        @"contabilizado" bool
+        @"descuento1" decimal(18,8)
+        @"descuento2" decimal(18,8)
+        @"directos" decimal(18,8)
+        @"documento" ref:"cdocumentos" required
+        @"fecha" date
+        @"fembarque" date
+        @"fentrega" date
+        @"fliquidacion" date
+        @"formapago" ref:"cformaspago" required
+        @"fultimopago" date
+        @"impuesto1" decimal(18,8)
+        @"impuesto2" decimal(18,8)
+        @"impuesto3" decimal(18,8)
+        @"impuesto4" decimal(18,8)
+        @"indirectos" decimal(18,8)
+        @"notas" memo
+        @"partida" string(32)
+        @"poliza" string(32)
+        @"referencia" string(25) required
+        @"statusadministrativo" ref:"cstatusadministrativos" required
+        @"statusentrega" ref:"cstatusentrega" required
+        @"statusfacturacion" ref:"cstatusfacturacion" required
+        @"statusfinanciero" ref:"cstatusfinancieros" required
+        @"subtotal" decimal(18,8)
+        @"tipoCambio"decimal(18,8)
+        @"vencimiento" date
+        @"aplicadoa" ref:"compra"
+        @"ialmacen" ref:"almacen" required
+        @"idivisa" ref:"divisa" required
+        @"imovcaja" ref:"movcaja"
+        @"imovchequera" ref:"movcuenta"
+        @"iproveedor" ref:"proveedor" required
+        @"uf_color" int
+        @"uf_fechacancelacion" datetime
+        @"uf_importado" bool
+        @"uf_iaduana" int
+        @"uf_numdocaduanero" string(200)
+        @"uf_fechadocaduanero" date
     }
 
     //* ======================================== [ ENTIDADES PRINCIPALES ]
@@ -263,9 +423,11 @@ model "erp.cxp"
         @"tasamoratorios" decimal(18,8) // Porcentaje de interés mensual por mora
         @"tipocambio" decimal(18,8)     // tipo de cambio en la divisa del proveedor al momento de la operación
         @"xaplicar" decimal(18,8)       // Saldo restante por aplicar (si es un pago o bonificación)
-        
-        @"imovchequera" int ref:"movcuenta" ["sys_pk"]
+        @"icompra" ref:"compra"
+        @"imovcaja" ref:"movcaja"
+        @"imovchequera" ref:"movcuenta"
         @"iproveedor" ref:"proveedor"  required // Relación a un proveedor
+        @"uf_igasto" ref:"ut_gasto"
         @"uuid_fiscal" string(45)       // UUID de un comprobante fiscal digital
 
         // Saldo por pagar del documento por pagar
@@ -328,7 +490,7 @@ model "erp.cxp"
         @"icon96x96" string(1024) required
         @"src" string(1024) required
         @"_blank" bool
-        @"appid" ref : "sys_app_catalog"
-        @"cat" ref :"sys_app_category"
+        @"appid" ref:"sys_app_catalog"
+        @"cat" ref:"sys_app_category"
     }
 }
