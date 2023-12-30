@@ -666,7 +666,7 @@ module "model"
             do record.clear(data)
             data<"form*"> : formData
             
-            do cte.prepareView(db,params,data)
+            do cxp.prepareView(db,params,data)
             do rise_error(code,error)
         }
     }
