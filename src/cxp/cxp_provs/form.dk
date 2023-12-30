@@ -202,8 +202,8 @@ module "form.dk"
 
             form(class="" action="./" method="POST" id="form_proveedor")
             {
-                input(type="hidden" name="sys_pk" value="")
-                Input(type="hidden" name="sys_recver" value="")
+                // input(type="hidden" name="sys_pk" value="")
+                // Input(type="hidden" name="sys_recver" value="")
 
                 div(class="overflow-auto"){ span(class="text-danger" id="err-msg"){$"#<@('$error/message')>"} }
 

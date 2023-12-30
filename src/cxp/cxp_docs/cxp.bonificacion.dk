@@ -50,7 +50,6 @@ module "cxp.bonidicacion.dk"
         {
             input(type="hidden" name="aplicadoa" value="#<@@(info_dcxp,'#sys_pk')>")
             input(type="hidden" name="iproveedor" value="#<@@(info_dcxp,'#iproveedor')>")
-            input(type="hidden" name="destino" value="#<@CXP_DESTINO_APLICACION_BONIFICACIONES>")
 
             div(class="row")
             {

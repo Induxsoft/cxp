@@ -2,27 +2,25 @@
 #!
 module "controller"
 {
-    #include "lib.dk"
-
     switch @@(@http_context,"$request/get/_view")
     {
         case "pago"
         {
             point @update to cxp.pagarDocumento
-            point @read to cxp.obtenerDocumentoPorPagar
+            point @read to cxp.blank
             @form_view = "cxp.pago.dk"
         }
         case "bonificacion"
         {
             point @update to cxp.crearBonificacion
-            point @read to cxp.obtenerDocumentoPorPagar
+            point @read to cxp.blank
             @form_view = "cxp.bonificacion.dk"
             break
         }
         case "intmoratorios"
         {
             point @update to cxp.aplicarIntMoratorios
-            point @read to cxp.obtenerDocumentoPorPagar
+            point @read to cxp.blank
             @form_view = "cxp.intereses.dk"
             break
         }
@@ -35,20 +33,15 @@ module "controller"
         }
         case ""
         {
-            if contains(@@(@http_context,"request/headers/http_accept"),"html") 
-            {
-                if @@(@http_context,"$request/get/_entity_id") == "_new" 
-                {
-                    point @create to cxp.crearDocumentoPorPagar
-                    point @blank to cxp.blank
-                    @form_view = "cxp.crear.dk"
-                }
-                else 
-                {
-                    point @read to cxp.read
-                    point @list to cxp.list
-                }
-            }
+            point @list to cxp.list
+            point @read to cxp.read
+            point @blank to cxp.blank
+
+            point @create to cxp.crearDocumentoPorPagar
+            point @update to cxp.update
+            point @delete to cxp.delete
+            
+            @form_view = "cxp.crear.dk"
         }
     }
 }

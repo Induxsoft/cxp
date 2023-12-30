@@ -583,12 +583,12 @@ module "model"
 
     pdr.create::&db,&params,&data
     {
-        do errordet(@false)
+        do errordet(@true)
         @use_transaction = @false
 
         ref fieldsProveedor = split("codcuenta,codigo,curp,diascredito,diasentrega,email,fax,limitecredito,nombre,notas,rfc,saldo,status,tasaiva,telefonos,website,contacto1,contacto2,contacto3,idivisa,izona,tipo,uf_vueltaviajero,uf_tipoop",",")
 
-        ref proveedor = new_rec()
+        ref proveedor = record.create()
         ref domicilio1 = @null
         ref domicilio2 = @null
         ref domicilio3 = @null
@@ -608,7 +608,7 @@ module "model"
         // Datos de domicilios
         if chq_domicilio1
         {
-            ref domicilio1 = new_rec()
+            ref domicilio1 = record.create()
             using domicilio1
             {
                 @"codpos": trim(@@(data,"$codpos"))
@@ -617,13 +617,15 @@ module "model"
                 @"notas": trim(@@(data,"$dm_notas"))
                 @"telefonos": trim(@@(data,"$dm_telefonos"))
                 @"iciudad": @@(data,"#iciudad")
+                @"numint": trim(@@(data,"$numint"))
+                @"numext": trim(@@(data,"$numext"))
             }
             
             proveedor<"domicilio1"> : @@(dbr.save(db,"domicilio",domicilio1),"#sys_pk")
         }
         if chq_domicilio2
         {
-            ref domicilio2 = new_rec()
+            ref domicilio2 = record.create()
             using domicilio2
             {
                 @"codpos": trim(@@(data,"$codpos2"))
@@ -632,13 +634,15 @@ module "model"
                 @"notas": trim(@@(data,"$dm_notas2"))
                 @"telefonos": trim(@@(data,"$dm_telefonos2"))
                 @"iciudad": @@(data,"#iciudad2")
+                @"numint": trim(@@(data,"$numint2"))
+                @"numext": trim(@@(data,"$numext2"))
             }
 
             proveedor<"domicilio2"> : @@(dbr.save(db,"domicilio",domicilio2),"#sys_pk")
         }
         if chq_domicilio3
         {
-            ref domicilio3 = new_rec()
+            ref domicilio3 = record.create()
             using domicilio3
             {
                 @"codpos": trim(@@(data,"$codpos3"))
@@ -647,12 +651,15 @@ module "model"
                 @"notas": trim(@@(data,"$dm_notas3"))
                 @"telefonos": trim(@@(data,"$dm_telefonos3"))
                 @"iciudad": @@(data,"#iciudad3")
+                @"numint": trim(@@(data,"$numint3"))
+                @"numext": trim(@@(data,"$numext3"))
             }
 
             proveedor<"domicilio3"> : @@(dbr.save(db,"domicilio",domicilio3),"#sys_pk")
         }
-
+        
         ref entity = entity.create(db,params,proveedor)
+        
         do dbr.commit(db)
 
         exception
@@ -669,5 +676,15 @@ module "model"
             do cxp.prepareView(db,params,data)
             do rise_error(code,error)
         }
+    }
+
+    pdr.update::&db,&params,&data
+    {
+        do rise_error(500,"Acción no implementada.")
+    }
+
+    pdr.delete::&db,&params
+    {
+        do rise_error(500,"Acción no implementada.")
     }
 }

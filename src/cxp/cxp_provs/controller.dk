@@ -2,8 +2,6 @@
 #!
 module "controller"
 {
-    #include "lib.dk"
-
     switch @@(@http_context,"$request/get/_view")
     {
         case "buscar-proveedor"
@@ -65,6 +63,8 @@ module "controller"
             point @blank to pdr.blank
 
             point @create to pdr.create
+            point @update to pdr.update
+            point @delete to pdr.delete
             break
         }
     }

@@ -10,8 +10,12 @@ module "cxp.crear.dk"
     #include "../_lib/lib.dk"
 
     do @context.begin(@crud_context)
+    ref info_dcxp = ifnull(@("&./info_dcxp"),record.create())
     ref infoProv = ifnull(@("&./info_proveedor"),record.create())
     ref listDocumentos = ifnull(@("&./documentos"),list.create())
+
+    // do rise_error(0,to.json(@("&.")))
+    enable_editing = (@("$parameters/_entity_id") == "_new")
 
     new sel_documento
     {
@@ -25,24 +29,26 @@ module "cxp.crear.dk"
         }
         @"value_field": "id"
         @"text_field": "const"
-        @"selected": form("documento","nm",@null)
+        @"selected": form("documento","nm",info_dcxp)
     }
 
     #$
     div(class="container")
     {
+        link(href="#<@CSS_MAIN>" rel="stylesheet")
+        
         div(class="row container-section m-0 px-0 py-2 my-2 border-bottom sticky-top bg-white" id="main_action_bar")
         {
             div(class="col-4 d-flex align-items-center p-0") { h1(class="h5 text-primary tex-no-break m-0"){$"Agregar documento por pagar"} }
             div(class="col-8 d-flex justify-content-end align-items-center p-0 gap-2")
             {
                 a(href="./" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Refrescar"){$"#<@ICON_ARROW_CLOCKWISE>"}
-                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" id="btn_save"){$"#<@ICON_SAVE> Guardar"}
+                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action #<ifstr(enable_editing,'','disable-ctrl')>" id="btn_save"){$"#<@ICON_SAVE> Guardar"}
                 a(href="#<@CXP_DOCS>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Salir"){$"#<@ICON_X_LG>"}
             }
         }
 
-        form(action="." method="POST" enctype="multipart/form-data" id="form_cxp")
+        form(action="." method="POST" enctype="multipart/form-data" id="form_cxp" class="#<ifstr(enable_editing,'','disable-form')>")
         {
             label(class="form-label" "for"="sel_proveedor"){$"Proveedor:"}
             "input-key"(
@@ -78,25 +84,43 @@ module "cxp.crear.dk"
 
                 div(class="col-lg-4") {
                     label(class="form-label" "for"="txt_ref"){$"Referencia:"}
-                    input(type="text" class="form-control rounded-0" name="referencia" id="txt_ref" value="#<form('referencia','tx',@null)>" required="true")
+                    input(type="text" class="form-control rounded-0" name="referencia" id="txt_ref" value="#<form('referencia','tx',info_dcxp)>" required="true")
                 }
                 div(class="col-lg-4") {
+                    #!
+                    fecha_documento = form("fecha_documento","dt",@null)
+                    if @("$parameters/_entity_id") != "_new" { fecha_documento = @@(info_dcxp,"$emision") }
+                    #$
                     label(class="form-label" "for"="txt_fdoc"){$"Fecha del documento:"}
-                    input(type="date" class="form-control rounded-0" name="fecha_documento" id="txt_fdoc" value="#<form('fecha_documento','dt',@null)>" required="true")
+                    input(type="date" class="form-control rounded-0" name="fecha_documento" id="txt_fdoc" value="#<fecha_documento>" required="true")
                 }
                 div(class="col-lg-4") {
+                    #!
+                    fecha_limite = form("fecha_limite_pago","dt",@null)
+                    if @("$parameters/_entity_id") != "_new" { fecha_limite = @@(info_dcxp,"$fultmoratorios") }
+                    #$
                     label(class="form-label" "for"="txt_flimite"){$"Fecha límite de pago:"}
-                    input(type="date" class="form-control rounded-0" name="fecha_limite_pago" id="txt_flimite" value="#<form('fecha_limite_pago','dt',@null)>" required="true")
+                    input(type="date" class="form-control rounded-0" name="fecha_limite_pago" id="txt_flimite" value="#<fecha_limite>" required="true")
                 }
 
                 div(class="col-12")
                 {
                     label(class="form-label" "for"="txt_concepto"){$"Concepto:"}
                     textarea(class="form-control rounded-0" name="concepto" id="txt_concepto" required="true")
-                    { $"#<form('concepto','tx',@null)>" }
+                    {
+                        #!
+                        concepto = form("concepto","tx",@null)
+                        if concepto == "" && @("$parameters/_entity_id") != "_new" { concepto = @@(info_dcxp,"$notas") }
+                        #$
+                        $"#<concepto>"
+                    }
 
                     div(class="form-check") {
-                        input(class="form-check-input" type="checkbox" name="aplicable" id="ch_aplicable" checked="checked")
+                        #!
+                        checked = "checked"
+                        if @("$parameters/_entity_id") != "_new" { checked = form("aplicable","ch",info_dcxp) }
+                        #$
+                        input(class="form-check-input" type="checkbox" name="aplicable" id="ch_aplicable" "#<checked>"="")
                         label(class="form-check-label" "for"="ch_aplicable"){$"Marcar como aplicable"}
                     }
                     // input(type="hidden" name="aplicable" value="true")
@@ -105,7 +129,13 @@ module "cxp.crear.dk"
                 div(class="col-lg-4 col-md-6 col-sm-6 offset-lg-8 offset-md-6 offset-sm-6")
                 {
                     label(class="form-label" "for"="txt_importe"){$"Importe:"}
-                    input(type="number" class="form-control rounded-0" name="importe" min="1" step="0.000001" id="txt_importe" value="#<form('importe','nm',@null)>" required="true")
+                    #!
+                    importe = form('importe','nm',@null)
+                    if importe == 0 && @("$parameters/_entity_id") != "_new" {
+                        importe = (@@(info_dcxp,"#debe") + @@(info_dcxp,"#haber"))
+                    }
+                    #$
+                    input(type="number" class="form-control rounded-0" name="importe" min="1" step="0.000001" id="txt_importe" value="#<importe>" required="true")
                 }
             }
         }

@@ -75,27 +75,10 @@ module
 	@GST_AGREGAR = "/!/cxp/gastos/_new/"
 	@GST_CONSULTAR = "/!/cxp/gastos/@id/"
 	//#endregion
-
-	//#region cxp_banco
-	@CXP_BANCO = "/!/cxp/bancos/"
-	@BNC_AGREGAR = "/!/cxp/bancos/_new/"
-	//#endregion
-
-	//#region cxp_chequera
-	@CXP_CHEQUERA = "/!/cxp/cuentas/"
-	//#endregion
-
-	//#region cxp_movcuenta
-	@CXP_MOVCUENTA = "/!/cxp/movcuenta/"
-	@MOV_MOVIMIENTOS = "/!/cxp/movcuenta/@cuenta/movimientos/"
-	@MOV_DEPOSITO = "/!/cxp/movcuenta/_new/deposito/"
-	@MOV_RETIRO = "/!/cxp/movcuenta/_new/retiro/"
-	@MOV_TRASPASO = "/!/cxp/movcuenta/_new/traspaso/"
-	//#endregion
 	
 	//* ======================================== [ AUTHORIZATIONS ]
 	
-	//********************* Documentos **********************
+	//- - - - - - - - - - - - - - - Documentos [dcxp]
 	@CXP_SEC_PRIVID_AGREGAR_DCXP="FX1-60-10-000"//Agregar documento por pagar
 	@CXP_SEC_PRIVID_APLICAR_ABONO="FX1-60-40-000"
 	@CXP_SEC_PRIVID_APLICAR_BONIFICACION="FX1-60-30-000"
@@ -109,8 +92,7 @@ module
 	@CXP_SEC_PRIVID_APLICAR_PAGOSBONIFICACION_DOCSPAGAR="FX1-60-01-000" 
 	@CXP_SEC_PRIVID_CONSULTAR_DOC="FX1-60-01-000"//Consultar documento
 
-	//************************* Proveedores *************************
-
+	//- - - - - - - - - - - - - - - Proveedores [proveedor]
 	/*
 	- Proveedores con saldo por pagar . 
 			- Verificar si el código del permiso es correcto
@@ -147,40 +129,8 @@ module
 	*/
 	@CXP_SEC_PRIVID_BONIFICACION_PROVD="FX1-60-00-000"
 	
-	//******************** Gastos ******************
+	//- - - - - - - - - - - - - - - Gastos [ut_gasto]
 	@CXP_SEC_PRIVID_CONSULTAR_GASTOS="FX1-20-20-700"
 	@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO="FX1-20-20-702"
 	@CXP_SEC_PRIVID_CONSULTAR_UN_GASTO="FX1-20-20-701"
-	//Bancos
-	@CXP_SEC_PRIVID_CONSULTAR_BANCOS="FX1-10-30-000"
-	@CXP_SEC_PRIVID_ADD_BANCOS="FX1-10-30-002"
-	@CXP_SEC_PRIVID_EDIT_BANCOS="FX1-10-30-003"
-	@CXP_SEC_PRIVID_DEL_BANCOS="FX1-10-30-004"
-	
-	//********************* Cuentas *************************
-
-	/*
-	- Consultar cuentas bancarias. 
-			- Verificar si el código del permiso es correcto
-	*/
-	@CXP_SEC_PRIVID_CONSULTAR_CUENTAS_BANCARIAS="FX1-72-00-000"
-
-	/*
-	- Agregar, editar y eliminar cuentas bancarias
-			- Colocar los códigos de los permisos correctos
-	*/
-	@CXP_SEC_PRIVID_ADD_CUENTA_BANCARIA="FX1-72-00-000"
-	@CXP_SEC_PRIVID_EDIT_CUENTA_BANCARIA="FX1-72-00-000"
-	@CXP_SEC_PRIVID_DEL_CUENTA_BANCARIA="FX1-72-00-000"
-
-	//********************** movcuentas ****************************
-	@CXP_SEC_PRIVID_ADD_DEPOSITO="FX1-72-03-000"
-	@CXP_SEC_PRIVID_ADD_RETIRO="FX1-72-01-000"
-	@CXP_SEC_PRIVID_REALIZAR_TRANSFERENCIA="FX1-72-04-000"
-
-	/*
-	- Estado de cuenta bancaria
-			- Verificar si el código del permiso es correcto
-	*/
-	@CXP_SEC_PRIVID_ESTADO_CUENTA_BANCARIA="FX1-72-00-000"
 }

@@ -4,9 +4,9 @@ module "Controller configs"
 {
 	#include "functions.dkh"
 	#include "serialize.dkh"
-	#include "./movimientos.dkh"
 	#include "_lib/config.dk"
 	#include "_lib/lib.dk"
+	#include "./movimientos.dkh"
 
 	if @@(@http_context,"$session/user/ids") == "" {
 		@http_context<"response/headers/location"> : "/"
@@ -37,9 +37,6 @@ module "Controller configs"
 	do crudl.routes.entity("/documentos/","cxp_docs")
 	do crudl.routes.entity("/proveedores/","cxp_provs")
 	do crudl.routes.entity("/gastos/","ut_gasto")
-	do crudl.routes.entity("/bancos/","cxp_banco")
-	do crudl.routes.entity("/cuentas/","cxp_chequera")
-	do crudl.routes.entity("/movcuenta/","cxp_movcuenta")
 	
 	@dbmvc_path="crudl/"
 	

@@ -35,7 +35,7 @@ program
         cformaspago.csv,
         cstatusadministrativos.csv,
         cstatusorg.csv,
-        ctasaiva.csv,
+        ctasasiva.csv,
         divisa.csv,
         sitem.csv,
         tipoproveedor.csv,
@@ -44,37 +44,18 @@ program
         sys_app_category.csv,
         sys_app_shortcut.csv
     '
-	
+	// Lista de permisos iniciales
 	ref priv_ids=from.json('[
 		"FX1-60-10-000",
 		"FX1-60-40-000",
 		"FX1-60-30-000",
 		"FX1-60-90-000",
 		"FX1-60-01-000",
-		"FX1-60-01-000",
-		"FX1-60-01-000",
 		"FX1-10-260-000",
-		"FX1-60-01-000",
-		"FX1-60-00-000",
-		"FX1-60-00-000",
-		"FX1-60-00-000",
 		"FX1-60-00-000",
 		"FX1-20-20-700",
 		"FX1-20-20-702",
 		"FX1-20-20-701",
-		"FX1-10-30-000",
-		"FX1-10-30-002",
-		"FX1-10-30-003",
-		"FX1-10-30-004",
-		"FX1-72-00-000",
-		"FX1-72-00-000",
-		"FX1-72-00-000",
-		"FX1-72-00-000",
-		"FX1-72-03-000",
-		"FX1-72-01-000",
-		"FX1-72-04-000",
-		"FX1-72-00-000"
-		
 	]')
 
     // =============== EJECUCIÓN DEL PROGRAMA

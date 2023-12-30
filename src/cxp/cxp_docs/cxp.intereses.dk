@@ -50,7 +50,6 @@ module "cxp.intereses.dk"
         {
             input(type="hidden" name="aplicadoa" value="#<@@(info_dcxp,'#sys_pk')>")
             input(type="hidden" name="iproveedor" value="#<@@(info_dcxp,'#iproveedor')>")
-            input(type="hidden" name="destino" value="#<@CXP_DESTINO_APLICACION_INT_MORATORIOS>")
 
             div(class="row")
             {
@@ -157,7 +156,7 @@ module "cxp.intereses.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_referencia"){$"Referencia:"}
                         div(class="col-6") {
-                            input(type="text" class="form-control form-control-sm rounded-0" name="referencia" id="txt_referencia" value="#<@('$input/referencia')>" required="true")
+                            input(type="text" class="form-control form-control-sm rounded-0" name="referencia" id="txt_referencia" value="#<form('referencia','tx',@null)>" required="true")
                         }
                     }
 
@@ -165,7 +164,7 @@ module "cxp.intereses.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_fdoc"){$"Fecha del documento:"}
                         div(class="col-6") {
-                            input(type="date" class="form-control form-control-sm rounded-0" name="fecha_documento" id="txt_fdoc" value="#<@('$input/fecha_documento')>" required="true")
+                            input(type="date" class="form-control form-control-sm rounded-0" name="fecha_documento" id="txt_fdoc" value="#<form('fecha_documento','dt',@null)>" required="true")
                         }
                     }
 
@@ -173,7 +172,7 @@ module "cxp.intereses.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_faplicacion"){$"Fecha de aplicación:"}
                         div(class="col-6") {
-                            input(type="date" class="form-control form-control-sm rounded-0" name="fecha_aplicacion" id="txt_faplicacion" value="#<@('$input/fecha_aplicacion')>" required="true")
+                            input(type="date" class="form-control form-control-sm rounded-0" name="fecha_aplicacion" id="txt_faplicacion" value="#<form('fecha_aplicacion','dt',@null)>" required="true")
                         }
                     }
 
@@ -204,7 +203,13 @@ module "cxp.intereses.dk"
                         label(class="col-auto col-form-label" "for"="txt_notas"){$"Notas:"}
                         div(class="col-6") {
                             textarea(class="form-control form-control-sm rounded-0" name="notas" id="txt_notas" required="true")
-                            { $"#<@('$input/notas')>" }
+                            {
+                                #!
+                                concepto = form("notas","tx",@null)
+                                if concepto == "" { concepto = "Intereses moratorios al documento con referencia " + @@(info_dcxp,'$referencia') }
+                                #$
+                                $"#<concepto>"
+                            }
                         }
                     }
 

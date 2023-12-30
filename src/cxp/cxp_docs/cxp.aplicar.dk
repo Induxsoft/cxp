@@ -7,7 +7,7 @@ module "cxp.aplicar.dk"
     #include "uielements.dkl"
     #include "../_lib/icons.dk"
     #include "../_lib/config.dk"
-    #include "lib.dk"
+    #include "../_lib/lib.dk"
     
     do @context.begin(@crud_context)
 

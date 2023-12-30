@@ -62,6 +62,22 @@ module "lib.dk"
                 if value <= 0 { value = @@(obj,"#"+name) }
                 return value
             }
+            case "ch"
+            {
+                bool = trim(@("$input/"+name))
+                if bool == "" { bool = trim(@("$./form/"+name)) }
+                if bool == "" { bool = trim(@@(obj,"$"+name)) }
+                
+                return ifstr(parse.bool(bool),"checked","")
+            }
+            case "rd"
+            {
+                bool = trim(@("$input/"+name))
+                if bool == "" { bool = trim(@("$./form/"+name)) }
+                if bool == "" { bool = trim(@@(obj,"$"+name)) }
+                
+                return ifstr(parse.bool(bool),"checked","")
+            }
             case "dt"
             {
                 fecha = trim(@("$input/"+name))
@@ -82,7 +98,14 @@ module "lib.dk"
             @"sys_guid": uuid()
             @"sys_dtcreated*": now()
             @"sys_timestamp*": now()
+            // @"sys_info": ""
+            // @"sys_user": ""
+            // @"sys_lastuser": ""
+            // @"sys_exported": @false
+            // @"sys_dtexported*": @null
             @"sys_recver": 0
+            // @"sys_deleted": @false
+            // @"sys_lock": @false
         }
         return record
     }
