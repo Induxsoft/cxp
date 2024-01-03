@@ -13,7 +13,6 @@ module "cxp.pago.dk"
     ref info_dcxp = ifnull(@("&./info_dcxp"),record.create())
     ref dvsPred = ifnull(@("&./dvs_pred"),record.create())
 
-    FMT_MONEY = "$ "+"#"+@THOUSANDS_SEPARATOR+"0"+@DECIMAL_SEPARATOR+padright("",@DECIMAL_PRECISION,"0")
     cDIVISA_PRED = field.dstr(dvsPred,"codigo","MXN")
     tCAMBIO_PRED = field.dnum(dvsPred,"tcambio",1)
 
@@ -95,7 +94,7 @@ module "cxp.pago.dk"
 
         form(action="." method="POST" id="form_pagocxp")
         {
-            input(type="hidden" name="aplicadoa" value="#<@@(info_dcxp,'#sys_pk')>")
+            input(type="hidden" name="pkparent" value="#<@@(info_dcxp,'#sys_pk')>")
             input(type="hidden" name="iproveedor" value="#<@@(info_dcxp,'#iproveedor')>")
 
             div(class="row")
@@ -145,7 +144,7 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label fw-bolder"){$"Capital:"}
                         div(class="col-6") {
-                            $"#<format(@@(info_dcxp,'#haber'),FMT_MONEY)>"
+                            $"#<format(@@(info_dcxp,'#haber'),@FMT_MONEY)>"
                         }
                     }
 
@@ -153,7 +152,7 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label fw-bolder"){$"Intereses Financieros:"}
                         div(class="col-6") {
-                            $"#<format(@@(info_dcxp,'#intereses_financieros'),FMT_MONEY)>"
+                            $"#<format(@@(info_dcxp,'#intfinancieros'),@FMT_MONEY)>"
                         }
                     }
 
@@ -161,7 +160,7 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label fw-bolder"){$"Intereses Moratorios:"}
                         div(class="col-6") {
-                            $"#<format(@@(info_dcxp,'#intereses_moratorios'),FMT_MONEY)>"
+                            $"#<format(@@(info_dcxp,'#intmoratorios'),@FMT_MONEY)>"
                         }
                     }
 
@@ -169,7 +168,7 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label fw-bolder"){$"Bonificaciones:"}
                         div(class="col-6") {
-                            $"#<format(@@(info_dcxp,'#bonificaciones'),FMT_MONEY)>"
+                            $"#<format(@@(info_dcxp,'#bonificaciones'),@FMT_MONEY)>"
                         }
                     }
 
@@ -177,7 +176,7 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label fw-bolder"){$"Saldo:"}
                         div(class="col-6") {
-                            $"#<format(@@(info_dcxp,'#saldo'),FMT_MONEY)>"
+                            $"#<format(@@(info_dcxp,'#saldo'),@FMT_MONEY)>"
                         }
                     }
                     
@@ -285,7 +284,7 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_fdoc"){$"Fecha del documento:"}
                         div(class="col-6") {
-                            input(type="date" class="form-control form-control-sm rounded-0" name="fecha_documento" id="txt_fdoc" value="#<form('fecha_documento','dt',@null)>" required="true")
+                            input(type="date" class="form-control form-control-sm rounded-0" name="fecha" id="txt_fdoc" value="#<form('fecha','dt',@null)>" required="true")
                         }
                     }
 
@@ -293,7 +292,7 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_faplicacion"){$"Fecha de aplicación:"}
                         div(class="col-6") {
-                            input(type="date" class="form-control form-control-sm rounded-0" name="fecha_aplicacion" id="txt_faplicacion" value="#<form('fecha_aplicacion','dt',@null)>" required="true")
+                            input(type="date" class="form-control form-control-sm rounded-0" name="faplicacion" id="txt_faplicacion" value="#<form('faplicacion','dt',@null)>" required="true")
                         }
                     }
 

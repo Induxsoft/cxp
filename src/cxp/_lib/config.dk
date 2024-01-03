@@ -2,15 +2,7 @@
 #!
 module
 {
-	#include "dbr.dkh"
-	#include "dbr.vars.dkl"
-	#include "dbr.security.dkl"
-	#include "dbr.events.dkl"
-	#include "crudl/crudl.dk"
-	
 	//* ======================================== [ CONSTANTS ]
-	ref database = crudl.database()
-	@SYS_PK_DIVISA_PREDETERMINADA = parse.num(dbr.vars.get(database,"FXCA013"))
 
 	@CXP_DESTINO_APLICACION_INT_FINANCIEROS = 1
     @CXP_DESTINO_APLICACION_INT_MORATORIOS = 2
@@ -32,10 +24,19 @@ module
 	@DECIMAL_SEPARATOR = "."
 	@DECIMAL_PRECISION = 2
 
+	/**
+	* Clave Primaria (PK) de la divisa predeterminada
+	* 0 : Se obtiene la divisa de las variables globales (glovalbar), 1 por defecto si no existe.
+	*/
+	@IDIVISA_PREDETERMINADA = 0
+
 	// Ubicacion predeterminada
 	@PAIS = "México"
 	@ESTADO = "Chiapas"
 	@CIUDAD = "Tuxtla Gutiérrez"
+
+	// Formato de moneda (dkl)
+	@FMT_MONEY = "$ "+"#"+@THOUSANDS_SEPARATOR+"0"+@DECIMAL_SEPARATOR+padright("",@DECIMAL_PRECISION,"0")
 
 	//* ======================================== [ _STATIC RESOURCES ]
 	@CSS_MAIN = "/$/cxp/css/main.css"
@@ -67,7 +68,7 @@ module
 	@DOC_BONIFICACION = "/!/cxp/documentos/@doc/bonificacion/"
 	@DOC_PAGOS = "/!/cxp/documentos/@doc/pago/"
 	@DOC_INTMORATORIOS = "/!/cxp/documentos/@doc/intmoratorios/"
-	@DOC_APLICAR = "/!/cxp/documentos/@id/aplicar/"
+	@DOC_APLICAR = "/!/cxp/documentos/@doc/aplicar/"
 	//#endregion
 
 	//#region ut_gasto

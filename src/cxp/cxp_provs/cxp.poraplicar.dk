@@ -94,7 +94,7 @@ module "cxp.poraplicar.dk"
                         return;
                     }
                     var data=table.DataArray[table.CurrentRowIndex()];
-                    window.location.href=url.replace("@id",data.sys_pk);
+                    window.location.href=url.replace("@doc",data.sys_pk);
                 }
             '
         }

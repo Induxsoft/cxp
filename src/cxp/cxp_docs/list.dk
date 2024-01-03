@@ -23,6 +23,7 @@ module "cxp.list"
                 button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="documento.goTo('#<@DOC_PAGOS>')"){"Pagar documento"}
                 button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="documento.goTo('#<@DOC_BONIFICACION>')"){"Bonificaciones"}
                 button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="documento.goTo('#<@DOC_INTMORATORIOS>')"){"Int. Moratorios"}
+                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="documento.goTo('#<@DOC_APLICAR>')"){"Aplicar abonos"}
             }
         }
 

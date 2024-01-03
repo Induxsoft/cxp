@@ -4,8 +4,14 @@ module "Controller configs"
 {
 	#include "functions.dkh"
 	#include "serialize.dkh"
+	#include "dbr.dkh"
+	#include "dbr.vars.dkl"
+	#include "dbr.security.dkl"
+	#include "dbr.events.dkl"
+	#include "crudl/crudl.dk"
 	#include "_lib/config.dk"
 	#include "_lib/lib.dk"
+	#include "../efectivo/movimientos.dkh"
 	#include "./movimientos.dkh"
 
 	if @@(@http_context,"$session/user/ids") == "" {

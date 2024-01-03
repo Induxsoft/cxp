@@ -1,112 +1,38 @@
 #include "dkli.dkh"
 #!
-module "movimientos.dkh:erp.cxp.movimientos"
+module ":erp.cxp.movimientos"
 {
-    retiro::&db,&data
+    saveCxP::&db,&data
     {
-        start_transaction = @false
+        if trim(@@(data,"$referencia")) == "" { do rise_error(500,"Debe indicar una referencia `referencia`.") }
+        if trim(@@(data,"$aplicacion")) == "" { do rise_error(500,"Debe indicar la fecha de aplicación `aplicacion`.") }
+        if trim(@@(data,"$fecha")) == "" { do rise_error(500,"Debe indicar la fecha del documento `fecha`.") }
+        if @@(data,"#documento") <= 0 { do rise_error(500,"Debe indicar el tipo de documento `documento`.") }
+        if @@(data,"#iproveedor") <= 0 { do rise_error(500,"No se ha indicado un proveedor `iproveedor`.") }
 
-        if not(dbr.in_transaction(db)) {
-            do dbr.begin(db)
-            start_transaction = @true
-        }
-
-        new retiro
-        {
-            @"sys_pk": 0
-            @"sys_guid": uuid()
-            @"sys_dtcreated*": now()
-            @"sys_timestamp*": now()
-            @"sys_recver": 0
-            @"aplicacion*": str2dt(@@(data,"$faplicacion"))
-            @"auditado": @true
-            @"beneficiario": @@(data,"$beneficiario")
-            @"cancelado": @false
-            @"conciliado": parse.bool(@@(data,"$conciliado"))
-            @"contabilizado": @false
-            @"egreso": @@(data,"#importe")
-            @"fecha*": str2dt(@@(data,"$fecha"))
-            @"ingreso": 0.0
-            @"notas": @@(data,"$concepto")
-            @"referencia": @@(data,"$referencia")
-            @"tipo": @@(data,"#documento")
-            @"icategoria": @@(data,"#icategoria")
-            @"icuenta": @@(data,"#icuenta")
-            @"uf_iproveedor": @@(data,"#iproveedor")
-        }
-        do dbr.insert(db,"movcuenta",retiro)
-
-        if start_transaction { do dbr.commit(db) }
-        return dbr.num(db,"select last_insert_id();",@null)
-
-        exception
-        {
-            if dbr.in_transaction(db) { do dbr.rollback(db) }
-            do rise_error(last_error_code(),last_error())
-        }
-    }
-
-    deposito::&db,&data
-    {
-        start_transaction = @false
-
-        if not(dbr.in_transaction(db)) {
-            do dbr.begin(db)
-            start_transaction = @true
-        }
-
-        new deposito
-        {
-            @"sys_pk": 0
-            @"sys_guid": uuid()
-            @"sys_dtcreated*": now()
-            @"sys_timestamp*": now()
-            @"sys_recver": 0
-            @"aplicacion*": str2dt(@@(data,"$faplicacion"))
-            @"auditado": @true
-            @"cancelado": @false
-            @"conciliado": parse.bool(@@(data,"$conciliado"))
-            @"contabilizado": @false
-            @"egreso": 0.0
-            @"fecha*": str2dt(@@(data,"$fecha"))
-            @"ingreso": @@(data,"#importe")
-            @"notas": @@(data,"$concepto")
-            @"referencia": @@(data,"$referencia")
-            @"tipo": @@(data,"#documento")
-            @"icategoria": @@(data,"#icategoria")
-            @"icuenta": @@(data,"#icuenta")
-            @"uf_iproveedor": @@(data,"#iproveedor")
-        }
-        do dbr.insert(db,"movcuenta",deposito)
-
-        if start_transaction { do dbr.commit(db) }
-        return dbr.num(db,"select last_insert_id();",@null)
-        
-        exception
-        {
-            if dbr.in_transaction(db) { do dbr.rollback(db) }
-            do rise_error(last_error_code(),last_error())
-        }
-    }
-
-    generarCxP::
-    {
         new dcxp
         {
             @"sys_pk": 0
             @"sys_guid": uuid()
             @"sys_dtcreated*": now()
             @"sys_timestamp*": now()
+            @"sys_info": ""
+            @"sys_user": ""
+            @"sys_lastuser": ""
+            @"sys_exported": @false
+            @"sys_dtexported*": @null
             @"sys_recver": 0
+            @"sys_deleted": @false
+            @"sys_lock": 0
             @"aplicable": @true
-            @"aplicacion*": @null
+            @"aplicacion*": now()
             @"auditado": @false
-            @"basecm": 0
+            @"basecm*": @null
             @"bonificaciones": 0.0
             @"contabilizado": @false
             @"debe": 0.0
-            @"documento": 0
-            @"fecha*": @null
+            @"documento*": @null
+            @"fecha*": now()
             @"fultmoratorios*": @null
             @"haber": 0.0
             @"intfinancieros": 0.0
@@ -121,15 +47,117 @@ module "movimientos.dkh:erp.cxp.movimientos"
             @"referencia": ""
             @"relacionadoa": 0
             @"tasamoratorios": 0.0
-            @"tipocambio": 1
+            @"tipocambio": 0.0
             @"xaplicar": 0.0
             @"icompra*": @null
             @"imovcaja*": @null
             @"imovchequera*": @null
             @"iproveedor*": @null
             @"uf_igasto*": @null
+            @"uuid_fiscal": ""
         }
-        return dcxp
+
+        new col_type
+        {
+            @"sys_pk": "int"
+            @"sys_guid": "str"
+            @"sys_dtcreated": "date"
+            @"sys_timestamp": "date"
+            @"sys_info": "str"
+            @"sys_user": "str"
+            @"sys_lastuser": "str"
+            @"sys_exported": "bool"
+            @"sys_dtexported": "date"
+            @"sys_recver": "int"
+            @"sys_deleted": "bool"
+            @"sys_lock": "int"
+            @"aplicable": "bool"
+            @"aplicacion": "date"
+            @"auditado": "bool"
+            @"basecm": "int"
+            @"bonificaciones": "dec"
+            @"contabilizado": "bool"
+            @"debe": "dec"
+            @"documento": "int"
+            @"fecha": "date"
+            @"fultmoratorios": "date"
+            @"haber": "dec"
+            @"intfinancieros": "dec"
+            @"intmoratorios": "dec"
+            @"notas": "str"
+            @"pagos": "dec"
+            @"partida": "str"
+            @"poliza": "str"
+            @"porimpuestocap": "dec"
+            @"porimpuestofin": "dec"
+            @"porimpuestomor": "dec"
+            @"referencia": "str"
+            @"relacionadoa": "int"
+            @"tasamoratorios": "dec"
+            @"tipocambio": "dec"
+            @"xaplicar": "dec"
+            @"icompra": "int"
+            @"imovcaja": "int"
+            @"imovchequera": "int"
+            @"iproveedor": "int"
+            @"uf_igasto": "int"
+            @"uuid_fiscal": "str"
+        }
+
+        ref fields = list.create_from_fields(data)
+        for i = 0; i < list.count(fields)
+        {
+            field = tolower(trim(list.str(fields,i)))
+            if field.exist(dcxp,field)
+            {
+                switch @@(col_type,field)
+                {
+                    case "str"
+                    {
+                        dcxp<field> : trim(@@(data,"$"+field))
+                        break
+                    }
+                    case "int"
+                    {
+                        dcxp<field> : trun(@@(data,"#"+field))
+                        break
+                    }
+                    case "dec"
+                    {
+                        dcxp<field> : @@(data,"#"+field)
+                        break
+                    }
+                    case "bool"
+                    {
+                        dcxp<field> : parse.bool(trim(@@(data,"$"+field)))
+                        break
+                    }
+                    case "date"
+                    {
+                        dcxp<field+"*"> : str2dt(trim(@@(data,"$"+field)))
+                        break
+                    }
+                }
+            }
+        }
+
+        start_transaction = @false
+
+        if not(dbr.in_transaction(db)) {
+            do dbr.begin(db)
+            start_transaction = @true
+        }
+        
+        do dbr.insert(db,"dcxp",dcxp)
+        
+        if start_transaction { do dbr.commit(db) }
+        return dbr.num(db,"select last_insert_id();",@null)
+
+        exception
+        {
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            do rise_error(last_error_code(),last_error())
+        }
     }
 
     determinarImporteCxP::&cxp,importe
@@ -141,11 +169,12 @@ module "movimientos.dkh:erp.cxp.movimientos"
         * 5: cNota_de_crédito
         * 6: cTickets
         * 17: cNota_de_cargo
+        * 18: cPagaré
         * 19: cRecibo
         */
         
         afecta_debe = (doc==5 || doc==19)
-        afecta_haber = (doc==3 || doc==4 || doc==6 || doc==17)
+        afecta_haber = (doc==3 || doc==4 || doc==6 || doc==17 || doc==18)
 
         if afecta_debe
         {
@@ -166,6 +195,23 @@ module "movimientos.dkh:erp.cxp.movimientos"
 
     crearCxP::&db,&data
     {
+        namespace "erp.cxp.movimientos"
+
+        new dcxp
+        {
+            @"aplicable": @@(data,"$aplicable")
+            @"aplicacion": @@(data,"$flimite")
+            @"basecm": 0
+            @"documento": @@(data,"#documento")
+            @"fecha": @@(data,"$fecha")
+            @"fultmoratorios": @@(data,"$flimite")
+            @"notas": @@(data,"$concepto")
+            @"referencia": @@(data,"$referencia")
+            @"tipocambio": @@(data,"#tcambio")
+            @"iproveedor": @@(data,"#iproveedor")
+        }
+        do determinarImporteCxP(dcxp,@@(data,"#importe"))
+
         start_transaction = @false
 
         if not(dbr.in_transaction(db)) {
@@ -173,48 +219,353 @@ module "movimientos.dkh:erp.cxp.movimientos"
             start_transaction = @true
         }
 
-        ref dfields = split("aplicable:bool,aplicacion:date,auditado:bool,basecm:num,bonificaciones:num,contabilizado:bool,debe:num,documento:num,fecha:date,fultmoratorios:date,haber:num,intfinancieros:num,intmoratorios:num,notas:str,pagos:num,partida:str,poliza:str,porimpuestocap:num,porimpuestofin:num,porimpuestomor:num,referencia:str,relacionadoa:num,tasamoratorios:num,tipocambio:num,xaplicar:num,icompra:num,imovcaja:num,imovchequera:num,iproveedor:num,uf_igasto:num",",")
-
-        ref dcxp = erp.cxp.movimientos.generarCxP()
-        for i = 0; i < list.count(dfields); i+1
-        {
-            ref item = split(list.str(dfields,i),":")
-            field = list.str(item,0)
-            type = list.str(item,1)
-
-            if field.exist(data,field)
-            {
-                switch type
-                {
-                    case "str"
-                    {
-                        dcxp<field> : trim(@@(data,"$"+field))
-                        break
-                    }
-                    case "num"
-                    {
-                        dcxp<field> : @@(data,"#"+field)
-                        break
-                    }
-                    case "bool"
-                    {
-                        dcxp<field> : parse.bool(trim(@@(data,"$"+field)))
-                        break
-                    }
-                    case "date"
-                    {
-                        dcxp<field+"*"> : str2dt(trim(@@(data,"$"+field)))
-                        break
-                    }
-                }
-            }
-        }
-        do erp.cxp.movimientos.determinarImporteCxP(dcxp,@@(data,"#importe"))
-        
-        do dbr.insert(db,"dcxp",dcxp)
+        // Generar documento por pagar (dcxp).
+        lastId = saveCxP(db,dcxp)
+        // Afectar saldo del proveedor.
+        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) + @importe) WHERE sys_pk = @iproveedor;",data)
         
         if start_transaction { do dbr.commit(db) }
-        return dbr.num(db,"select last_insert_id();",@null)
+        return lastId
+
+        exception
+        {
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            do rise_error(last_error_code(),last_error())
+        }
+    }
+
+    pagarCxP::&db,&data
+    {
+        namespace "erp.cxp.movimientos"
+
+        tcambio_doc = @@(data,"#tipocambio")
+        tcambio_ret = @@(data,"#tcambio_retiro")
+        
+        importe_doc = @@(data,"#importe")
+        importe_ret = (importe_doc * tcambio_doc)
+        importe_ret = (importe_ret / tcambio_ret)
+
+        new retiro
+        {
+            @"faplicacion": trim(@@(data,"$faplicacion"))
+            @"beneficiario": trim(@@(data,"$beneficiario"))
+            @"conciliado": parse.bool(@@(data,"$conciliado"))
+            @"importe": importe_ret
+            @"fecha": trim(@@(data,"$fecha"))
+            @"concepto": trim(@@(data,"$notas"))
+            @"referencia": @@(data,"$referencia")
+            @"documento": @@(data,"#documento_retiro")
+            @"icategoria": @@(data,"#categoria_retiro")
+            @"icuenta": @@(data,"#cuenta_retiro")
+            @"iproveedor": @@(data,"#iproveedor")
+        }
+
+        new dcxp
+        {
+            @"aplicable": @false
+            @"aplicacion": @@(data,"$faplicacion")
+            @"basecm": 0
+            @"documento": @@(data,"#documento")
+            @"fecha": @@(data,"$fecha")
+            @"fultmoratorios": @@(data,"$faplicacion")
+            @"notas": @@(data,"$notas")
+            @"referencia": @@(data,"$referencia")
+            @"tipocambio": @@(data,"#tipocambio")
+            @"iproveedor": @@(data,"#iproveedor")
+        }
+
+        new aplcxp
+        {
+            @"sys_pk": 0
+            @"sys_guid": uuid()
+            @"sys_dtcreated*": now()
+            @"sys_timestamp*": now()
+            @"sys_recver": 0
+            @"destino": @CXP_DESTINO_APLICACION_PAGOS
+            @"fecha*": str2dt(@@(data,"$fecha"))
+            @"importe": importe_doc
+            @"aplicadoa": @@(data,"#pkparent")
+        }
+
+        start_transaction = @false
+
+        if not(dbr.in_transaction(db)) {
+            do dbr.begin(db)
+            start_transaction = @true
+        }
+
+        new p
+        {
+            @"iproveedor": @@(data,"#iproveedor")
+            @"importe_doc": importe_doc
+            @"pkparent": @@(data,"#pkparent")
+        }
+
+        // Realizar retiro a la cuenta.
+        dcxp<"imovchequera"> : erp.efectivo.movimientos.retiro(db,retiro)
+        // Generar documento por pagar (dcxp).
+        do determinarImporteCxP(dcxp,importe_doc)
+        aplcxp<"fk_dcxp_aplicadoa"> : saveCxP(db,dcxp)
+        // Aplicar pago.
+        do dbr.insert(db,"aplcxp",aplcxp)
+        
+        sql_aplicar_pago = "UPDATE dcxp SET pagos = (IFNULL(pagos,0) + @importe_doc) WHERE sys_pk = @pkparent 
+        AND ((IFNULL(haber,0) + IFNULL(intmoratorios,0) - IFNULL(bonificaciones,0) - IFNULL(pagos,0) - @importe_doc) >= 0);"
+        if not(dbr.execute(db,sql_aplicar_pago,p)) { do rise_error(500,"Documento destino no encontrado o el importe a pagar es mayor al saldo.") }
+        // Afectar saldo del proveedor.
+        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe_doc) WHERE sys_pk = @iproveedor;",p)
+
+        if start_transaction { do dbr.commit(db) }
+
+        exception
+        {
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            do rise_error(last_error_code(),last_error())
+        }
+    }
+
+    bonificarCxP::&db,&data
+    {
+        namespace "erp.cxp.movimientos"
+
+        new dcxp
+        {
+            @"aplicable": @false
+            @"aplicacion": @@(data,"$faplicacion")
+            @"basecm": 0
+            @"documento": @@(data,"#documento")
+            @"fecha": @@(data,"$fecha")
+            @"fultmoratorios": @@(data,"$faplicacion")
+            @"notas": @@(data,"$notas")
+            @"referencia": @@(data,"$referencia")
+            @"tipocambio": @@(data,"#tipocambio")
+            @"iproveedor": @@(data,"#iproveedor")
+        }
+
+        new aplcxp
+        {
+            @"sys_pk": 0
+            @"sys_guid": uuid()
+            @"sys_dtcreated*": now()
+            @"sys_timestamp*": now()
+            @"sys_recver": 0
+            @"destino": @CXP_DESTINO_APLICACION_BONIFICACIONES
+            @"fecha*": str2dt(@@(data,"$fecha"))
+            @"importe": @@(data,"#importe")
+            @"aplicadoa": @@(data,"#pkparent")
+        }
+
+        start_transaction = @false
+
+        if not(dbr.in_transaction(db)) {
+            do dbr.begin(db)
+            start_transaction = @true
+        }
+
+        new p
+        {
+            @"iproveedor": @@(data,"#iproveedor")
+            @"importe": @@(data,"#importe")
+            @"pkparent": @@(data,"#pkparent")
+        }
+
+        // Generar documento por pagar (dcxp).
+        do determinarImporteCxP(dcxp,@@(data,"#importe"))
+        aplcxp<"fk_dcxp_aplicadoa"> : saveCxP(db,dcxp)
+        // Aplicar bonificación.
+        do dbr.insert(db,"aplcxp",aplcxp)
+
+        sql_aplicar_bonific = "UPDATE dcxp SET bonificaciones = (IFNULL(bonificaciones,0) + @importe) WHERE sys_pk = @pkparent 
+        AND ((IFNULL(haber,0) + IFNULL(intmoratorios,0) - IFNULL(bonificaciones,0) - IFNULL(pagos,0) - @importe) >= 0);"
+        if not(dbr.execute(db,sql_aplicar_bonific,p)) { do rise_error(500,"Documento destino no encontrado o la bonificación es mayor al saldo") }
+        // Afectar saldo del proveedor.
+        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe) WHERE sys_pk = @iproveedor;",p)
+
+        if start_transaction { do dbr.commit(db) }
+
+        exception
+        {
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            do rise_error(last_error_code(),last_error())
+        }
+    }
+
+    aplicarIntMor::&db,&data
+    {
+        namespace "erp.cxp.movimientos"
+
+        new dcxp
+        {
+            @"aplicable": @false
+            @"aplicacion": @@(data,"$faplicacion")
+            @"basecm": 0
+            @"documento": @@(data,"#documento")
+            @"fecha": @@(data,"$fecha")
+            @"fultmoratorios": @@(data,"$faplicacion")
+            @"notas": @@(data,"$notas")
+            @"referencia": @@(data,"$referencia")
+            @"tipocambio": @@(data,"#tipocambio")
+            @"iproveedor": @@(data,"#iproveedor")
+        }
+
+        new aplcxp
+        {
+            @"sys_pk": 0
+            @"sys_guid": uuid()
+            @"sys_dtcreated*": now()
+            @"sys_timestamp*": now()
+            @"sys_recver": 0
+            @"destino": @CXP_DESTINO_APLICACION_INT_MORATORIOS
+            @"fecha*": str2dt(@@(data,"$fecha"))
+            @"importe": @@(data,"#importe")
+            @"aplicadoa": @@(data,"#pkparent")
+        }
+
+        start_transaction = @false
+
+        if not(dbr.in_transaction(db)) {
+            do dbr.begin(db)
+            start_transaction = @true
+        }
+
+        new p
+        {
+            @"iproveedor": @@(data,"#iproveedor")
+            @"importe": @@(data,"#importe")
+            @"pkparent": @@(data,"#pkparent")
+        }
+
+        // Generar documento por pagar (dcxp).
+        do determinarImporteCxP(dcxp,@@(data,"#importe"))
+        aplcxp<"fk_dcxp_aplicadoa"> : saveCxP(db,dcxp)
+        // Aplicar IntMor
+        do dbr.insert(db,"aplcxp",aplcxp)
+
+        sql_aplicar_intmor = "UPDATE dcxp SET intmoratorios = (IFNULL(intmoratorios,0) + @importe) WHERE sys_pk = @pkparent 
+        AND ((IFNULL(haber,0) + IFNULL(intmoratorios,0) - IFNULL(bonificaciones,0) - IFNULL(pagos,0) - @importe) >= 0);"
+        if not(dbr.execute(db,sql_aplicar_intmor,p)) { do rise_error(500,"Documento destino no encontrado o el importe es mayor al saldo.") }
+        // Afectar saldo del proveedor
+        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) + @importe) WHERE sys_pk = @iproveedor;",p)
+
+        if start_transaction { do dbr.commit(db) }
+
+        exception
+        {
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            do rise_error(last_error_code(),last_error())
+        }
+    }
+
+    pagarProveedor::&db,&data
+    {
+        namespace "erp.cxp.movimientos"
+
+        tcambio_pdr = @@(data,"#tcambio")
+        tcambio_ret = @@(data,"#tcambio_retiro")
+        
+        importe_pdr = @@(data,"#importe")
+        importe_ret = (importe_pdr * tcambio_pdr)
+        importe_ret = (importe_ret / tcambio_ret)
+
+        new retiro
+        {
+            @"faplicacion": trim(@@(data,"$faplicacion"))
+            @"beneficiario": trim(@@(data,"$beneficiario"))
+            @"conciliado": parse.bool(@@(data,"$conciliado"))
+            @"importe": importe_ret
+            @"fecha": trim(@@(data,"$fecha"))
+            @"concepto": trim(@@(data,"$notas"))
+            @"referencia": @@(data,"$referencia")
+            @"documento": @@(data,"#documento_retiro")
+            @"icategoria": @@(data,"#categoria_retiro")
+            @"icuenta": @@(data,"#cuenta_retiro")
+            @"iproveedor": @@(data,"#iproveedor")
+        }
+
+        new dcxp
+        {
+            @"aplicable": @false
+            @"aplicacion": @@(data,"$faplicacion")
+            @"basecm": 0
+            @"documento": @@(data,"#documento")
+            @"fecha": @@(data,"$fecha")
+            @"fultmoratorios": @@(data,"$faplicacion")
+            @"notas": @@(data,"$notas")
+            @"referencia": @@(data,"$referencia")
+            @"tipocambio": @@(data,"#tcambio")
+            @"xaplicar": importe_pdr
+            @"iproveedor": @@(data,"#iproveedor")
+        }
+
+        start_transaction = @false
+
+        if not(dbr.in_transaction(db)) {
+            do dbr.begin(db)
+            start_transaction = @true
+        }
+
+        new p
+        {
+            @"iproveedor": @@(data,"#iproveedor")
+            @"importe_pdr": importe_pdr
+        }
+
+        // Realizar retiro a la cuenta.
+        dcxp<"imovchequera"> : erp.efectivo.movimientos.retiro(db,retiro)
+        // Generar documento por pagar (dcxp).
+        do determinarImporteCxP(dcxp,importe_pdr)
+        do saveCxP(db,dcxp)
+        // Afectar saldo del proveedor.
+        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe_pdr) WHERE sys_pk = @iproveedor;",p)
+
+        if start_transaction { do dbr.commit(db) }
+
+        exception
+        {
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            do rise_error(last_error_code(),last_error())
+        }
+    }
+
+    bonificarProveedor::&db,&data
+    {
+        namespace "erp.cxp.movimientos"
+
+        new dcxp
+        {
+            @"aplicable": @false
+            @"aplicacion": @@(data,"$faplicacion")
+            @"basecm": 0
+            @"documento": @@(data,"#documento")
+            @"fecha": @@(data,"$fecha")
+            @"fultmoratorios": @@(data,"$faplicacion")
+            @"notas": @@(data,"$notas")
+            @"referencia": @@(data,"$referencia")
+            @"tipocambio": @@(data,"#tcambio")
+            @"xaplicar": @@(data,"#importe")
+            @"iproveedor": @@(data,"#iproveedor")
+        }
+        do determinarImporteCxP(dcxp,@@(data,"#importe"))
+
+        start_transaction = @false
+
+        if not(dbr.in_transaction(db)) {
+            do dbr.begin(db)
+            start_transaction = @true
+        }
+
+        new p
+        {
+            @"iproveedor": @@(data,"#iproveedor")
+            @"importe": @@(data,"#importe")
+        }
+
+        // Generar documento por pagar (dcxp).
+        do saveCxP(db,dcxp)
+        // Afectar saldo del proveedor.
+        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe) WHERE sys_pk = @iproveedor;",p)
+
+        if start_transaction { do dbr.commit(db) }
 
         exception
         {

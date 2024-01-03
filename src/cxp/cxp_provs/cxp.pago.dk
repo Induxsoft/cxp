@@ -215,7 +215,7 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_fdoc"){$"Fecha del documento:"}
                         div(class="col-6") {
-                            input(type="date" class="form-control form-control-sm rounded-0" name="fecha_documento" id="txt_fdoc" value="#<form('fecha_documento','dt',@null)>" required="true")
+                            input(type="date" class="form-control form-control-sm rounded-0" name="fecha" id="txt_fdoc" value="#<form('fecha','dt',@null)>" required="true")
                         }
                     }
 
@@ -223,7 +223,7 @@ module "cxp.pago.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_faplicacion"){$"Fecha de aplicación:"}
                         div(class="col-6") {
-                            input(type="date" class="form-control form-control-sm rounded-0" name="fecha_aplicacion" id="txt_faplicacion" value="#<form('fecha_aplicacion','dt',@null)>" required="true")
+                            input(type="date" class="form-control form-control-sm rounded-0" name="faplicacion" id="txt_faplicacion" value="#<form('faplicacion','dt',@null)>" required="true")
                         }
                     }
 

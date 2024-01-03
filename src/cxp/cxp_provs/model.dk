@@ -159,9 +159,8 @@ module "model"
 
     cxp.prepareView::&db,&params,&data
     {
-        params<"pk_dvs_pred"> : @SYS_PK_DIVISA_PREDETERMINADA
-
-        sql_divisa_predeterminada = "SELECT sys_pk, codigo, tcambio FROM divisa WHERE sys_pk = @pk_dvs_pred;"
+        params<"pk_dvs"> : get_idivisa_predeterminada()
+        sql_divisa_predeterminada = "SELECT sys_pk, codigo, tcambio FROM divisa WHERE sys_pk = @pk_dvs;"
 
         switch @@(params,"$_view")
         {
@@ -247,69 +246,7 @@ module "model"
     {
         do errordet(@false)
         if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado") }
-        
-        referencia = trim(@@(data,"$referencia"))
-        if referencia == "" { do rise_error(500,"Debe indicar una referencia") }
-
-        new p
-        {
-            @"icuenta": @@(data,"#cuenta_retiro")
-            @"referencia": referencia
-        }
-
-        regs = dbr.num(db,"SELECT COUNT(sys_pk) regs FROM movcuenta WHERE icuenta = @icuenta && referencia = @referencia;",p)
-        if regs > 0 { do rise_error(99,"La referencia proporcionada ya se encuentra en uso.") }
-
-        tcambio_pdr = @@(data,"#tcambio")
-        tcambio_ret = @@(data,"#tcambio_retiro")
-        
-        importe_pdr = @@(data,"#importe")
-        importe_ret = (importe_pdr * tcambio_pdr)
-        importe_ret = (importe_ret / tcambio_ret)
-
-        p<"iproveedor"> : @@(data,"#iproveedor")
-        p<"importe_pdr"> : importe_pdr
-
-        new retiro
-        {
-            @"faplicacion": trim(@@(data,"$fecha_aplicacion"))
-            @"beneficiario": trim(@@(data,"$beneficiario"))
-            @"conciliado": parse.bool(@@(data,"$conciliado"))
-            @"importe": importe_ret
-            @"fecha": trim(@@(data,"$fecha_documento"))
-            @"concepto": trim(@@(data,"$notas"))
-            @"referencia": referencia
-            @"documento": @@(data,"#documento_retiro")
-            @"icategoria": @@(data,"#categoria_retiro")
-            @"icuenta": @@(data,"#cuenta_retiro")
-            @"iproveedor": @@(data,"#iproveedor")
-        }
-
-        new dcxp
-        {
-            @"aplicable": @false
-            @"aplicacion": @@(data,"$fecha_aplicacion")
-            @"documento": @@(data,"#documento")
-            @"fecha": @@(data,"$fecha_documento")
-            @"fultmoratorios": @@(data,"$fecha_aplicacion")
-            @"notas": @@(data,"$notas")
-            @"referencia": referencia
-            @"tipocambio": @@(data,"#tcambio")
-            @"xaplicar": importe_pdr
-            @"iproveedor": @@(data,"#iproveedor")
-            @"importe": importe_pdr
-        }
-
-        do dbr.begin(db)
-        
-        // Realizar retiro a la cuenta.
-        dcxp<"imovchequera"> : erp.cxp.movimientos.retiro(db,retiro)
-        // Generar documento por pagar (dcxp).
-        do erp.cxp.movimientos.crearCxP(db,dcxp)
-        // Afectar saldo del proveedor.
-        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe_pdr) WHERE sys_pk = @iproveedor;",p)
-        
-        do dbr.commit(db)
+        do erp.cxp.movimientos.pagarProveedor(db,data)
         @url_redir = @CXP_PROVS
 
         exception
@@ -332,31 +269,7 @@ module "model"
     {
         do errordet(@false)
         if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado")}
-        if trim(@@(data,"$referencia")) == "" { do rise_error(99,"Debe indicar una referencia") }
-        
-        new dcxp
-        {
-            @"aplicable": @false
-            @"aplicacion": @@(data,"$fecha_aplicacion")
-            @"documento": @@(data,"#documento")
-            @"fecha": @@(data,"$fecha_documento")
-            @"fultmoratorios": @@(data,"$fecha_documento")
-            @"notas": @@(data,"$notas")
-            @"referencia": @@(data,"$referencia")
-            @"tipocambio": @@(data,"#tcambio")
-            @"xaplicar": @@(data,"#importe")
-            @"iproveedor": @@(data,"#iproveedor")
-            @"importe": @@(data,"#importe")
-        }
-
-        do dbr.begin(db)
-        
-        // Generar documento por pagar (dcxp).
-        do erp.cxp.movimientos.crearCxP(db,dcxp)
-        // Afectar saldo del proveedor.
-        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe) WHERE sys_pk = @iproveedor;",dcxp)
-        
-        do dbr.commit(db)
+        do erp.cxp.movimientos.bonificarProveedor(db,data)
         @url_redir = @CXP_PROVS
 
         exception
@@ -583,7 +496,7 @@ module "model"
 
     pdr.create::&db,&params,&data
     {
-        do errordet(@true)
+        do errordet(@false)
         @use_transaction = @false
 
         ref fieldsProveedor = split("codcuenta,codigo,curp,diascredito,diasentrega,email,fax,limitecredito,nombre,notas,rfc,saldo,status,tasaiva,telefonos,website,contacto1,contacto2,contacto3,idivisa,izona,tipo,uf_vueltaviajero,uf_tipoop",",")

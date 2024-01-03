@@ -13,6 +13,10 @@ module "cxp.bonificacion.dk"
 
     ref dtprov = ifnull(@("&./info_prov"),record.create())
     ref formData = ifnull(@("&./form"),record.create())
+    ref dvsPred = ifnull(@("&./dvsPred"),record.create())
+
+    cDIVISA_PRED = field.dstr(dvsPred,"codigo","MXN")
+    tCAMBIO_PRED = field.dnum(dvsPred,"tcambio",1)
 
     new sel_documento
     {
@@ -90,7 +94,7 @@ module "cxp.bonificacion.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_fdoc"){$"Fecha del documento:"}
                         div(class="col-6") {
-                            input(type="date" class="form-control rounded-0" name="fecha_documento" id="txt_fdoc" value="#<form('fecha_documento','dt',@null)>" required="true")
+                            input(type="date" class="form-control rounded-0" name="fecha" id="txt_fdoc" value="#<form('fecha','dt',@null)>" required="true")
                         }
                     }
 
@@ -98,7 +102,7 @@ module "cxp.bonificacion.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_faplicacion"){$"Fecha de aplicación:"}
                         div(class="col-6") {
-                            input(type="date" class="form-control rounded-0" name="fecha_aplicacion" id="txt_faplicacion" value="#<form('fecha_aplicacion','dt',@null)>" required="true")
+                            input(type="date" class="form-control rounded-0" name="faplicacion" id="txt_faplicacion" value="#<form('faplicacion','dt',@null)>" required="true")
                         }
                     }
 
@@ -106,7 +110,10 @@ module "cxp.bonificacion.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_tcambio"){$"Tipo de cambio:"}
                         div(class="col-6") {
-                            input(type="number" class="form-control rounded-0" name="tcambio" min="1" step="0.000001" id="txt_tcambio" value="#<form('tcambio','nm',@null)>" required="true")
+                            div(class="input-group") {
+                                input(type="number" class="form-control rounded-0" name="tcambio" min="1" step="0.000001" id="txt_tcambio" value="#<form('tcambio','nm',dtprov)>" required="true")
+                                span(class="input-group-text rounded-0"){$"#<cDIVISA_PRED> = 1 #<@@(dtprov,'$divisa')>"}
+                            }
                         }
                     }
 
@@ -114,7 +121,10 @@ module "cxp.bonificacion.dk"
                     {
                         label(class="col-auto col-form-label" "for"="txt_importe"){$"Importe:"}
                         div(class="col-6") {
-                            input(type="number" class="form-control rounded-0" name="importe" min="1" step="0.000001" id="txt_importe" value="#<form('importe','nm',@null)>" required="")
+                            div(class="input-group") {
+                                input(type="number" class="form-control rounded-0" name="importe" min="1" step="0.000001" id="txt_importe" value="#<form('importe','nm',@null)>" required="")
+                                span(class="input-group-text rounded-0"){$"#<@@(dtprov,'$divisa')>"}
+                            }
                         }
                     }
 

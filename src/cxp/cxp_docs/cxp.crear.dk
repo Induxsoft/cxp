@@ -53,7 +53,7 @@ module "cxp.crear.dk"
             label(class="form-label" "for"="sel_proveedor"){$"Proveedor:"}
             "input-key"(
                 id="sel_proveedor"
-                name="proveedor"
+                name="iproveedor"
                 "data-key"="sys_pk"
                 "data-search"="codigo"
                 "data-text"="nombre"
@@ -88,19 +88,19 @@ module "cxp.crear.dk"
                 }
                 div(class="col-lg-4") {
                     #!
-                    fecha_documento = form("fecha_documento","dt",@null)
+                    fecha_documento = form("fecha","dt",@null)
                     if @("$parameters/_entity_id") != "_new" { fecha_documento = @@(info_dcxp,"$emision") }
                     #$
                     label(class="form-label" "for"="txt_fdoc"){$"Fecha del documento:"}
-                    input(type="date" class="form-control rounded-0" name="fecha_documento" id="txt_fdoc" value="#<fecha_documento>" required="true")
+                    input(type="date" class="form-control rounded-0" name="fecha" id="txt_fdoc" value="#<fecha_documento>" required="true")
                 }
                 div(class="col-lg-4") {
                     #!
-                    fecha_limite = form("fecha_limite_pago","dt",@null)
+                    fecha_limite = form("flimite","dt",@null)
                     if @("$parameters/_entity_id") != "_new" { fecha_limite = @@(info_dcxp,"$fultmoratorios") }
                     #$
                     label(class="form-label" "for"="txt_flimite"){$"Fecha límite de pago:"}
-                    input(type="date" class="form-control rounded-0" name="fecha_limite_pago" id="txt_flimite" value="#<fecha_limite>" required="true")
+                    input(type="date" class="form-control rounded-0" name="flimite" id="txt_flimite" value="#<fecha_limite>" required="true")
                 }
 
                 div(class="col-12")
@@ -123,7 +123,6 @@ module "cxp.crear.dk"
                         input(class="form-check-input" type="checkbox" name="aplicable" id="ch_aplicable" "#<checked>"="")
                         label(class="form-check-label" "for"="ch_aplicable"){$"Marcar como aplicable"}
                     }
-                    // input(type="hidden" name="aplicable" value="true")
                 }
 
                 div(class="col-lg-4 col-md-6 col-sm-6 offset-lg-8 offset-md-6 offset-sm-6")

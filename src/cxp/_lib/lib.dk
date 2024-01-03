@@ -90,6 +90,17 @@ module "lib.dk"
         }
     }
 
+    function get_idivisa_predeterminada()
+    {
+        ref db = crudl.database()
+
+        if not(isset("@IDIVISA_PREDETERMINADA")) { @IDIVISA_PREDETERMINADA = 0 }
+        if @IDIVISA_PREDETERMINADA <= 0 { @IDIVISA_PREDETERMINADA = parse.num(dbr.vars.get(db,"FXCA013")) }
+        if @IDIVISA_PREDETERMINADA <= 0 { @IDIVISA_PREDETERMINADA = 1 }
+        
+        return @IDIVISA_PREDETERMINADA
+    }
+
     function new_rec()
     {
         new record
@@ -105,7 +116,7 @@ module "lib.dk"
             // @"sys_dtexported*": @null
             @"sys_recver": 0
             // @"sys_deleted": @false
-            // @"sys_lock": @false
+            // @"sys_lock": 0
         }
         return record
     }
