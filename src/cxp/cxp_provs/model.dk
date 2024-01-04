@@ -84,9 +84,17 @@ module "model"
             IFNULL(empresa,'') empresa,
             IFNULL(tratamiento,'') tratamiento
         FROM contacto
-        WHERE (apellidos LIKE CONCAT('%',@search,'%') OR nombre LIKE CONCAT('%',@search,'%') OR empresa LIKE CONCAT('%',@search,'%'))
+        WHERE #<condition>
         "
-        return dbr.list(db,sql,params)
+        if trim(@@(params,"$id")) != "" {
+            condition = "(sys_pk = @id OR sys_guid = @id)"
+            return dbr.rec(db,ftext(sql),params)
+        }
+        if trim(@@(params,"$search")) != "" {
+            condition = "(apellidos LIKE CONCAT('%',@search,'%') OR nombre LIKE CONCAT('%',@search,'%') OR empresa LIKE CONCAT('%',@search,'%'))"
+            return dbr.list(db,ftext(sql),params)
+        }
+        return list.create()
     }
 
     cxp.buscarEstado::&db,&params
@@ -204,27 +212,48 @@ module "model"
                 sql_zona = "SELECT sys_pk, nombre AS `text` FROM zona WHERE NOT IFNULL(sys_deleted,0) ORDER BY sys_pk ASC;"
                 sql_status = "SELECT id, const FROM cstatusorg ORDER BY id ASC;"
                 sql_tasasiva = "SELECT id, const FROM ctasasiva ORDER BY id ASC;"
-                sql_domicilio = "SELECT sys_pk, sys_guid, sys_recver, IFNULL(codpos,'') codpos, IFNULL(colonia,'') colonia, IFNULL(direccion,'') direccion, IFNULL(notas,'') notas, IFNULL(telefonos,'') telefonos, iciudad FROM domicilio WHERE #<condition>"
 
                 new p {}
                 ref list_pais = dbr.list(db,sql_pais,@null)
                 ref list_estado = @null
                 ref list_ciudad = @null
 
-                if @@(params,"#_entity_id") > 0
+                if @@(params,"$_entity_id") != "_new"
                 {
+                    sql_domicilio = "
+                    SELECT
+                        dm.sys_pk,
+                        dm.sys_guid,
+                        dm.sys_recver,
+                        IFNULL(dm.codpos,'') codpos,
+                        IFNULL(dm.colonia,'') colonia,
+                        IFNULL(dm.direccion,'') direccion,
+                        IFNULL(dm.numint,'') numint,
+                        IFNULL(dm.numext,'') numext,
+                        IFNULL(dm.telefonos,'') telefonos,
+                        IFNULL(dm.notas,'') notas,
+                        dm.iciudad,
+                        cd.estado iestado,
+                        ed.ipais
+                    FROM domicilio dm
+                        INNER JOIN ciudad cd ON dm.iciudad = cd.sys_pk
+                        INNER JOIN edoprov ed ON cd.estado = ed.sys_pk
+                    WHERE #<condition>
+                    "
+                    ref dtprov = entity.read(db,params)
                     using p
                     {
-                        @"domicilio1": @@(data,"#domicilio1")
-                        @"domicilio2": @@(data,"#domicilio2")
-                        @"domicilio3": @@(data,"#domicilio3")
+                        @"domicilio1": @@(dtprov,"#domicilio1")
+                        @"domicilio2": @@(dtprov,"#domicilio2")
+                        @"domicilio3": @@(dtprov,"#domicilio3")
                     }
                     
-                    condition = "sys_pk = @domicilio1"
+                    data<"dtprov*"> : dtprov
+                    condition = "dm.sys_pk = @domicilio1"
                     data<"domicilio1*"> : dbr.rec(db,ftext(sql_domicilio),p)
-                    condition = "sys_pk = @domicilio2"
+                    condition = "dm.sys_pk = @domicilio2"
                     data<"domicilio2*"> : dbr.rec(db,ftext(sql_domicilio),p)
-                    condition = "sys_pk = @domicilio3"
+                    condition = "dm.sys_pk = @domicilio3"
                     data<"domicilio3*"> : dbr.rec(db,ftext(sql_domicilio),p)
                 }
 
@@ -453,7 +482,7 @@ module "model"
 
     pdr.read::&db,&params
     {
-        ref data = entity.read(db,params)
+        new data {}
         do cxp.prepareView(db,params,data)
         return data
     }
@@ -501,16 +530,12 @@ module "model"
 
         ref fieldsProveedor = split("codcuenta,codigo,curp,diascredito,diasentrega,email,fax,limitecredito,nombre,notas,rfc,saldo,status,tasaiva,telefonos,website,contacto1,contacto2,contacto3,idivisa,izona,tipo,uf_vueltaviajero,uf_tipoop",",")
 
-        ref proveedor = record.create()
-        ref domicilio1 = @null
-        ref domicilio2 = @null
-        ref domicilio3 = @null
-
         chq_domicilio1 = parse.bool(@@(data,"$chq_domicilio1"))
         chq_domicilio2 = parse.bool(@@(data,"$chq_domicilio2"))
         chq_domicilio3 = parse.bool(@@(data,"$chq_domicilio3"))
 
         // Datos del nuevo proveedor
+        ref proveedor = record.create()
         if trim(@@(data,"$codigo")) == "" {
             sql_gen_code = "SELECT (IF(COUNT(*) >= 1,CONCAT('PV',LPAD(CAST(MAX(SUBSTR(codigo,4,4))+1 AS CHAR),'4','0')),'PV0001')) AS codigo FROM proveedor WHERE codigo LIKE 'PV%';"
             proveedor<"codigo"> : dbr.str(db,sql_gen_code,@null)
@@ -521,8 +546,7 @@ module "model"
         // Datos de domicilios
         if chq_domicilio1
         {
-            ref domicilio1 = record.create()
-            using domicilio1
+            new domicilio1
             {
                 @"codpos": trim(@@(data,"$codpos"))
                 @"colonia": trim(@@(data,"$colonia"))
@@ -538,8 +562,7 @@ module "model"
         }
         if chq_domicilio2
         {
-            ref domicilio2 = record.create()
-            using domicilio2
+            new domicilio2
             {
                 @"codpos": trim(@@(data,"$codpos2"))
                 @"colonia": trim(@@(data,"$colonia2"))
@@ -555,8 +578,7 @@ module "model"
         }
         if chq_domicilio3
         {
-            ref domicilio3 = record.create()
-            using domicilio3
+            new domicilio3
             {
                 @"codpos": trim(@@(data,"$codpos3"))
                 @"colonia": trim(@@(data,"$colonia3"))
@@ -571,9 +593,27 @@ module "model"
             proveedor<"domicilio3"> : @@(dbr.save(db,"domicilio",domicilio3),"#sys_pk")
         }
         
-        ref entity = entity.create(db,params,proveedor)
-        
+        ref entity = @@(entity.create(db,params,proveedor),"&dtprov")
         do dbr.commit(db)
+
+        switch toupper(trim(@@(data,"$shortcut")))
+        {
+            case "F6"
+            {
+                @url_redir = replace(@PDR_CONSULTAR,"@proveedor",@@(entity,"$sys_pk"))
+                break
+            }
+            case "F8"
+            {
+                @url_redir = @CXP_PROVS
+                break
+            }
+            case "F9"
+            {
+                @url_redir = @PDR_AGREGAR
+                break
+            }
+        }
 
         exception
         {
@@ -593,7 +633,124 @@ module "model"
 
     pdr.update::&db,&params,&data
     {
-        do rise_error(500,"Acción no implementada.")
+        do errordet(@false)
+        @use_transaction = @false
+
+        if trim(@@(data,"$codigo")) == "" { do rise_error(99,"Es necesario indicar el código del proveedor.") }
+        if trim(@@(data,"$nombre")) == "" { do rise_error(99,"Es necesario indicar un nombre para el proveedor.") }
+        if @@(data,"#tipo") <= 0 { do rise_error(99,"Es necesario indicar el tipo del proveedor.") }
+
+        ref fieldsProveedor = split("codcuenta,codigo,curp,diascredito,diasentrega,email,fax,limitecredito,nombre,notas,rfc,saldo,status,tasaiva,telefonos,website,contacto1,contacto2,contacto3,idivisa,izona,tipo,uf_vueltaviajero,uf_tipoop",",")
+
+        chq_domicilio1 = parse.bool(@@(data,"$chq_domicilio1"))
+        chq_domicilio2 = parse.bool(@@(data,"$chq_domicilio2"))
+        chq_domicilio3 = parse.bool(@@(data,"$chq_domicilio3"))
+
+        // Datos del nuevo proveedor
+        new proveedor
+        {
+            @"sys_pk": @@(data,"#sys_pk")
+            @"sys_timestamp*": now()
+            @"sys_recver": @@(data,"#sys_recver")
+        }
+        do cleanFormData(fieldsProveedor,data,proveedor)
+
+        do dbr.begin(db)
+        // Datos de domicilios
+        if chq_domicilio1
+        {
+            new domicilio1
+            {
+                @"sys_pk": @@(data,"#dm_sys_pk")
+                @"sys_timestamp*": now()
+                @"sys_recver": @@(data,"#dm_sys_recver")
+                @"codpos": trim(@@(data,"$codpos"))
+                @"colonia": trim(@@(data,"$colonia"))
+                @"direccion": "||" + trim(@@(data,"$calle")) + "|" + trim(@@(data,"$numext")) + "|" + trim(@@(data,"$numint")) + "||"
+                @"notas": trim(@@(data,"$dm_notas"))
+                @"telefonos": trim(@@(data,"$dm_telefonos"))
+                @"iciudad": @@(data,"#iciudad")
+                @"numint": trim(@@(data,"$numint"))
+                @"numext": trim(@@(data,"$numext"))
+            }
+            
+            proveedor<"domicilio1"> : @@(dbr.save(db,"domicilio",domicilio1),"#sys_pk")
+        }
+        if chq_domicilio2
+        {
+            new domicilio2
+            {
+                @"sys_pk": @@(data,"#dm_sys_pk2")
+                @"sys_timestamp*": now()
+                @"sys_recver": @@(data,"#dm_sys_recver2")
+                @"codpos": trim(@@(data,"$codpos2"))
+                @"colonia": trim(@@(data,"$colonia2"))
+                @"direccion": "||" + trim(@@(data,"$calle2")) + "|" + trim(@@(data,"$numext2")) + "|" + trim(@@(data,"$numint2")) + "||"
+                @"notas": trim(@@(data,"$dm_notas2"))
+                @"telefonos": trim(@@(data,"$dm_telefonos2"))
+                @"iciudad": @@(data,"#iciudad2")
+                @"numint": trim(@@(data,"$numint2"))
+                @"numext": trim(@@(data,"$numext2"))
+            }
+
+            proveedor<"domicilio2"> : @@(dbr.save(db,"domicilio",domicilio2),"#sys_pk")
+        }
+        if chq_domicilio3
+        {
+            new domicilio3
+            {
+                @"sys_pk": @@(data,"#dm_sys_pk3")
+                @"sys_timestamp*": now()
+                @"sys_recver": @@(data,"#dm_sys_recver3")
+                @"codpos": trim(@@(data,"$codpos3"))
+                @"colonia": trim(@@(data,"$colonia3"))
+                @"direccion": "||" + trim(@@(data,"$calle3")) + "|" + trim(@@(data,"$numext3")) + "|" + trim(@@(data,"$numint3")) + "||"
+                @"notas": trim(@@(data,"$dm_notas3"))
+                @"telefonos": trim(@@(data,"$dm_telefonos3"))
+                @"iciudad": @@(data,"#iciudad3")
+                @"numint": trim(@@(data,"$numint3"))
+                @"numext": trim(@@(data,"$numext3"))
+            }
+
+            proveedor<"domicilio3"> : @@(dbr.save(db,"domicilio",domicilio3),"#sys_pk")
+        }
+        
+        ref entity = @@(entity.update(db,params,proveedor),"&dtprov")
+        do dbr.commit(db)
+
+        switch toupper(trim(@@(data,"$shortcut")))
+        {
+            case "F6"
+            {
+                @url_redir = replace(@PDR_CONSULTAR,"@proveedor",@@(entity,"$sys_pk"))
+                break
+            }
+            case "F8"
+            {
+                @url_redir = @CXP_PROVS
+                break
+            }
+            case "F9"
+            {
+                @url_redir = @PDR_AGREGAR
+                break
+            }
+        }
+
+        exception
+        {
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+
+            ref formData = record.copy(data,"*")
+            code = last_error_code()
+            error = last_error()
+
+            do record.clear(data)
+            data<"form*"> : formData
+            
+            do cxp.prepareView(db,params,data)
+            do rise_error(code,error)
+        }
     }
 
     pdr.delete::&db,&params

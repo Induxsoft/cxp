@@ -62,6 +62,9 @@ section(class="" id="")
 
 section(class="my-2" id="")
 {
+    input(type="hidden" name="dm_sys_pk2" value="#<@@(domicilio2,'#sys_pk')>")
+    input(type="hidden" name="dm_sys_recver2" value="#<@@(domicilio2,'#sys_recver')>")
+
     div(class="card")
     {
         div(class="card-header bg-transparent")
@@ -143,33 +146,62 @@ section(class="my-2" id="")
             {
                 div(class="col-lg-8 col-md-6 col-sm-12")
                 {
+                    #!
+                    calle2 = form("calle2","tx",@null)
+                    if calle2 == "" && @("$parameters/_entity_id") != "_new"
+                    {
+                        ref dir2 = split(@@(domicilio2,"$direccion"),"|")
+                        calle2 = list.str(dir2,2)
+                        exception{/*ignore*/}
+                    }
+                    #$
                     label(class="form-label" "for"="txt_calle2"){$"Calle:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="calle2" value="" id="txt_calle2")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="calle2" value="#<calle2>" id="txt_calle2")
                 }
                 div(class="col-lg-2 col-md-3 col-sm-6")
                 {
+                    #!
+                    numext2 = form("numext2","tx",@null)
+                    if numext2 == "" && @("$parameters/_entity_id") != "_new" { numext2 = @@(domicilio2,"$numext") }
+                    #$
                     label(class="form-label" "for"="txt_numext2"){$"No. Ext:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="numext2" value="" id="txt_numext2")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="numext2" value="#<numext2>" id="txt_numext2")
                 }
                 div(class="col-lg-2 col-md-3 col-sm-6")
                 {
+                    #!
+                    numint2 = form("numint2","tx",@null)
+                    if numint2 == "" && @("$parameters/_entity_id") != "_new" { numint2 = @@(domicilio2,"$numint") }
+                    #$
                     label(class="form-label" "for"="txt_numint2"){$"No. Int:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="numint2" value="" id="txt_numint2")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="numint2" value="#<numint2>" id="txt_numint2")
                 }
                 div(class="col-12")
                 {
+                    #!
+                    colonia2 = form("colonia2","tx",@null)
+                    if colonia2 == "" && @("$parameters/_entity_id") != "_new" { colonia2 = @@(domicilio2,"$colonia") }
+                    #$
                     label(class="form-label" "for"="txt_colonia2"){$"Colonia:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="colonia2" maxlength="150" value="" id="txt_colonia2")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="colonia2" maxlength="150" value="#<colonia2>" id="txt_colonia2")
                 }
                 div(class="col-lg-4 col-md-4 col-sm-4")
                 {
+                    #!
+                    codpos2 = form("codpos2","tx",@null)
+                    if codpos2 == "" && @("$parameters/_entity_id") != "_new" { codpos2 = @@(domicilio2,"$codpos") }
+                    #$
                     label(class="form-label" "for"="txt_codpos2"){$"Código postal:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="codpos2" minlength="5" maxlength="10" value="" id="txt_codpos2")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="codpos2" minlength="5" maxlength="10" value="#<codpos2>" id="txt_codpos2")
                 }
                 div(class="col-lg-8 col-md-8 col-sm-8")
                 {
+                    #!
+                    telefonos2 = form("dm_telefonos2","tx",@null)
+                    if telefonos2 == "" && @("$parameters/_entity_id") != "_new" { telefonos2 = @@(domicilio2,"$telefonos") }
+                    #$
                     label(class="form-label" "for"="txt_dm_telefonos2"){$"Tel:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="dm_telefonos2" maxlength="150" value="" id="txt_dm_telefonos2")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="dm_telefonos2" maxlength="150" value="#<telefonos2>" id="txt_dm_telefonos2")
                 }
             }
         }
@@ -178,6 +210,9 @@ section(class="my-2" id="")
 
 section(class="" id="")
 {
+    input(type="hidden" name="dm_sys_pk3" value="#<@@(domicilio3,'#sys_pk')>")
+    input(type="hidden" name="dm_sys_recver3" value="#<@@(domicilio3,'#sys_recver')>")
+
     div(class="card")
     {
         div(class="card-header bg-transparent")
@@ -259,33 +294,62 @@ section(class="" id="")
             {
                 div(class="col-lg-8 col-md-6 col-sm-12")
                 {
+                    #!
+                    calle3 = form("call3","tx",@null)
+                    if calle3 == "" && @("$parameters/_entity_id") != "_new"
+                    {
+                        ref dir3 = split(@@(domicilio3,"$direccion"),"|")
+                        calle3 = list.str(dir3,2)
+                        exception{/*ignore*/}
+                    }
+                    #$
                     label(class="form-label" "for"="txt_calle3"){$"Calle:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="calle3" value="" id="txt_calle3")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="calle3" value="#<calle3>" id="txt_calle3")
                 }
                 div(class="col-lg-2 col-md-3 col-sm-6")
                 {
+                    #!
+                    numext3 = form("numext3","tx",@null)
+                    if numext3 == "" && @("$parameters/_entity_id") != "_new" { numext3 = @@(domicilio3,"$numext") }
+                    #$
                     label(class="form-label" "for"="txt_numext3"){$"No. Ext:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="numext3" value="" id="txt_numext3")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="numext3" value="#<numext3>" id="txt_numext3")
                 }
                 div(class="col-lg-2 col-md-3 col-sm-6")
                 {
+                    #!
+                    numint3 = form("numint3","tx",@null)
+                    if numint3 == "" && @("$parameters/_entity_id") != "_new" { numint3 = @@(domicilio3,"$numint") }
+                    #$
                     label(class="form-label" "for"="txt_numint3"){$"No. Int:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="numint3" value="" id="txt_numint3")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="numint3" value="#<numint3>" id="txt_numint3")
                 }
                 div(class="col-12")
                 {
+                    #!
+                    colonia3 = form("colonia3","tx",@null)
+                    if colonia3 == "" && @("$parameters/_entity_id") != "_new" { colonia3 = @@(domicilio3,"$colonia") }
+                    #$
                     label(class="form-label" "for"="txt_colonia3"){$"Colonia:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="colonia3" maxlength="150" value="" id="txt_colonia3")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="colonia3" maxlength="150" value="#<colonia3>" id="txt_colonia3")
                 }
                 div(class="col-lg-4 col-md-4 col-sm-4")
                 {
+                    #!
+                    codpos3 = form("codpos3","tx",@null)
+                    if codpos3 == "" && @("$parameters/_entity_id") != "_new" { codpos3 = @@(domicilio3,"$codpos") }
+                    #$
                     label(class="form-label" "for"="txt_codpos3"){$"Código postal:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="codpos3" minlength="5" maxlength="10" value="" id="txt_codpos3")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="codpos3" minlength="5" maxlength="10" value="#<codpos3>" id="txt_codpos3")
                 }
                 div(class="col-lg-8 col-md-8 col-sm-8")
                 {
+                    #!
+                    telefonos3 = form("dm_telefonos3","tx",@null)
+                    if telefonos3 == "" && @("$parameters/_entity_id") != "_new" { telefonos3 = @@(domicilio3,"$telefonos") }
+                    #$
                     label(class="form-label" "for"="txt_dm_telefonos3"){$"Tel:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="dm_telefonos3" maxlength="150" value="" id="txt_dm_telefonos3")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="dm_telefonos3" maxlength="150" value="#<telefonos3>" id="txt_dm_telefonos3")
                 }
             }
         }

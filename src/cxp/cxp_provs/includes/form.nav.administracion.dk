@@ -56,20 +56,20 @@ section(class="" id="")
                 }
                 div(class="form-check form-check-inline ps-0")
                 {
-                    input(type="hidden" class="form-control form-control-sm rounded-0" name="limitecredito" min="0" value="" id="txt_limite_credito" placeholder="0.00")
+                    input(type="hidden" class="form-control form-control-sm rounded-0" name="limitecredito" min="0" value="#<form('limitecredito','nm',dtprov)>" id="txt_limite_credito" placeholder="0.00")
                 }
             }
         }
         div(class="col-lg-6 col-md-6 col-sm-6")
         {
             label(class="form-label" "for"="txt_dias_credito"){$"Dias de crédito:"}
-            input(class="form-control form-control-sm rounded-0" type="number" name="diascredito" min="0" value="" id="txt_dias_credito")
+            input(class="form-control form-control-sm rounded-0" type="number" name="diascredito" min="0" value="#<form('diascredito','nm',dtprov)>" id="txt_dias_credito")
         }
 
         div(class="col-lg-4 col-md-4 col-sm-4")
         {
             label(class="form-label" "for"="txt_cuenta_contable"){$"Cuenta contable:"}
-            input(class="form-control form-control-sm rounded-0" type="text" name="codcuenta" maxlength="50" value="" id="txt_cuenta_contable")
+            input(class="form-control form-control-sm rounded-0" type="text" name="codcuenta" maxlength="50" value="#<form('codcuenta','tx',dtprov)>" id="txt_cuenta_contable")
         }
         div(class="col-lg-4 col-md-4 col-sm-4")
         {
@@ -89,17 +89,17 @@ section(class="" id="")
         div(class="col-lg-4 col-md-4 col-sm-4")
         {
             label(class="form-label" "for"="txt_dias_entrega"){$"Días de entrega:"}
-            input(class="form-control form-control-sm rounded-0" type="number" name="diasentrega" min="0" value="" id="txt_dias_entrega")
+            input(class="form-control form-control-sm rounded-0" type="number" name="diasentrega" min="0" value="#<form('diasentrega','nm',dtprov)>" id="txt_dias_entrega")
         }
         div(class="col-lg-4 col-md-4 col-sm-4")
         {
             label(class="form-label" "for"="txt_vuelta_viajero"){$"Vuelta de viajero (días):"}
-            input(class="form-control form-control-sm rounded-0" type="number" name="uf_vueltaviajero" min="0" value="" id="txt_vuelta_viajero")
+            input(class="form-control form-control-sm rounded-0" type="number" name="uf_vueltaviajero" min="0" value="#<form('uf_vueltaviajero','nm',dtprov)>" id="txt_vuelta_viajero")
         }
         div(class="col-lg-4 col-md-4 col-sm-4")
         {
             label(class="form-label" "for"="txt_saldo"){$"Saldo:"}
-            input(class="form-control form-control-sm rounded-0" type="number" name="saldo" value="" id="txt_saldo" disabled="" readonly="")
+            input(class="form-control form-control-sm rounded-0" type="number" name="saldo" value="#<form('saldo','nm',dtprov)>" id="txt_saldo" disabled="" readonly="")
         }
     }
 }

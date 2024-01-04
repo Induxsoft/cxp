@@ -33,7 +33,25 @@ var documento =
         window.location.href = url.replace("@doc",data.sys_pk);
     },
 
-    list: {},
+    list: {
+        tbl_documentos: null,
+
+        init()
+        {
+            this.tbl_documentos = document.getElementById("tbl_cxp");
+            this.setEvents();
+        },
+
+        setEvents()
+        {
+            if (this.tbl_documentos)
+            {
+                this.tbl_documentos.hiddeSelector = true;
+                this.tbl_documentos.AutoAddRow = false;
+                this.tbl_documentos.AutoDelRow = false;
+            }
+        },
+    },
 
     form: {},
 

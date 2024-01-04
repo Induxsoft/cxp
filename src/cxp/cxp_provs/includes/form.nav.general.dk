@@ -7,12 +7,12 @@ section(class="" id="")
         div(class="col-12")
         {
             label(class="form-label" "for"="txt_codigo"){$"Código:" sup{$"*"}}
-            input(class="form-control form-control-sm rounded-0" type="text" name="codigo" maxlength="35" value="" id="txt_codigo" placeholder="<A>")
+            input(class="form-control form-control-sm rounded-0" type="text" name="codigo" maxlength="35" value="#<form('codigo','tx',dtprov)>" id="txt_codigo" placeholder="<A>")
         }
         div(class="col-lg-6 col-md-6 col-sm-6")
         {
             label(class="form-label" "for"="txt_nombre"){$"Nombre:" sup{$"*"}}
-            input(class="form-control form-control-sm rounded-0" type="text" name="nombre" maxlength="150" value="" id="txt_nombre" required="")
+            input(class="form-control form-control-sm rounded-0" type="text" name="nombre" maxlength="150" value="#<form('nombre','tx',dtprov)>" id="txt_nombre" required="")
         }
         div(class="col-lg-6 col-md-6 col-sm-6")
         {
@@ -29,18 +29,21 @@ section(class="" id="")
         div(class="col-lg-6 col-md-6 col-sm-6")
         {
             label(class="form-label" "for"="txt_rfc"){$"RFC:"}
-            input(class="form-control form-control-sm rounded-0 text-uppercase" type="text" name="rfc" minlength="12" maxlength="13" value="" id="txt_rfc")
+            input(class="form-control form-control-sm rounded-0 text-uppercase" type="text" name="rfc" minlength="12" maxlength="13" value="#<form('rfc','tx',dtprov)>" id="txt_rfc")
         }
         div(class="col-lg-6 col-md-6 col-sm-6")
         {
             label(class="form-label" "for"="txt_curp"){$"CURP:"}
-            input(class="form-control form-control-sm rounded-0 text-uppercase" type="text" name="curp" minlength="18" maxlength="18" value="" id="txt_curp")
+            input(class="form-control form-control-sm rounded-0 text-uppercase" type="text" name="curp" minlength="18" maxlength="18" value="#<form('curp','tx',dtprov)>" id="txt_curp")
         }
     }
 }
 
 section(class="my-2" id="")
 {
+    input(type="hidden" name="dm_sys_pk" value="#<@@(domicilio1,'#sys_pk')>")
+    input(type="hidden" name="dm_sys_recver" value="#<@@(domicilio1,'#sys_recver')>")
+
     div(class="card")
     {
         div(class="card-header bg-transparent")
@@ -95,33 +98,62 @@ section(class="my-2" id="")
             {
                 div(class="col-lg-8 col-md-6 col-sm-12")
                 {
+                    #!
+                    calle1 = form("calle","tx",@null)
+                    if calle1 == "" && @("$parameters/_entity_id") != "_new"
+                    {
+                        ref dir1 = split(@@(domicilio1,"$direccion"),"|")
+                        calle1 = list.str(dir1,2)
+                        exception{/*ignore*/}
+                    }
+                    #$
                     label(class="form-label" "for"="txt_calle"){$"Calle:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="calle" value="" id="txt_calle")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="calle" value="#<calle1>" id="txt_calle")
                 }
                 div(class="col-lg-2 col-md-3 col-sm-6")
                 {
+                    #!
+                    numext1 = form("numext","tx",@null)
+                    if numext1 == "" && @("$parameters/_entity_id") != "_new" { numext1 = @@(domicilio1,"$numext") }
+                    #$
                     label(class="form-label" "for"="txt_numext"){$"No. Ext:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="numext" value="" id="txt_numext")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="numext" value="#<numext1>" id="txt_numext")
                 }
                 div(class="col-lg-2 col-md-3 col-sm-6")
                 {
+                    #!
+                    numint1 = form("numint","tx",@null)
+                    if numint1 == "" && @("$parameters/_entity_id") != "_new" { numint1 = @@(domicilio1,"$numint") }
+                    #$
                     label(class="form-label" "for"="txt_numint"){$"No. Int:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="numint" value="" id="txt_numint")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="numint" value="#<numint1>" id="txt_numint")
                 }
                 div(class="col-12")
                 {
+                    #!
+                    colonia1 = form("colonia","tx",@null)
+                    if colonia1 == "" && @("$parameters/_entity_id") != "_new" { colonia1 = @@(domicilio1,"$colonia") }
+                    #$
                     label(class="form-label" "for"="txt_colonia"){$"Colonia:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="colonia" maxlength="150" value="" id="txt_colonia")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="colonia" maxlength="150" value="#<colonia1>" id="txt_colonia")
                 }
                 div(class="col-lg-4 col-md-4 col-sm-4")
                 {
+                    #!
+                    codpos1 = form("codpos","tx",@null)
+                    if codpos1 == "" && @("$parameters/_entity_id") != "_new" { codpos1 = @@(domicilio1,"$codpos") }
+                    #$
                     label(class="form-label" "for"="txt_codpos"){$"Código postal:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="codpos" minlength="5" maxlength="10" value="" id="txt_codpos")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="codpos" minlength="5" maxlength="10" value="#<codpos1>" id="txt_codpos")
                 }
                 div(class="col-lg-8 col-md-8 col-sm-8")
                 {
+                    #!
+                    telefonos1 = form("dm_telefonos","tx",@null)
+                    if telefonos1 == "" && @("$parameters/_entity_id") != "_new" { telefonos1 = @@(domicilio1,"$telefonos") }
+                    #$
                     label(class="form-label" "for"="txt_dm_telefonos"){$"Tel:"}
-                    input(class="form-control form-control-sm rounded-0" type="text" name="dm_telefonos" maxlength="150" value="" id="txt_dm_telefonos")
+                    input(class="form-control form-control-sm rounded-0" type="text" name="dm_telefonos" maxlength="150" value="#<telefonos1>" id="txt_dm_telefonos")
                 }
             }
         }
@@ -135,22 +167,22 @@ section(class="" id="")
         div(class="col-lg-6 col-md-6 col-sm-6")
         {
             label(class="form-label" "for"="txt_email"){$"E-mail:"}
-            input(class="form-control form-control-sm rounded-0" type="text" name="email" maxlength="80" value="" id="txt_email")
+            input(class="form-control form-control-sm rounded-0" type="text" name="email" maxlength="80" value="#<form('email','tx',dtprov)>" id="txt_email")
         }
         div(class="col-lg-6 col-md-6 col-sm-6")
         {
             label(class="form-label" "for"="txt_telefonos"){$"Telefonos:"}
-            input(class="form-control form-control-sm rounded-0" type="text" name="telefonos" maxlength="150" value="" id="txt_telefonos")
+            input(class="form-control form-control-sm rounded-0" type="text" name="telefonos" maxlength="150" value="#<form('telefonos','tx',dtprov)>" id="txt_telefonos")
         }
         div(class="col-lg-6 col-md-6 col-sm-6")
         {
             label(class="form-label" "for"="txt_website"){$"Sitio web:"}
-            input(class="form-control form-control-sm rounded-0" type="text" name="website" maxlength="150" value="" id="txt_website")
+            input(class="form-control form-control-sm rounded-0" type="text" name="website" maxlength="150" value="#<form('website','tx',dtprov)>" id="txt_website")
         }
         div(class="col-lg-6 col-md-6 col-sm-6")
         {
             label(class="form-label" "for"="txt_fax"){$"Fax:"}
-            input(class="form-control form-control-sm rounded-0" type="text" name="fax" maxlength="150" value="" id="txt_fax")
+            input(class="form-control form-control-sm rounded-0" type="text" name="fax" maxlength="150" value="#<form('fax','tx',dtprov)>" id="txt_fax")
         }
     }
 }

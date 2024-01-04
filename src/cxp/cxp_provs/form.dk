@@ -20,6 +20,10 @@ module "form.dk"
     ref listStatus = ifnull(@("&./list_status"),list.create())
     ref listZonaImpuesto = ifnull(@("&./list_tasasiva"),list.create())
     ref formData = ifnull(@("&./form"),record.create())
+    ref dtprov = ifnull(@("&./dtprov"),record.create())
+    ref domicilio1 = ifnull(@("&./domicilio1"),record.create())
+    ref domicilio2 = ifnull(@("&./domicilio2"),record.create())
+    ref domicilio3 = ifnull(@("&./domicilio3"),record.create())
 
     // do rise_error(0,to.json(@("&.")))
 
@@ -35,7 +39,7 @@ module "form.dk"
         }
         @"value_field": "sys_pk"
         @"text_field": "text"
-        @"selected": form("tipo","nm",@null)
+        @"selected": form("tipo","nm",dtprov)
     }
 
     new sel_pais
@@ -111,7 +115,7 @@ module "form.dk"
             @"data-codigo": "#<@@(row,'codigo')>"
             @"data-tcambio": "#<@@(row,'tcambio')>"
         }
-        @"selected": form("idivisa","nm",@null)
+        @"selected": form("idivisa","nm",dtprov)
     }
 
     new sel_toperacion
@@ -125,7 +129,7 @@ module "form.dk"
         }
         @"value_field": "sys_pk"
         @"text_field": "text"
-        @"selected": form("uf_tipoop","nm",@null)
+        @"selected": form("uf_tipoop","nm",dtprov)
     }
 
     new sel_zona
@@ -139,7 +143,7 @@ module "form.dk"
         }
         @"value_field": "sys_pk"
         @"text_field": "text"
-        @"selected": form("izona","nm",@null)
+        @"selected": form("izona","nm",dtprov)
     }
 
     new sel_status
@@ -153,7 +157,7 @@ module "form.dk"
         }
         @"value_field": "id"
         @"text_field": "const"
-        @"selected": form("status","nm",@null)
+        @"selected": form("status","nm",dtprov)
     }
 
     new sel_zimpuesto
@@ -168,8 +172,11 @@ module "form.dk"
         }
         @"value_field": "id"
         @"text_field": "const"
-        @"selected": form("tasaiva","nm",@null)
+        @"selected": form("tasaiva","nm",dtprov)
     }
+
+    form_title = "Nuevo proveedor"
+    if @@(@("&parameters"),"$_entity_id") != "_new" { form_title = "Editar proveedor" }
     
     #$
     div(class="container")
@@ -178,7 +185,7 @@ module "form.dk"
 
         div(class="row container-section m-0 px-0 py-2 my-2 border-bottom sticky-top bg-white" id="main_action_bar")
         {
-            div(class="col-4 d-flex align-items-center p-0") { h1(class="h5 text-primary tex-no-break m-0"){$"Nuevo proveedor"} }
+            div(class="col-4 d-flex align-items-center p-0") { h1(class="h5 text-primary tex-no-break m-0"){$"#<form_title>"} }
             div(class="col-8 d-flex justify-content-end align-items-center p-0 gap-2")
             {
                 a(href="./" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Refrescar"){$"#<@ICON_ARROW_CLOCKWISE>"}
@@ -202,8 +209,9 @@ module "form.dk"
 
             form(class="" action="./" method="POST" id="form_proveedor")
             {
-                // input(type="hidden" name="sys_pk" value="")
-                // Input(type="hidden" name="sys_recver" value="")
+                input(type="hidden" name="sys_pk" value="#<@@(dtprov,'#sys_pk')>")
+                input(type="hidden" name="sys_recver" value="#<@@(dtprov,'#sys_recver')>")
+                input(type="hidden" name="shortcut" value="F6")
 
                 div(class="overflow-auto"){ span(class="text-danger" id="err-msg"){$"#<@('$error/message')>"} }
 
@@ -214,7 +222,7 @@ module "form.dk"
                     div(class="tab-pane fade" id="nav-adicionales" role="tabpanel" "aria-labelledby"="nav-adicionales-tab"){#! #include "./includes/form.nav.adicionales.dk" #$}
                     div(class="tab-pane fade" id="nav-notas" role="tabpanel" "aria-labelledby"="nav-notas-tab")
                     {
-                        textarea(class="form-control" maxlength="32000" name="notas" id="txt_notas" rows="20"){$""}
+                        textarea(class="form-control" maxlength="32000" name="notas" id="txt_notas" rows="20"){$"#<form('notas','tx',dtprov)>"}
                     }
                 }
             }
@@ -228,8 +236,19 @@ module "form.dk"
             script(type="text/javascript")
             {$'
                 document.addEventListener("DOMContentLoaded", () => {
+                    proveedor.form._GET = #<to.json(@("&parameters"))> ?? {};
                     proveedor.form.url_buscar_edoprov = "#<@URL_BUSCAR_EDOPROV>";
                     proveedor.form.url_buscar_ciudad = "#<@URL_BUSCAR_CIUDAD>";
+                    proveedor.form.url_buscar_contacto = "#<@URL_BUSCAR_CONTACTO>";
+                    proveedor.form.CXP_PROVS = "#<@CXP_PROVS>";
+                    proveedor.form.PDR_AGREGAR = "#<@PDR_AGREGAR>";
+                    proveedor.form.ipais = #<@IPAIS>;
+                    proveedor.form.iestado = #<@IESTADO>;
+                    proveedor.form.iciudad = #<@ICIUDAD>;
+                    proveedor.form.dtProv = #<to.json(dtprov)> ?? {};
+                    proveedor.form.domicilio1 = #<to.json(domicilio1)> ?? {};
+                    proveedor.form.domicilio2 = #<to.json(domicilio2)> ?? {};
+                    proveedor.form.domicilio3 = #<to.json(domicilio3)> ?? {};
                     proveedor.form.init();
                 });
             '}

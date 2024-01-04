@@ -8,6 +8,7 @@ module "list.dk"
     #include "../_lib/config.dk"
     
     do @context.begin(@crud_context)
+    ref listProveedores = ifnull(@("&."),list.create())
     
     #$
     div(class="container")
@@ -34,6 +35,8 @@ module "list.dk"
                 button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="proveedor.goTo('#<@PDR_XAPLICAR>')"){$"Pagos por aplicar"}
                 button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="proveedor.goTo('#<@PDR_PAGOS>')"){$"Pago a proveedor"}
                 button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="proveedor.goTo('#<@PDR_BONIFICACION>')"){$"Bonificaciones"}
+
+                a(href="/" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Salir" target="_top"){$"#<@ICON_X_LG>"}
             }
         }
 
@@ -65,6 +68,11 @@ module "list.dk"
                     }
                 }
             }
+            #!
+            spnmsg = ""
+            if list.count(listProveedores) <= 0 { spnmsg = "Sin registros." }
+            #$
+            div(class="text-center bg-light" style="padding: 10rem 0;" id="div_spnmsg"){ h6(class="" id="spnmsg"){$"#<spnmsg>"} }
         }
 
         p{$"#<@('$error/message')>"}

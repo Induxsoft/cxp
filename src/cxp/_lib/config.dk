@@ -31,9 +31,9 @@ module
 	@IDIVISA_PREDETERMINADA = 0
 
 	// Ubicacion predeterminada
-	@PAIS = "México"
-	@ESTADO = "Chiapas"
-	@CIUDAD = "Tuxtla Gutiérrez"
+	@IPAIS = 1 //"México"
+	@IESTADO = 7 //"Chiapas"
+	@ICIUDAD = 396//"Tuxtla Gutiérrez"
 
 	// Formato de moneda (dkl)
 	@FMT_MONEY = "$ "+"#"+@THOUSANDS_SEPARATOR+"0"+@DECIMAL_SEPARATOR+padright("",@DECIMAL_PRECISION,"0")
@@ -54,6 +54,7 @@ module
 	//#region cxp_provs
 	@CXP_PROVS = "/!/cxp/proveedores/"
 	@PDR_AGREGAR = "/!/cxp/proveedores/_new/"
+	@PDR_CONSULTAR = "/!/cxp/proveedores/@proveedor/"
 	@PDR_EDO_CTA = "/!/cxp/proveedores/@proveedor/balance/"
 	@PDR_BONIFICACION = "/!/cxp/proveedores/@proveedor/bonificacion/"
 	@PDR_PAGOS = "/!/cxp/proveedores/@proveedor/pago/"
