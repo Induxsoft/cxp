@@ -81,62 +81,50 @@ section(class="my-2" id="")
                 div(class="col-lg-4 col-md-4 col-sm-12")
                 {
                     label(class="form-label" "for"="sel_pais2"){$"País:"}
-                    div(class="input-group")
+                    ##
+                    using sel_pais
                     {
-                        ##
-                        using sel_pais
+                        @"id": "sel_pais2"
+                        member "attributes"
                         {
-                            @"id": "sel_pais2"
-                            member "attributes"
-                            {
-                                @"name": "ipais2"
-                            }
-                            @"selected": form("ipais2","nm",@null)
+                            @"name": "ipais2"
                         }
-                        do uie.dbSelect(sel_pais)
-                        ##
-                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                        @"selected": form("ipais2","nm",@null)
                     }
+                    do uie.dbSelect(sel_pais)
+                    ##
                 }
                 div(class="col-lg-4 col-md-4 col-sm-12")
                 {
                     label(class="form-label" "for"="sel_estado"){$"Estado:"}
-                    div(class="input-group")
+                    ##
+                    using sel_estado
                     {
-                        ##
-                        using sel_estado
+                        @"id": "sel_estado2"
+                        member "attributes"
                         {
-                            @"id": "sel_estado2"
-                            member "attributes"
-                            {
-                                @"name": "iestado2"
-                            }
-                            @"selected": form("iestado2","nm",@null)
+                            @"name": "iestado2"
                         }
-                        do uie.dbSelect(sel_estado)
-                        ##
-                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                        @"selected": form("iestado2","nm",@null)
                     }
+                    do uie.dbSelect(sel_estado)
+                    ##
                 }
                 div(class="col-lg-4 col-md-4 col-sm-12")
                 {
                     label(class="form-label" "for"="sel_ciudad"){$"Ciudad:"}
-                    div(class="input-group")
+                    ##
+                    using sel_ciudad
                     {
-                        ##
-                        using sel_ciudad
+                        @"id": "sel_ciudad2"
+                        member "attributes"
                         {
-                            @"id": "sel_ciudad2"
-                            member "attributes"
-                            {
-                                @"name": "iciudad2"
-                            }
-                            @"selected": form("iciudad2","nm",@null)
+                            @"name": "iciudad2"
                         }
-                        do uie.dbSelect(sel_ciudad)
-                        ##
-                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                        @"selected": form("iciudad2","nm",@null)
                     }
+                    do uie.dbSelect(sel_ciudad)
+                    ##
                 }
             }
             
@@ -229,62 +217,50 @@ section(class="" id="")
                 div(class="col-lg-4 col-md-4 col-sm-12")
                 {
                     label(class="form-label" "for"="sel_pais3"){$"País:"}
-                    div(class="input-group")
+                    ##
+                    using sel_pais
                     {
-                        ##
-                        using sel_pais
+                        @"id": "sel_pais3"
+                        member "attributes"
                         {
-                            @"id": "sel_pais3"
-                            member "attributes"
-                            {
-                                @"name": "ipais3"
-                            }
-                            @"selected": form("ipais3","nm",@null)
+                            @"name": "ipais3"
                         }
-                        do uie.dbSelect(sel_pais)
-                        ##
-                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                        @"selected": form("ipais3","nm",@null)
                     }
+                    do uie.dbSelect(sel_pais)
+                    ##
                 }
                 div(class="col-lg-4 col-md-4 col-sm-12")
                 {
                     label(class="form-label" "for"="sel_estado3"){$"Estado:"}
-                    div(class="input-group")
+                    ##
+                    using sel_estado
                     {
-                        ##
-                        using sel_estado
+                        @"id": "sel_estado3"
+                        member "attributes"
                         {
-                            @"id": "sel_estado3"
-                            member "attributes"
-                            {
-                                @"name": "iestado3"
-                            }
-                            @"selected": form("iestado3","nm",@null)
+                            @"name": "iestado3"
                         }
-                        do uie.dbSelect(sel_estado)
-                        ##
-                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                        @"selected": form("iestado3","nm",@null)
                     }
+                    do uie.dbSelect(sel_estado)
+                    ##
                 }
                 div(class="col-lg-4 col-md-4 col-sm-12")
                 {
                     label(class="form-label" "for"="sel_ciudad3"){$"Ciudad:"}
-                    div(class="input-group")
+                    ##
+                    using sel_ciudad
                     {
-                        ##
-                        using sel_ciudad
+                        @"id": "sel_ciudad3"
+                        member "attributes"
                         {
-                            @"id": "sel_ciudad3"
-                            member "attributes"
-                            {
-                                @"name": "iciudad3"
-                            }
-                            @"selected": form("iciudad3","nm",@null)
+                            @"name": "iciudad3"
                         }
-                        do uie.dbSelect(sel_ciudad)
-                        ##
-                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
+                        @"selected": form("iciudad3","nm",@null)
                     }
+                    do uie.dbSelect(sel_ciudad)
+                    ##
                 }
             }
             

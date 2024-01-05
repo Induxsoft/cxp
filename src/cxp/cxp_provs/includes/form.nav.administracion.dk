@@ -7,14 +7,9 @@ section(class="" id="")
         div(class="col-lg-4 col-md-4 col-sm-12")
         {
             label(class="form-label" "for"="sel_divisa"){$"Divisa:" sup{$"*"}}
-            div(class="input-group")
-            {
-                ##
-                do uie.dbSelect(sel_divisa)
-                ##
-                button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
-                button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_EDIT>"}
-            }
+            ##
+            do uie.dbSelect(sel_divisa)
+            ##
         }
         div(class="col-lg-4 col-md-4 col-sm-6")
         {

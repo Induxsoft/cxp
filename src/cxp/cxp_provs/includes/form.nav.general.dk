@@ -17,14 +17,9 @@ section(class="" id="")
         div(class="col-lg-6 col-md-6 col-sm-6")
         {
             label(class="form-label" "for"="sel_tipo"){$"Tipo:" sup{$"*"}}
-            div(class="input-group")
-            {
-                ##
-                do uie.dbSelect(sel_tipo)
-                ##
-                button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
-                button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_EDIT>"}
-            }
+            ##
+            do uie.dbSelect(sel_tipo)
+            ##
         }
         div(class="col-lg-6 col-md-6 col-sm-6")
         {
@@ -60,35 +55,23 @@ section(class="my-2" id="")
                 div(class="col-lg-4 col-md-4 col-sm-12")
                 {
                     label(class="form-label" "for"="sel_pais"){$"País:"}
-                    div(class="input-group")
-                    {
-                        ##
-                        do uie.dbSelect(sel_pais)
-                        ##
-                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
-                    }
+                    ##
+                    do uie.dbSelect(sel_pais)
+                    ##
                 }
                 div(class="col-lg-4 col-md-4 col-sm-12")
                 {
                     label(class="form-label" "for"="sel_estado"){$"Estado:"}
-                    div(class="input-group")
-                    {
-                        ##
-                        do uie.dbSelect(sel_estado)
-                        ##
-                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
-                    }
+                    ##
+                    do uie.dbSelect(sel_estado)
+                    ##
                 }
                 div(class="col-lg-4 col-md-4 col-sm-12")
                 {
                     label(class="form-label" "for"="sel_ciudad"){$"Ciudad:"}
-                    div(class="input-group")
-                    {
-                        ##
-                        do uie.dbSelect(sel_ciudad)
-                        ##
-                        button(type="button" class="btn btn-light btn-sm border rounded-0"){$"#<@ICON_PLUS_LG>"}
-                    }
+                    ##
+                    do uie.dbSelect(sel_ciudad)
+                    ##
                 }
             }
             
