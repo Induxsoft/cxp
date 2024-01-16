@@ -28,7 +28,10 @@ module "cxp.aplicar.dk"
     div(class="container")
     {
         // h1(class="h4"){$"Aplicación de pago o bonificación a uno o más documentos"}
-        #! do uie.printMainBar(@null, "Aplicación de pago o bonificación a uno o más documentos", @false, @CXP_DOCS)
+        #! url_bac = @CXP_DOCS
+        if trim(@@(get,"$url_back")) != "" { url_bac = url_dcode(@@(get,"$url_back")) }
+
+        #! do uie.printMainBar(@null, "Aplicación de pago o bonificación a uno o más documentos", @false, url_bac)
 
         #$ div
         {

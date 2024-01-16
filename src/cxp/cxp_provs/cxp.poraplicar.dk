@@ -6,16 +6,73 @@ module "cxp.poraplicar.dk"
     #include "serialize.dkh"
     #include "../_lib/icons.dk"
     #include "../_lib/config.dk"
+    #include "uielements.v12.dkl"
     
     do @context.begin(@crud_context)
+    ref @http_context = @('&http')
+    ref get = @@(@http_context,"&request/get")
+
+    current_url = url_encode(@@(@http_context,"request/headers/REQUEST_URI"))
+
+    get<"filter-mode">: ifstr(trim(@@(get,"filter-mode"))!="", @@(get,"filter-mode"), "month")
+    get<"year">: ifstr(trim(@@(get,"year"))!="", @@(get,"year"), str(ndatetime.year(ndatetime.now())))
+    get<"month">: ifstr(trim(@@(get,"month"))!="", @@(get,"month"), str(ndatetime.month(ndatetime.now())))
 
     #$
     div(class="container")
     {
-        h1(class="h4"){$"Pagos y bonificaciones por aplicar"}
+        #! do uie.printMainBar(@null, "Pagos y bonificaciones por aplicar", @false, @CXP_PROVS)
 
-        div
+       #$ div(id="work_area" class="container-section mt-1 p-2 pt-0")
         {
+            p{$"#<@('$error/message')>"}
+
+            form(action="./" method="GET" id="form_filter" class="no-print mb-1")
+            {
+                div(class="d-flex align-items-center")
+                {
+                    div(class="flex-grow-1")
+                    {
+                        "filter-date-range"(
+                            "mode-field"="filter-mode"
+                            "year-field"="year"
+                            "month-field"="month"
+                            "range-field"="range"
+                            "from-field"="datefrom"
+                            "to-field"="dateto"
+                            "selection"='#<to.json(get)>'
+                            "lastdays-options"="15,30,45,60,90"
+                            "years-options"="2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024"
+                            "custom-range"="true"
+                            "form"="#form_filter"
+                            "auto-submit"="true"
+                            "label-months"="Ver por cada mes"
+                            "label-days"="Últ. @lastdays días"
+                            "label-custom"="Personalizado"
+                            "label-from"="Desde:"
+                            "label-to"="Hasta:"
+                            "month-names"="Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"
+                        ){$""}
+                    }
+                }
+
+                div(class="py-1 w-100 d-flex gap-2 flex-wrap align-items-center")
+                {
+                    div(class="flex-grow-1")
+                    {
+                        "filter-text"(
+                            "id"="micontrol10"
+                            "text-field"="s"
+                            "placeholder"="Referencia por referencia"
+                            "form"="#form_filter"
+                            "value"="#<@@(get,'$s')>"
+                            "auto-submit"="true"
+                            "class"="w-100"
+                        ){$""}
+                    }
+                }
+            }
+
             div(class="d-flex justify-content-between")
             {
                 h6(class=""){$"#<@('$./nombre')>"}
@@ -44,14 +101,9 @@ module "cxp.poraplicar.dk"
                 }
             }
 
-            div(class="bg-light my-1")
+            div(class="d-flex justify-content-end align-items-center my-1 gap-2")
             {
-                div(class="btn-group" role="group")
-                {
-                    a(href="#<@CXP_PROVS>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
-                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicarPago('#<@DOC_APLICAR>')"){"Aplicar"}
-                    a(href="./" class="btn btn-light btn-sm fw-bolder"){$"Refrescar"}
-                }
+                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="aplicarPago('#<@DOC_APLICAR>')"){"Aplicar"}
             }
 
             "edit-table"(class="w-100" id="table_poraplicar" data="#<to.json(@('&./docs'))>")
@@ -81,6 +133,7 @@ module "cxp.poraplicar.dk"
         {
             $'
             var table=document.getElementById("table_poraplicar");
+            var current_url="#<current_url>";
             document.addEventListener("DOMContentLoaded",()=>
             {
                
@@ -94,7 +147,9 @@ module "cxp.poraplicar.dk"
                         return;
                     }
                     var data=table.DataArray[table.CurrentRowIndex()];
-                    window.location.href=url.replace("@doc",data.sys_pk);
+                    let _url=url.replace("@doc",data.sys_pk);
+                    _url += "?url_back=" + current_url;
+                    window.location.href=_url;
                 }
             '
         }

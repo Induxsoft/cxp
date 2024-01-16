@@ -400,7 +400,7 @@ module "model"
 
         params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
         params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
-        
+
         sql = "
         SELECT
             doc.const AS documento,
@@ -449,12 +449,17 @@ module "model"
         FROM dcxp AS cxp
             INNER JOIN cdocumentos AS doc ON doc.id = cxp.documento
         WHERE cxp.iproveedor = @_entity_id
-            AND IFNULL(cxp.xaplicar,0) > 0;
+            AND IFNULL(cxp.xaplicar,0) > 0
+            AND IF(IFNULL(@s,'')='', true, cxp.referencia LIKE CONCAT('%',@s,'%'))
+            AND IF(IFNULL(@year,'')='', true, YEAR(cxp.fecha)=@year)
+            AND IF(IFNULL(@month,'')='', true, (YEAR(cxp.fecha)=IFNULL(@year,YEAR(NOW())) AND MONTH(cxp.fecha)=@month))
+            AND IF(IFNULL(@range,'-99')='-99', true, (DATE(cxp.fecha) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
+            AND IF(IFNULL(@datefrom,'')='', true, (DATE(cxp.fecha) BETWEEN DATE(@datefrom) AND DATE(@dateto)));
         "
 
         ref data = cxp.obtenerProveedor(db,@@(params,"_entity_id"))
         do cxp.obtenerSaldos(db,params,data)
-        data<"docs*"> : dbr.list(db,sql,params)
+        data<"docs*"> : dbr.list(db,ftext(sql),params)
 
         return data
     }
