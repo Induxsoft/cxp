@@ -6,30 +6,88 @@ module "cxp.balance.dk"
     #include "serialize.dkh"
     #include "../_lib/icons.dk"
     #include "../_lib/config.dk"
+    #include "uielements.v12.dkl"
     
     do @context.begin(@crud_context)
+    @_entity_id = @('$parameters/_entity_id')
+    ref @http_context = @('&http')
+    ref get = @@(@http_context,"&request/get")
+    ref docs = @('&./docs')
 
-    _entity_id = @('$parameters/_entity_id')
+    get<"filter-mode">: ifstr(trim(@@(get,"filter-mode"))!="", @@(get,"filter-mode"), "month")
+    get<"year">: ifstr(trim(@@(get,"year"))!="", @@(get,"year"), str(ndatetime.year(ndatetime.now())))
+    get<"month">: ifstr(trim(@@(get,"month"))!="", @@(get,"month"), str(ndatetime.month(ndatetime.now())))
+
+    header_act::
+    { 
+        #$ a(href="#<@DOC_AGREGAR>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Agregar"}
+        a(href="#<@GST_AGREGAR>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Agregar gasto"}
+        a(href="#<replace(@PDR_XPAGAR,'@proveedor',@_entity_id)>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Docs. por pagar"}
+        a(href="#<replace(@PDR_XAPLICAR,'@proveedor',@_entity_id)>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Pagos por aplicar"}
+        a(href="#<replace(@PDR_PAGOS,'@proveedor',@_entity_id)>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Pago a prov."}
+        a(href="#<replace(@PDR_BONIFICACION,'@proveedor',@_entity_id)>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Bonificación a prov."}
+    }
+    #! point general_act to header_act
     
-    #$
-    div(class="container")
+    #$ div(class="container")
     {
-        h1(class="h4"){$"Balance"}
+        #! do uie.printMainBar(general_act, "Balance", @false, @CXP_PROVS)
 
-        div
+        #$ div(id="work_area" class="container-section mt-1 p-2 pt-0")
         {
-            div(class="bg-light my-1")
+            p{$"#<@('$error/message')>"}
+
+            form(action="./" method="GET" id="form_filter" class="no-print mb-1")
             {
-                div(class="btn-group" role="group")
+                div(class="d-flex align-items-center")
                 {
-                    a(href="#<@CXP_PROVS>" class="btn btn-secondary btn-sm fw-bolder"){$"#<@ICON_ARROW_LEFT>"}
-                    a(href="#<@DOC_AGREGAR>" class="btn btn-light btn-sm fw-bolder"){"Agregar"}
-                    a(href="#<@GST_AGREGAR>" class="btn btn-light btn-sm fw-bolder"){"Agregar gasto"}
-                    a(href="#<replace(@PDR_XPAGAR,'@proveedor',_entity_id)>" class="btn btn-light btn-sm fw-bolder"){"Documentos por pagar"}
-                    a(href="#<replace(@PDR_XAPLICAR,'@proveedor',_entity_id)>" class="btn btn-light btn-sm fw-bolder"){"Pagos por aplicar"}
-                    a(href="#<replace(@PDR_PAGOS,'@proveedor',_entity_id)>" class="btn btn-light btn-sm fw-bolder"){"Pago a proveedor"}
-                    a(href="#<replace(@PDR_BONIFICACION,'@proveedor',_entity_id)>" class="btn btn-light btn-sm fw-bolder"){"Bonificación a proveedor"}
-                    a(href="./" class="btn btn-light btn-sm fw-bolder"){$"Refrescar"}
+                    div
+                    {
+                        select(class="induxsoft-form-select" name="tdate" onchange="document.querySelector('#form_filter').submit();")
+                        {
+                            option(value="0" "#<ifstr(@@(get,'$tdate')=='0','selected','')>"="true"){$"Emisión"}
+                            option(value="1" "#<ifstr(@@(get,'$tdate')=='1','selected','')>"="true"){$"Aplicación"}
+                        }
+                    }
+                    div(class="flex-grow-1")
+                    {
+                        "filter-date-range"(
+                            "mode-field"="filter-mode"
+                            "year-field"="year"
+                            "month-field"="month"
+                            "range-field"="range"
+                            "from-field"="datefrom"
+                            "to-field"="dateto"
+                            "selection"='#<to.json(get)>'
+                            "lastdays-options"="15,30,45,60,90"
+                            "years-options"="2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024"
+                            "custom-range"="true"
+                            "form"="#form_filter"
+                            "auto-submit"="true"
+                            "label-months"="Ver por cada mes"
+                            "label-days"="Últ. @lastdays días"
+                            "label-custom"="Personalizado"
+                            "label-from"="Desde:"
+                            "label-to"="Hasta:"
+                            "month-names"="Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"
+                        ){$""}
+                    }
+                }
+
+                div(class="py-1 w-100 d-flex gap-2 flex-wrap align-items-center")
+                {
+                    div(class="flex-grow-1")
+                    {
+                        "filter-text"(
+                            "id"="micontrol10"
+                            "text-field"="s"
+                            "placeholder"="Referencia por referencia"
+                            "form"="#form_filter"
+                            "value"="#<@@(get,'$s')>"
+                            "auto-submit"="true"
+                            "class"="w-100"
+                        ){$""}
+                    }
                 }
             }
 
@@ -67,14 +125,11 @@ module "cxp.balance.dk"
                 }
             }
 
-            div(class="bg-light my-1")
+            div(class="d-flex justify-content-end align-items-center my-1 gap-2")
             {
-                div(class="btn-group" role="group")
-                {
-                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@DOC_BONIFICACION>')"){"Aplicar bonificación"}
-                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@DOC_PAGOS>')"){"Aplicar pago"}
-                    button(type="button" class="btn btn-light btn-sm fw-bolder" onclick="aplicar('#<@DOC_INTMORATORIOS>')"){"Aplicar cargos por mora"}
-                }
+                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="aplicar('#<@DOC_BONIFICACION>')"){"Aplicar bonificación"}
+                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="aplicar('#<@DOC_PAGOS>')"){"Aplicar pago"}
+                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="aplicar('#<@DOC_INTMORATORIOS>')"){"Aplicar cargos por mora"}
             }
 
             "edit-table"(class="w-100" id="lst_dcxp" data="#<to.json(@('&./docs'))>")
@@ -98,8 +153,6 @@ module "cxp.balance.dk"
                 } */
             }
         }
-
-        p{$"#<@('$error/message')>"}
 
         script
         {$'
