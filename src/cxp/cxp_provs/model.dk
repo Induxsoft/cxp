@@ -397,6 +397,10 @@ module "model"
     cxp.obtenerDocsPendientesDePago::&db,&params
     {
         if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_DOCS_POR_PAGAR_PROVD)) { do rise_error(0,"No autorizado")}
+
+        params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
+        params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
+        
         sql = "
         SELECT
             doc.const AS documento,
@@ -412,12 +416,18 @@ module "model"
         FROM dcxp AS cxp
             INNER JOIN cdocumentos AS doc ON doc.id = cxp.documento
         WHERE cxp.iproveedor = @_entity_id
-            AND (IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) > 0;
+            AND (IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) > 0
+            AND IF(IFNULL(@s,'')='', true, cxp.referencia LIKE CONCAT('%',@s,'%'))
+            AND IF(IFNULL(@year,'')='', true, YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@year)
+            AND IF(IFNULL(@month,'')='', true, (YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=IFNULL(@year,YEAR(NOW())) AND MONTH(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@month))
+            AND IF(IFNULL(@range,'-99')='-99', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
+            AND IF(IFNULL(@datefrom,'')='', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE(@datefrom) AND DATE(@dateto)))
+            ;
         "
 
         ref data = cxp.obtenerProveedor(db,@@(params,"_entity_id"))
         do cxp.obtenerSaldos(db,params,data)
-        data<"docs*"> : dbr.list(db,sql,params)
+        data<"docs*"> : dbr.list(db,ftext(sql),params)
 
         return data
     }

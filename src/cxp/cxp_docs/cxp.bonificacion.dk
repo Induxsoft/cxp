@@ -10,6 +10,8 @@ module "cxp.bonidicacion.dk"
     #include "../_lib/lib.dk"
     
     do @context.begin(@crud_context)
+    ref @http_context = @('&http')
+    ref get = @@(@http_context,"&request/get")
     ref info_dcxp = ifnull(@("&./info_dcxp"),record.create())
     ref dvsPred = ifnull(@("&./dvs_pred"),record.create())
 
@@ -41,7 +43,9 @@ module "cxp.bonidicacion.dk"
             {
                 a(href="./" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Refrescar"){$"#<@ICON_ARROW_CLOCKWISE>"}
                 button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" id="btn_save"){$"#<@ICON_SAVE> Guardar"}
-                a(href="#<@CXP_DOCS>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Salir"){$"#<@ICON_X_LG>"}
+                #! url_bac = @CXP_DOCS
+                if trim(@@(get,"$url_back")) != "" { url_bac = url_dcode(@@(get,"$url_back")) }
+                #$ a(href="#<url_bac>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Salir"){$"#<@ICON_X_LG>"}
             }
         }
 
