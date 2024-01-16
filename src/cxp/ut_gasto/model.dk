@@ -131,7 +131,7 @@ module "model"
             @"statusadministrativo": @STATUS_ADMINISTRATIVO
         }
         do dbr.begin(db)
-            gasto<"imovchequera">:@@(mov.retiro(db,params,data),"Sys_PK")
+            gasto<"imovchequera">:@@(mov.retiro(db,params,data),"#sys_pk")
             do dbr.insert(db,"ut_gasto",gasto)
         do dbr.commit(db)
         exception
@@ -148,6 +148,9 @@ module "model"
     ut.list::&db,&params
     {
         if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_GASTOS)) { do rise_error(0,"No autorizado")}
+
+        params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
+        params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
 
         new filters {}
 
@@ -190,7 +193,27 @@ module "model"
             sql = sql = " AND DATE(ut.fecha) <= DATE(@ff)"
         }
 
-        return dbr.list(db,sql,filters)
+        sql = sql + ftext("
+                AND IF(IFNULL(@s,'')='', true, (ut.referencia LIKE CONCAT('%',@s,'%') OR pdr.nombre LIKE CONCAT('%',@s,'%') OR pdr.codigo LIKE CONCAT('%',@s,'%') OR pdr.rfc LIKE CONCAT('%',@s,'%')))
+                AND IF(IFNULL(@year,'')='', true, YEAR(IF(IFNULL(@tdate,'0')='0', ut.fecha, ut.vencimiento))=@year)
+                AND IF(IFNULL(@month,'')='', true, (YEAR(IF(IFNULL(@tdate,'0')='0', ut.fecha, ut.vencimiento))=IFNULL(@year,YEAR(NOW())) AND MONTH(IF(IFNULL(@tdate,'0')='0', ut.fecha, ut.vencimiento))=@month))
+                AND IF(IFNULL(@range,'-99')='-99', true, (DATE(IF(IFNULL(@tdate,'0')='0', ut.fecha, ut.vencimiento)) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
+                AND IF(IFNULL(@datefrom,'')='' AND IFNULL(@dateto,'')='', true, (DATE(IF(IFNULL(@tdate,'0')='0', ut.fecha, ut.vencimiento)) BETWEEN DATE(@datefrom) AND DATE(@dateto)))
+                AND IF(IFNULL(@edoadmin,'-1')='-1', true, edo.id = @edoadmin)
+            ORDER BY ut.fecha
+            LIMIT #<@default_max_rows>;
+        ")
+
+        sql_edoadmin = "SELECT id, const FROM cstatusadministrativos ORDER BY id;"
+        ref edoadmin = dbr.list(db, sql_edoadmin, @null)
+
+        new response
+        {
+            @"gastos*": dbr.list(db, ftext(sql),params)
+            @"edoadmin*": prepare_filter(edoadmin)
+        }
+
+        return response
     }
 
     ut.read::&db,&params
@@ -254,6 +277,16 @@ module "model"
         do ut.prepareView(db,params,data)
         do ut.data(db,data)
         return data
+    }
+    prepare_filter::list
+    {
+        new record
+        {
+            @"id": "-1"
+            @"const": "Todos"
+        }
+        do list.ins(list, 0, record)
+        return list
     }
 
     point @read to ut.read

@@ -7,10 +7,17 @@ module "form.dk"
     #include "uielements.dkl"
     #include "../_lib/icons.dk"
     #include "../_lib/config.dk"
+    #include "uielements.v12.dkl"
 
     do @context.begin(@crud_context)
     ref infoProv = ifnull(@("&./info_proveedor"),record.create())
     @crud_context<"input*">:if(isnull(@("&input")),@("&."),@("&input"))
+
+    header_act::
+    { 
+        if @("$./sys_pk")==""{ #$ button(type="submit" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"){$"Aceptar"} }
+    }
+    #! point general_act to header_act
 
     new tipo
     {
@@ -18,7 +25,7 @@ module "form.dk"
         @"id": "sel_documento"
         new member "attributes"
         {
-            @"class": "form-select"
+            @"class": "induxsoft-form-select"
             @"name": "documento"
         }
         @"value_field": "id"
@@ -31,7 +38,7 @@ module "form.dk"
         @"id": "sel_cuenta"
         new member "attributes"
         {
-            @"class": "form-select"
+            @"class": "induxsoft-form-select"
             @"name": "cuenta"
         }
         @"value_field": "sys_pk"
@@ -42,31 +49,31 @@ module "form.dk"
     #$
     div(class="container")
     {
-        h1(class="text-primary"){$"Gasto"}
-
-        div(class="row")
+        form(action="." method="post")
         {
-            div(class="col-lg-8 col-md-9 col-sm-12")
-            {
-                form(action="." method="post")
-                {
-                    div(class="row")
-                    {
-                        div(class="col-lg-4 col-md-4 col-sm-12"){
-                            label(class="form-label" "for"="txt-fecha"){$"Fecha:"}
-                            input(type="date" class="form-control" name="fecha" id="txt_fecha" value="#<@('$input/fecha')>" required="")
-                        }
-                        div(class="col-lg-4 col-md-4 col-sm-12"){
-                            label(class="form-label" "for"="txt_vencimiento"){$"Fecha de vencimiento:"}
-                            input(type="date" class="form-control" name="vencimiento" id="vencimiento" value="#<@('$input/vencimiento')>" required="")
-                        }
-                        div(class="col-lg-4 col-md-4 col-sm-12"){
-                            label(class="form-label" "for"="txt_referencia"){$"Referencia:"}
-                            input(type="text" class="form-control" name="referencia" id="txt_referencia" value="#<@('$input/referencia')>" required="")
-                        }
-                    }
+            #! do uie.printMainBar(general_act, "Gasto", @false, @UT_GASTO)
 
-                    label(class="form-label" "for"="sel_proveedor"){$"Proveedor:"}
+            #$ div
+            {
+                div(class="row mb-2")
+                {
+                    div(class="col-lg-4 col-md-4 col-sm-12"){
+                        small(class="fw-bold" "for"="txt-fecha"){$"Fecha:"}
+                        input(type="date" class="induxsoft-form-control" name="fecha" id="txt_fecha" value="#<@('$input/fecha')>" required="")
+                    }
+                    div(class="col-lg-4 col-md-4 col-sm-12"){
+                        small(class="fw-bold" "for"="txt_vencimiento"){$"Fecha de vencimiento:"}
+                        input(type="date" class="induxsoft-form-control" name="vencimiento" id="vencimiento" value="#<@('$input/vencimiento')>" required="")
+                    }
+                    div(class="col-lg-4 col-md-4 col-sm-12"){
+                        small(class="fw-bold" "for"="txt_referencia"){$"Referencia:"}
+                        input(type="text" class="induxsoft-form-control" name="referencia" id="txt_referencia" value="#<@('$input/referencia')>" required="")
+                    }
+                }
+
+                div(class="mb-2")
+                {
+                    small(class="fw-bold" "for"="sel_proveedor"){$"Proveedor:"}
                     "input-key"(
                         id="sel_proveedor"
                         name="proveedor"
@@ -80,78 +87,78 @@ module "form.dk"
                         "box-title-text"="Seleccione un proveedor"
                         required="true"
                     ){$""}
+                }
 
-                    label(class="form-label" "for"="sel_categoria"){$"Categoría:"}
-                    ##
-                    new params
+                div(class="row mb-2")
+                {
+                    div(class="col-12 col-sm-6")
                     {
-                        @"datatable*": ifnull(@("&./categorias"),list.create())
-                        @"id": "sel_categoria"
-                        new member "attributes"
+                        small(class="fw-bold" "for"="sel_categoria"){$"Categoría:"}
+                        #! new params
                         {
-                            @"class": "form-select"
-                            @"name": "categoria"
-                            @"required": ""
+                            @"datatable*": ifnull(@("&./categorias"),list.create())
+                            @"id": "sel_categoria"
+                            new member "attributes"
+                            {
+                                @"class": "induxsoft-form-select"
+                                @"name": "categoria"
+                                @"required": ""
+                            }
+                            @"value_field": "sys_pk"
+                            @"text_field": "descripcion"
+                            @"selected": @("$input/categoria")
                         }
-                        @"value_field": "sys_pk"
-                        @"text_field": "descripcion"
-                        @"selected": @("$input/categoria")
+                        do uie.dbSelect(params)
                     }
-                    do uie.dbSelect(params)
-                    ##
-
-                    label(class="form-label" "for"="sel_divisa"){$"Divisa:"}
-                    ##
-                    new params
+                    #$ div(class="col-12 col-sm-6")
                     {
-                        @"datatable*": ifnull(@("&./divisas"),list.create())
-                        @"id": "sel_divisa"
-                        new member "attributes"
+                        small(class="fw-bold" "for"="sel_divisa"){$"Divisa:"}
+                        #! new params
                         {
-                            @"class": "form-select"
-                            @"name": "divisa"
-                            @"required": ""
+                            @"datatable*": ifnull(@("&./divisas"),list.create())
+                            @"id": "sel_divisa"
+                            new member "attributes"
+                            {
+                                @"class": "induxsoft-form-select"
+                                @"name": "divisa"
+                                @"required": ""
+                            }
+                            @"value_field": "sys_pk"
+                            @"text_field": "divisa"
+                            @"selected": @("$input/divisa")
                         }
-                        @"value_field": "sys_pk"
-                        @"text_field": "divisa"
-                        @"selected": @("$input/divisa")
-                    }
-                    do uie.dbSelect(params)
-                    ##
-
-                    label(class="form-label" "for"="txt_concepto"){$"Concepto:"}
-                    textarea(class="form-control" name="concepto" id="txt_concepto" required=""){$"#<@('$input/concepto')>"}
-
-                    div(class="d-flex gap-2 align-items-center justify-content-end mt-2")
-                    {
-                        label(class="form-label" "for"="txt_importe"){$"Importe:"}
-                        input(type="number" class="form-control w-25" name="importe" min="1" step="0.000001" id="txt_importe" value="#<@('$input/importe')>" required="")
-                    }
-                    
-                    label(class="form-label" "for"="txt_beneficiario"){$"Beneficiario:"}
-                    input(type="text" class="form-control form-control-sm" name="beneficiario" id="txt_beneficiario" value="#<@('$./beneficiario')>")
-
-
-                    #$
-                    label{"Documento:"}
-                    #! do uie.dbSelect(tipo)
-
-                    #$ label{"Cuenta:"}
-                    #! do uie.dbSelect(cuentas)
-
-                    #$ div(class="d-flex gap-1 justify-content-end my-2")
-                    {
-                       #!
-                       if @("$./sys_pk")==""{#$button(type="submit" class="btn btn-primary"){$"Aceptar"}}
-                        a(type="reset" class="btn btn-danger" href=".."){$"Cancelar"}
+                        do uie.dbSelect(params)
                     }
                 }
+
+                #$ small(class="fw-bold" "for"="txt_concepto"){$"Concepto:"}
+                textarea(class="form-control" name="concepto" id="txt_concepto" required=""){$"#<@('$input/concepto')>"}
+
+                div(class="d-flex gap-2 align-items-center justify-content-end mt-2")
+                {
+                    small(class="form-label" "for"="txt_importe"){$"Importe:"}
+                    input(type="number" class="form-control w-25" name="importe" min="1" step="0.000001" id="txt_importe" value="#<@('$input/importe')>" required="")
+                }
+                
+                small(class="form-label" "for"="txt_beneficiario"){$"Beneficiario:"}
+                input(type="text" class="induxsoft-form-control" name="beneficiario" id="txt_beneficiario" value="#<@('$./beneficiario')>")
+
+                small{$"Documento:"}
+                #! do uie.dbSelect(tipo)
+
+                #$ small{$"Cuenta:"}
+                #! do uie.dbSelect(cuentas)
+
+                // #$ div(class="d-flex gap-1 justify-content-end my-2")
+                // {
+                //     #!
+                //     if @("$./sys_pk")==""{#$button(type="submit" class="btn btn-primary"){$"Aceptar"}}
+                //     a(type="reset" class="btn btn-danger" href=".."){$"Cancelar"}
+                // }
             }
         }
 
-        p{$"#<@('$error/message')>"}
-
-        script
+        #$ script
         {
             $'
             var proveedor=document.getElementById("sel_proveedor");
