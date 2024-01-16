@@ -8,8 +8,15 @@ module "cxp.aplicar.dk"
     #include "../_lib/icons.dk"
     #include "../_lib/config.dk"
     #include "../_lib/lib.dk"
+    #include "uielements.v12.dkl"
     
     do @context.begin(@crud_context)
+    ref @http_context = @('&http')
+    ref get = @@(@http_context,"&request/get")
+
+    get<"filter-mode">: ifstr(trim(@@(get,"filter-mode"))!="", @@(get,"filter-mode"), "month")
+    get<"year">: ifstr(trim(@@(get,"year"))!="", @@(get,"year"), str(ndatetime.year(ndatetime.now())))
+    get<"month">: ifstr(trim(@@(get,"month"))!="", @@(get,"month"), str(ndatetime.month(ndatetime.now())))
 
     ref infoprov = ifnull(@("&./info_prov"),record.create())
     ref xaplicar = ifnull(@("&./xaplicar"),record.create())
@@ -20,10 +27,61 @@ module "cxp.aplicar.dk"
     #$
     div(class="container")
     {
-        h1(class="h4"){$"Aplicación de pago o bonificación a uno o más documentos"}
+        // h1(class="h4"){$"Aplicación de pago o bonificación a uno o más documentos"}
+        #! do uie.printMainBar(@null, "Aplicación de pago o bonificación a uno o más documentos", @false, @CXP_DOCS)
 
-        div
+        #$ div
         {
+            form(action="./" method="GET" id="form_filter" class="no-print my-1")
+            {
+                div(class="d-flex align-items-center")
+                {
+                    div
+                    {
+                        select(class="induxsoft-form-select" name="tdate" onchange="document.querySelector('#form_filter').submit();")
+                        {
+                            option(value="0" "#<ifstr(@@(get,'$tdate')=='0','selected','')>"="true"){$"Emisión"}
+                            option(value="1" "#<ifstr(@@(get,'$tdate')=='1','selected','')>"="true"){$"Vencimiento"}
+                        }
+                    }
+                    div(class="flex-grow-1")
+                    {
+                        "filter-date-range"(
+                            "mode-field"="filter-mode"
+                            "year-field"="year"
+                            "month-field"="month"
+                            "range-field"="range"
+                            "from-field"="datefrom"
+                            "to-field"="dateto"
+                            "selection"='#<to.json(get)>'
+                            "lastdays-options"="15,30,45,60,90"
+                            "years-options"="2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024"
+                            "custom-range"="true"
+                            "form"="#form_filter"
+                            "auto-submit"="true"
+                            "label-months"="Ver por cada mes"
+                            "label-days"="Últ. @lastdays días"
+                            "label-custom"="Personalizado"
+                            "label-from"="Desde:"
+                            "label-to"="Hasta:"
+                            "month-names"="Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"
+                        ){$""}
+                    }
+                }
+                div(class="flex-grow-1 py-1")
+                {
+                    #$ "filter-text"(
+                        "id"="ft_search"
+                        "text-field"="s"
+                        "placeholder"="Buscar por referencia"
+                        "form"="#form_filter"
+                        "value"="#<@@(get,'$s')>"
+                        "auto-submit"="true"
+                        "class"="w-100"
+                    ){$""}
+                }
+            }
+            
             h5(class="text-center text-muted"){$"Aplicación de pago o bonificación"}
 
             div(class="d-flex justify-content-between my-1")

@@ -6,56 +6,134 @@ module "cxp.list"
     #include "serialize.dkh"
     #include "../_lib/icons.dk"
     #include "../_lib/config.dk"
+    #include "uielements.v12.dkl"
     
     do @context.begin(@crud_context)
+    ref @http_context = @('&http')
+    ref db = @("&database")
+    ref get = @@(@http_context,"&request/get")
+    ref docs = @('&./docs')
+
+    get<"filter-mode">: ifstr(trim(@@(get,"filter-mode"))!="", @@(get,"filter-mode"), "month")
+    get<"year">: ifstr(trim(@@(get,"year"))!="", @@(get,"year"), str(ndatetime.year(ndatetime.now())))
+    get<"month">: ifstr(trim(@@(get,"month"))!="", @@(get,"month"), str(ndatetime.month(ndatetime.now())))
+
+    new def_doc
+    {
+        @"datatable*": @('&./cdocumentos')
+        member "attributes"
+        {
+            @"name": "cdoc"
+            @"class": "induxsoft-form-select"
+            @"onchange": "document.querySelector('#form_filter').submit();"
+        }
+        @"text_field": "const"
+        @"value_field": "id"
+        @"selected": field.dstr(get, "cdoc", "-1")
+    }
+
+    new table_definition
+    {
+        @"datatable*": docs
+        @"leyend": "Mostrando los primeros # documentos ordenados por fecha de emisión"
+        member @"columns"
+        {
+            member @"cproveedor" { @"caption":"Código" }
+            member @"proveedor" { @"caption":"Proveedor" }
+            member @"documento" { @"caption":"Documento" }
+            member @"referencia" { @"caption":"Referencia" }
+            member @"emision" { @"caption":"Emisión" }
+            member @"aplicacion" { @"caption":"Aplicación" }
+            member @"debe" { @"caption":"Debe" }
+            member @"haber" { @"caption":"Haber" }
+            member @"divisa" { @"caption":"Divisa" }
+        }
+    }
+
+    header_act::
+    { 
+        #$ a(href="#<@DOC_AGREGAR>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"){"Agregar"}
+        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_CONSULTAR>')"){"Consultar"}
+        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_PAGOS>')"){"Pagar documento"}
+        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_BONIFICACION>')"){"Bonificaciones"}
+        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_INTMORATORIOS>')"){"Int. Moratorios"}
+        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_APLICAR>')"){"Aplicar abonos"}
+    }
+    #! point general_act to header_act
     
     #$
-    div(class="container")
+    div(class="container-fluid p-0")
     {
-        div(class="row container-section m-0 px-0 py-2 my-2 border-bottom sticky-top bg-white" id="main_action_bar")
-        {
-            div(class="col-4 d-flex align-items-center p-0") { h1(class="h5 text-primary tex-no-break m-0"){$"Documentos por pagar"} }
-            div(class="col-8 d-flex justify-content-end align-items-center p-0 gap-2")
-            {
-                a(href="./" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Refrescar"){$"#<@ICON_ARROW_CLOCKWISE>"}
-                a(href="#<@DOC_AGREGAR>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Agregar"}
-                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="documento.goTo('#<@DOC_CONSULTAR>')"){"Consultar"}
-                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="documento.goTo('#<@DOC_PAGOS>')"){"Pagar documento"}
-                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="documento.goTo('#<@DOC_BONIFICACION>')"){"Bonificaciones"}
-                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="documento.goTo('#<@DOC_INTMORATORIOS>')"){"Int. Moratorios"}
-                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="documento.goTo('#<@DOC_APLICAR>')"){"Aplicar abonos"}
-            }
-        }
+        #! do uie.printMainBar(general_act, "Documentos por pagar", @true, "")
 
-        div
+        #$ div(id="work_area" class="container-section mt-1 p-2 pt-0")
         {
-            "edit-table"(class="w-100" id="tbl_cxp" data="#<to.json(@('&.'))>")
+            p{$"#<@('$error/message')>"}
+
+            form(action="./" method="GET" id="form_filter" class="no-print mb-1")
             {
-                "edit-thead"
+                div(class="d-flex align-items-center")
                 {
-                    "edit-tr"
+                    div
                     {
-                        "edit-th"(type="NoEditable" field="cproveedor"){$"Código"}
-                        "edit-th"(type="NoEditable" field="proveedor"){$"Proveedor"}
-                        "edit-th"(type="NoEditable" field="documento"){$"Documento"}
-                        "edit-th"(type="NoEditable" field="referencia"){$"Referencia"}
-                        "edit-th"(type="NoEditable" field="emision"){$"Emisión"}
-                        "edit-th"(type="NoEditable" field="aplicacion"){$"Aplicación"}
-                        "edit-th"(type="NoEditable" field="debe"){$"Debe"}
-                        "edit-th"(type="NoEditable" field="haber"){$"Haber"}
-                        "edit-th"(type="NoEditable" field="divisa"){$"Divisa"}
+                        select(class="induxsoft-form-select" name="tdate" onchange="document.querySelector('#form_filter').submit();")
+                        {
+                            option(value="0" "#<ifstr(@@(get,'$tdate')=='0','selected','')>"="true"){$"Emisión"}
+                            option(value="1" "#<ifstr(@@(get,'$tdate')=='1','selected','')>"="true"){$"Aplicación"}
+                        }
+                    }
+                    div(class="flex-grow-1")
+                    {
+                        "filter-date-range"(
+                            "mode-field"="filter-mode"
+                            "year-field"="year"
+                            "month-field"="month"
+                            "range-field"="range"
+                            "from-field"="datefrom"
+                            "to-field"="dateto"
+                            "selection"='#<to.json(get)>'
+                            "lastdays-options"="15,30,45,60,90"
+                            "years-options"="2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024"
+                            "custom-range"="true"
+                            "form"="#form_filter"
+                            "auto-submit"="true"
+                            "label-months"="Ver por cada mes"
+                            "label-days"="Últ. @lastdays días"
+                            "label-custom"="Personalizado"
+                            "label-from"="Desde:"
+                            "label-to"="Hasta:"
+                            "month-names"="Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"
+                        ){$""}
                     }
                 }
-                /* "edit-tbody"
+
+                div(class="py-1 w-100 d-flex gap-2 flex-wrap align-items-center")
                 {
-                    // contenido...
-                } */
+                    div(class="d-flex gap-2")
+                    {
+                        div
+                        {
+                            #! do uie.dbSelect(def_doc) 
+                        }
+                    }
+                    #$ div(class="flex-grow-1")
+                    {
+                        "filter-text"(
+                            "id"="micontrol10"
+                            "text-field"="s"
+                            "placeholder"="Referencia del documento, nombre, código o RFC del proveedor"
+                            "form"="#form_filter"
+                            "value"="#<@@(get,'$s')>"
+                            "auto-submit"="true"
+                            "class"="w-100"
+                        ){$""}
+                    }
+                }
             }
+            #! do uie.dbeditable(table_definition,"tbl_cxp")
         }
 
-        p{$"#<@('$error/message')>"}
-
-        div
+        #$ div
         {
             script(src="#<@JS_DOCUMENTOS>"){$""}
             script(type="text/javascript")

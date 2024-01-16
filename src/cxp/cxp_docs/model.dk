@@ -2,6 +2,8 @@
 #!
 module "model"
 {
+    #include "../_lib/config.dk"
+
     @table_name = "dcxp"
     @read_query = "
     SELECT
@@ -225,6 +227,9 @@ module "model"
 
     cxp.obtenerDocumentosPendientesDePago::&db,&params
     {
+        params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
+        params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
+
         sql = "
         SELECT
             cxp.sys_pk,
@@ -263,9 +268,15 @@ module "model"
         FROM dcxp AS cxp
             INNER JOIN cdocumentos AS doc ON doc.id = cxp.documento
         WHERE cxp.iproveedor = @iproveedor
-            AND (IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) > 0;
+            AND (IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) > 0
+            AND IF(IFNULL(@s,'')='', true, cxp.referencia LIKE CONCAT('%',@s,'%'))
+            AND IF(IFNULL(@year,'')='', true, YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@year)
+            AND IF(IFNULL(@month,'')='', true, (YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=IFNULL(@year,YEAR(NOW())) AND MONTH(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@month))
+            AND IF(IFNULL(@range,'-99')='-99', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
+            AND IF(IFNULL(@datefrom,'')='', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE(@datefrom) AND DATE(@dateto)));
         "
-        ref pendientes = dbr.list(db,sql,xAplicar)
+        params<"iproveedor">: @@(xAplicar, "iproveedor")
+        ref pendientes = dbr.list(db,sql,params)
 
         new result
         {
@@ -352,6 +363,9 @@ module "model"
     cxp.list::&db,&params
     {
         if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_DOCS_POR_PAGAR)) { do rise_error(0,"No autorizado")}
+
+        params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
+        params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
             
         fformat = "yyyy-MM-dd"
 
@@ -399,15 +413,36 @@ module "model"
             )"
         }
         
-        if fi_emision != "" && ff_emision != "" && fi_aplicacion == "" && ff_aplicacion == "" { sql = sql + " AND DATE(cxp.fecha) BETWEEN @fie AND @ffe" }
-        if fi_emision == "" && ff_emision == "" && fi_aplicacion != "" && ff_aplicacion != "" { sql = sql + " AND DATE(cxp.aplicacion) BETWEEN @fia AND @ffa" }
+        // if fi_emision != "" && ff_emision != "" && fi_aplicacion == "" && ff_aplicacion == "" { sql = sql + " AND DATE(cxp.fecha) BETWEEN @fie AND @ffe" }
+        // if fi_emision == "" && ff_emision == "" && fi_aplicacion != "" && ff_aplicacion != "" { sql = sql + " AND DATE(cxp.aplicacion) BETWEEN @fia AND @ffa" }
 
-        if orderby != "" { sql = sql + " ORDER BY "+orderby+" "+direction }
+        // if orderby != "" { sql = sql + " ORDER BY "+orderby+" "+direction }
 
-        if fi_emision == "" && ff_emision == "" && fi_aplicacion == "" && ff_aplicacion == "" { sql = sql + " LIMIT "+str(recent)+";" }
+        // if fi_emision == "" && ff_emision == "" && fi_aplicacion == "" && ff_aplicacion == "" { sql = sql + " LIMIT "+str(recent)+";" }
+
+        sql = sql + ftext("
+                AND IF(IFNULL(@s,'')='', true, (cxp.referencia LIKE CONCAT('%',@s,'%') OR pdr.nombre LIKE CONCAT('%',@s,'%') OR pdr.codigo LIKE CONCAT('%',@s,'%') OR pdr.rfc LIKE CONCAT('%',@s,'%')))
+                AND IF(IFNULL(@year,'')='', true, YEAR(IF(IFNULL(@tdate,'0')='0', cxp.fecha, cxp.aplicacion))=@year)
+                AND IF(IFNULL(@month,'')='', true, (YEAR(IF(IFNULL(@tdate,'0')='0', cxp.fecha, cxp.aplicacion))=IFNULL(@year,YEAR(NOW())) AND MONTH(IF(IFNULL(@tdate,'0')='0', cxp.fecha, cxp.aplicacion))=@month))
+                AND IF(IFNULL(@range,'-99')='-99', true, (DATE(IF(IFNULL(@tdate,'0')='0', cxp.fecha, cxp.aplicacion)) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
+                AND IF(IFNULL(@datefrom,'')='' AND IFNULL(@dateto,'')='', true, (DATE(IF(IFNULL(@tdate,'0')='0', cxp.fecha, cxp.aplicacion)) BETWEEN DATE(@datefrom) AND DATE(@dateto)))
+                AND IF(IFNULL(@cdoc,'-1')='-1', true, doc.id = @cdoc)
+            ORDER BY cxp.fecha
+            LIMIT #<@default_max_rows>;
+        ")
 
         query = trim(sql)
-        return dbr.list(db,query,params)
+
+        sql_cdocumentos = "SELECT d.id, d.const FROM cdocumentos d INNER JOIN cfg_cxp_docs cd ON d.id=cd.documento ORDER BY d.id;"
+        ref cdocumentos = dbr.list(db, sql_cdocumentos, @null)
+
+        new response
+        {
+            @"docs*": dbr.list(db, ftext(query), params)
+            @"cdocumentos*": prepare_filter(cdocumentos)
+        }
+        
+        return response
     }
 
     cxp.read::&db,&params
@@ -438,5 +473,15 @@ module "model"
     cxp.delete::&db,&params
     {
         do rise_error(500,"Acción no implementada")
+    }
+    prepare_filter::list
+    {
+        new record
+        {
+            @"id": "-1"
+            @"const": "Todos"
+        }
+        do list.ins(list, 0, record)
+        return list
     }
 }

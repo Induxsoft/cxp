@@ -135,4 +135,7 @@ module
 	@CXP_SEC_PRIVID_CONSULTAR_GASTOS="FX1-20-20-700"
 	@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO="FX1-20-20-702"
 	@CXP_SEC_PRIVID_CONSULTAR_UN_GASTO="FX1-20-20-701"
+
+	// Número máximo de filas a mostrar en lista
+	@default_max_rows=250
 }
