@@ -103,12 +103,12 @@ module "cxp.balance.dk"
                 {
                     tr
                     {
-                        th{$"Saldo inicial"}
-                        th{$"Debe"}
-                        th{$"Haber"}
-                        th{$"Saldo al final"}
-                        th{$"Saldo docs"}
-                        th{$"Por aplicar"}
+                        th(class="text-center"){$"Saldo inicial"}
+                        th(class="text-center"){$"Debe"}
+                        th(class="text-center"){$"Haber"}
+                        th(class="text-center"){$"Saldo al final"}
+                        th(class="text-center"){$"Saldo docs"}
+                        th(class="text-center"){$"Por aplicar"}
                     }
                 }
                 tbody

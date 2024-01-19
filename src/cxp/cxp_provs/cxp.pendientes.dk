@@ -93,9 +93,9 @@ module "cxp.pendientes.dk"
                 {
                     tr
                     {
-                        th{$"Saldo total"}
-                        th{$"Saldo docs"}
-                        th{$"Por aplicar"}
+                        th(class="text-center"){$"Saldo total"}
+                        th(class="text-center"){$"Saldo docs"}
+                        th(class="text-center"){$"Por aplicar"}
                     }
                 }
                 tbody
@@ -127,8 +127,8 @@ module "cxp.pendientes.dk"
                         "edit-th"(type="NoEditable" field="emision"){$"Fecha"}
                         "edit-th"(type="NoEditable" field="aplicacion"){$"Vencimiento"}
                         "edit-th"(type="NoEditable" field="haber" textalign="end" format="true" decs="2" prefix="$ " thousandssep="true"){$"Importe"}
-                        "edit-th"(type="NoEditable" field="int_moratorios"){$"IntMoratorios"}
-                        "edit-th"(type="NoEditable" field="bonificaciones"){$"Bonificaciones"}
+                        "edit-th"(type="NoEditable" field="int_moratorios" textalign="end" format="true" decs="2" prefix="$ " thousandssep="true"){$"IntMoratorios"}
+                        "edit-th"(type="NoEditable" field="bonificaciones" textalign="end" format="true" decs="2" prefix="$ " thousandssep="true"){$"Bonificaciones"}
                         "edit-th"(type="NoEditable" field="pagos" textalign="end" format="true" decs="2" prefix="$ " thousandssep="true"){$"Pagos"}
                         "edit-th"(type="NoEditable" field="saldo" textalign="end" format="true" decs="2" prefix="$ " thousandssep="true"){$"Saldo"}
                     }
