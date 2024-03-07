@@ -61,7 +61,7 @@ module "form.dk"
     
     #$ div(class="container-fluid p-0")
     {
-        #! do uie.printMainBar(general_act, "Documentos por pagar", @true, "")
+        #! do uie.printMainBar(general_act, "Gastos", @true, "")
         
         #$ div(id="work_area" class="container-section mt-1 p-2 pt-0")
         {

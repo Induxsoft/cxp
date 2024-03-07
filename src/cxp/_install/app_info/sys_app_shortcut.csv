@@ -1,4 +1,4 @@
 "id","title","icon96x96","src","_blank","appid","cat"
-"cxp.documentos","Documentos por pagar","/$/cxp/img/icons/docs-96x96.png","/!/cxp/documentos/","0","documentos","0020"
-"cxp.proveedores","Proveedores y CxP","/$/cxp/img/icons/provs-96x96.png","/!/cxp/proveedores/","0","proveedores","0020"
-"cxp.gastos","Gastos","/$/cxp/img/icons/gastos-96x96.png","/!/cxp/gastos/","0","gastos","0020"
+"GC10","Documentos por pagar","/$/cxp/img/icons/docs-96x96.png","/!/cxp/documentos/","0","cxp.documentos","0020"
+"GC20","Proveedores y CxP","/$/cxp/img/icons/provs-96x96.png","/!/cxp/proveedores/","0","cxp.proveedores","0020"
+"GC30","Gastos","/$/cxp/img/icons/gastos-96x96.png","/!/cxp/gastos/","0","cxp.gastos","0020"
