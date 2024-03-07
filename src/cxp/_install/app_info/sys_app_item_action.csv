@@ -16,4 +16,4 @@
 "GC27","Bonificación a proveedor","Bonificaciones","","/!/cxp/proveedores/@_src_context_item_id/bonificacion/","0","cxp.proveedores","proveedor","1","action"
 
 "GC31","Agregar gasto","Agregar","","/!/cxp/gastos/_new/","0","cxp.gastos","gasto","0","action"
-"GC32","Consultar gasto","Consultar","","/!/cxp/gastos/@_src_context_item_id/","0","cxp.gastos","gasto","0","action"
+"GC32","Consultar gasto","Consultar","","/!/cxp/gastos/@_src_context_item_id/","0","cxp.gastos","gasto","1","action"
