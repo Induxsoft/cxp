@@ -164,7 +164,17 @@ module "cxp.pago.dk"
                         label(class="col-auto col-form-label" "for"="txt_tcambio_retiro"){$"Tipo de cambio:"}
                         div(class="col-6") {
                             div(class="input-group input-group-sm") {
-                                input(type="number" class="form-control rounded-0" name="tcambio_retiro" min="1" step="0.000001" id="txt_tcambio_retiro" value="#<form('tcambio_retiro','nm',@null)>" required="true")
+                                input(
+                                    class="form-control rounded-0 induxsoft-num-field mw-100"
+                                    type="number"
+                                    name="tcambio_retiro"
+                                    value="#<form('tcambio_retiro','nm',@null)>"
+                                    min="1"
+                                    step="0.000001"
+                                    id="txt_tcambio_retiro"
+                                    required="true"
+                                    "num-decs"="6"
+                                )
                                 span(class="input-group-text rounded-0" id="spn_tcambio_retiro"){$"#<cDIVISA_PRED>"}
                             }
                         }
@@ -175,7 +185,16 @@ module "cxp.pago.dk"
                         label(class="col-auto col-form-label" "for"="txt_importe_retiro"){$"Importe:"}
                         div(class="col-6") {
                             div(class="input-group input-group-sm"){
-                                input(type="number" class="form-control rounded-0" name="importe_retiro" step="0.000001" min="1" id="txt_importe_retiro" value="#<form('importe_retiro','nm',@null)>")
+                                input(
+                                    class="form-control rounded-0 induxsoft-num-field mw-100"
+                                    type="number"
+                                    name="importe_retiro"
+                                    value="#<form('importe_retiro','nm',@null)>"
+                                    step="0.000001"
+                                    min="1"
+                                    id="txt_importe_retiro"
+                                    "num-decs"="6"
+                                )
                                 span(class="input-group-text rounded-0" id="spn_importe_retiro"){$""}
                             }
                         }
@@ -232,7 +251,17 @@ module "cxp.pago.dk"
                         label(class="col-auto col-form-label" "for"="txt_tcambio"){$"Tipo de cambio:"}
                         div(class="col-6") {
                             div(class="input-group input-group-sm") {
-                                input(type="number" class="form-control rounded-0" name="tcambio" min="1" id="txt_tcambio" step="0.000001" value="#<form('tcambio','nm',dtprov)>" required="true")
+                                input(
+                                    class="form-control rounded-0 induxsoft-num-field mw-100"
+                                    type="number"
+                                    name="tcambio"
+                                    value="#<form('tcambio','nm',dtprov)>"
+                                    min="1"
+                                    step="0.000001"
+                                    id="txt_tcambio"
+                                    required="true"
+                                    "num-decs"="6"
+                                )
                                 span(class="input-group-text rounded-0"){$"#<cDIVISA_PRED> = 1 #<@@(dtprov,'$divisa')>"}
                             }
                         }
@@ -243,7 +272,16 @@ module "cxp.pago.dk"
                         label(class="col-auto col-form-label" "for"="txt_importe"){$"Importe:"}
                         div(class="col-6") {
                             div(class="input-group input-group-sm"){
-                                input(type="number" class="form-control rounded-0" name="importe" min="1" step="0.000001" id="txt_importe" value="#<form('importe','nm',@null)>")
+                                input(
+                                    class="form-control rounded-0 induxsoft-num-field mw-100"
+                                    type="number"
+                                    name="importe"
+                                    value="#<form('importe','nm',@null)>"
+                                    min="1"
+                                    step="0.000001"
+                                    id="txt_importe"
+                                    "num-decs"="6"
+                                )
                                 span(class="input-group-text rounded-0"){$"#<@@(dtprov,'$divisa')>"}
                             }
                         }
@@ -254,7 +292,13 @@ module "cxp.pago.dk"
                         label(class="col-auto col-form-label" "for"="txt_notas"){$"Notas:"}
                         div(class="col-6") {
                             textarea(class="form-control form-control-sm rounded-0" name="notas" id="txt_notas" required="true")
-                            { $"#<form('notas','tx',@null)>" }
+                            {
+                                #!
+                                concepto = form('notas','tx',@null)
+                                if concepto == "" { concepto = "Pago a: [" + @@(dtprov,'$codigo') + "] " + @@(dtprov,'$nombre') }
+                                #$
+                                $"#<concepto>"
+                            }
                         }
                     }
                 }
@@ -273,6 +317,7 @@ module "cxp.pago.dk"
                     proveedor.pago.dvsPred = #<to.json(dvsPred)>;
                     proveedor.pago.init();
                     proveedor.pago.pedirTCambio();
+                    InduxsoftNumberFields.Init();
                 });
             '}
         }

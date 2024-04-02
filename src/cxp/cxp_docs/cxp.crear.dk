@@ -15,7 +15,7 @@ module "cxp.crear.dk"
     ref listDocumentos = ifnull(@("&./documentos"),list.create())
 
     // do rise_error(0,to.json(@("&.")))
-    enable_editing = (@("$parameters/_entity_id") == "_new")
+    isNew = (@("$parameters/_entity_id") == "_new")
 
     new sel_documento
     {
@@ -32,6 +32,9 @@ module "cxp.crear.dk"
         @"selected": form("documento","nm",info_dcxp)
     }
 
+    bar_title = "Agregar documento por pagar"
+    if not(isNew) { bar_title = "Ver documento por pagar" }
+
     #$
     div(class="container")
     {
@@ -39,16 +42,16 @@ module "cxp.crear.dk"
         
         div(class="row container-section m-0 px-0 py-2 my-2 border-bottom sticky-top bg-white" id="main_action_bar")
         {
-            div(class="col-4 d-flex align-items-center p-0") { h5(class="tex-no-break m-0"){$"Agregar documento por pagar"} }
+            div(class="col-4 d-flex align-items-center p-0") { h5(class="tex-no-break m-0"){$"#<bar_title>"} }
             div(class="col-8 d-flex justify-content-end align-items-center p-0 gap-2")
             {
                 a(href="./" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Refrescar"){$"#<@ICON_ARROW_CLOCKWISE>"}
-                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action #<ifstr(enable_editing,'','disable-ctrl')>" id="btn_save"){$"#<@ICON_SAVE> Guardar"}
+                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action #<ifstr(isNew,'','disable-ctrl')>" id="btn_save"){$"#<@ICON_SAVE> Guardar"}
                 a(href="#<@CXP_DOCS>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Salir"){$"#<@ICON_X_LG>"}
             }
         }
 
-        form(action="." method="POST" enctype="multipart/form-data" id="form_cxp" class="#<ifstr(enable_editing,'','disable-form')>")
+        form(action="." method="POST" enctype="multipart/form-data" id="form_cxp" class="#<ifstr(isNew,'','disable-form')>")
         {
             label(class="form-label" "for"="sel_proveedor"){$"Proveedor:"}
             "input-key"(
@@ -73,7 +76,17 @@ module "cxp.crear.dk"
                 }
                 div(class="col-lg-4") {
                     label(class="form-label" "for"="txt_tcambio"){$"Tipo de cambio:"}
-                    input(type="number" class="form-control rounded-0" name="tcambio" id="txt_tcambio" min="1" step="0.000001" value="#<form('tcambio','nm',infoProv)>" required="")
+                    input(
+                        class="form-control rounded-0 induxsoft-num-field mw-100"
+                        type="number"
+                        name="tcambio"
+                        value="#<form('tcambio','nm',infoProv)>"
+                        id="txt_tcambio"
+                        min="1"
+                        step="0.000001"
+                        required="true"
+                        "num-decs"="6"
+                    )
                 }
                 div(class="col-lg-4") {
                     label(class="form-label" "for"="sel_documento"){$"Tipo de documento:"}
@@ -134,7 +147,18 @@ module "cxp.crear.dk"
                         importe = (@@(info_dcxp,"#debe") + @@(info_dcxp,"#haber"))
                     }
                     #$
-                    input(type="number" class="form-control rounded-0" name="importe" min="1" step="0.000001" id="txt_importe" value="#<importe>" required="true")
+                    input(
+                        class="form-control rounded-0 induxsoft-num-field mw-100"
+                        type="number"
+                        name="importe"
+                        value="#<importe>"
+                        min="1"
+                        step="0.000001"
+                        id="txt_importe"
+                        required="true"
+                        "num-style"="currency"
+                        "num-decs"="6"
+                    )
                 }
             }
         }
@@ -148,6 +172,7 @@ module "cxp.crear.dk"
             {$'
                 document.addEventListener("DOMContentLoaded", () => {
                     documento.crear.init();
+                    InduxsoftNumberFields.Init();
                 });
             '}
         }

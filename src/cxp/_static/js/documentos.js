@@ -69,7 +69,7 @@ var documento =
 
         setEvents()
         {
-            if (this.btnSave) { this.btnSave.addEventListener("click", () => { this.saveForm(); }); }
+            if (this.btnSave) { this.btnSave.addEventListener("click", () => { documento.trigger(this.formcxp,"submit") }); }
             if (this.formcxp) {
                 this.elements = this.formcxp.elements;
 
@@ -82,11 +82,6 @@ var documento =
                     txt_tcambio.value = data.tcambio;
                 });
             }
-        },
-
-        saveForm(){
-            if (!this.formcxp.reportValidity()) return;
-            this.formcxp.submit();
         },
     },
 
@@ -106,7 +101,7 @@ var documento =
 
         setEvents()
         {
-            if (this.btnSave) { this.btnSave.addEventListener("click", () => { this.saveForm(); }); }
+            if (this.btnSave) { this.btnSave.addEventListener("click", () => { documento.trigger(this.formPagoCXP,"submit") }); }
             if (this.formPagoCXP) {
                 this.elements = this.formPagoCXP.elements;
 
@@ -246,11 +241,6 @@ var documento =
             div_importe_ret.classList.toggle("d-none",hide_importe_ret);
             div_tcambio_pdr.classList.toggle("d-none",hide_tcambio_pdr);
         },
-
-        saveForm(){
-            if (!this.formPagoCXP.reportValidity()) return;
-            this.formPagoCXP.submit();
-        },
     },
 
     bonificacion: {
@@ -269,7 +259,7 @@ var documento =
 
         setEvents()
         {
-            if (this.btnSave) { this.btnSave.addEventListener("click", () => { this.saveForm(); }); }
+            if (this.btnSave) { this.btnSave.addEventListener("click", () => { documento.trigger(this.formBonificacionCXP,"submit") }); }
             if (this.formBonificacionCXP) {
                 this.elements = this.formBonificacionCXP.elements;
 
@@ -280,11 +270,6 @@ var documento =
                     this.elements["txt_nuevo_saldo"].value = Math.sub(saldo,importe);
                 });
             }
-        },
-
-        saveForm(){
-            if (!this.formBonificacionCXP.reportValidity()) return;
-            this.formBonificacionCXP.submit();
         },
     },
 
@@ -304,7 +289,7 @@ var documento =
 
         setEvents()
         {
-            if (this.btnSave) { this.btnSave.addEventListener("click", () => { this.saveForm(); }); }
+            if (this.btnSave) { this.btnSave.addEventListener("click", () => { documento.trigger(this.formIntMor,"submit") }); }
             if (this.formIntMor) {
                 this.elements = this.formIntMor.elements;
 
@@ -315,11 +300,6 @@ var documento =
                     this.elements["txt_nuevo_saldo"].value = Math.add(saldo,importe);
                 });
             }
-        },
-
-        saveForm(){
-            if (!this.formIntMor.reportValidity()) return;
-            this.formIntMor.submit();
         },
     },
 }

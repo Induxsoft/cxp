@@ -372,7 +372,7 @@ var proveedor =
 
         setEvents()
         {
-            if (this.btnSave) { this.btnSave.addEventListener("click", () => { this.saveForm(); }); }
+            if (this.btnSave) { this.btnSave.addEventListener("click", () => { proveedor.trigger(this.formPagoProv,"submit") }); }
             if (this.formPagoProv) {
                 this.elements = this.formPagoProv.elements;
 
@@ -504,12 +504,6 @@ var proveedor =
             div_importe_ret.classList.toggle("d-none",hide_importe_ret);
             div_tcambio_pdr.classList.toggle("d-none",hide_tcambio_pdr);
         },
-
-        saveForm(){
-            if (!this.formPagoProv.reportValidity()) return;
-
-            this.formPagoProv.submit();
-        },
     },
 
     bonificacion: {
@@ -526,14 +520,8 @@ var proveedor =
 
         setEvents()
         {
-            if (this.btnSave) { this.btnSave.addEventListener("click", () => { this.saveForm(); }); }
+            if (this.btnSave) { this.btnSave.addEventListener("click", () => { proveedor.trigger(this.formBonificacion,"submit") }); }
             if (this.formBonificacion) { this.elements = this.formBonificacion.elements; }
-        },
-
-        saveForm(){
-            if (!this.formBonificacion.reportValidity()) return;
-
-            this.formBonificacion.submit();
         },
     },
 }

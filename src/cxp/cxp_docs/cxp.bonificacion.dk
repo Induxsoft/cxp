@@ -184,7 +184,17 @@ module "cxp.bonidicacion.dk"
                         label(class="col-auto col-form-label" "for"="txt_tcambio"){$"Tipo de cambio:"}
                         div(class="col-6") {
                             div(class="input-group input-group-sm") {
-                                input(type="number" class="form-control rounded-0" name="tipocambio" id="txt_tcambio" min="1" step="0.000001" value="#<form('tipocambio','nm',info_dcxp)>" required="true")
+                                input(
+                                    class="form-control rounded-0 induxsoft-num-field mw-100"
+                                    type="number"
+                                    name="tipocambio"
+                                    value="#<form('tipocambio','nm',info_dcxp)>"
+                                    min="1"
+                                    step="0.000001"
+                                    id="txt_tcambio"
+                                    required="true"
+                                    "num-decs"="6"
+                                )
                                 span(class="input-group-text rounded-0"){$"#<cDIVISA_PRED> = 1 #<@@(info_dcxp,'$divisa')>"}
                             }
                         }
@@ -195,7 +205,16 @@ module "cxp.bonidicacion.dk"
                         label(class="col-auto col-form-label" "for"="txt_importe"){$"Importe:"}
                         div(class="col-6") {
                             div(class="input-group input-group-sm") {
-                                input(type="number" class="form-control rounded-0" name="importe" min="1" step="0.000001" id="txt_importe" value="#<form('importe','nm',@null)>")
+                                input(
+                                    class="form-control rounded-0 induxsoft-num-field mw-100"
+                                    type="number"
+                                    name="importe"
+                                    value="#<form('importe','nm',@null)>"
+                                    min="1"
+                                    step="0.000001"
+                                    id="txt_importe"
+                                    "num-decs"="6"
+                                )
                                 span(class="input-group-text rounded-0"){$"#<@@(info_dcxp,'$divisa')>"}
                             }
                         }
@@ -234,7 +253,15 @@ module "cxp.bonidicacion.dk"
 
                             nuevo_saldo = (saldo - importe)
                             #$
-                            input(type="number" class="form-control form-control-sm rounded-0" name="nuevo_saldo" id="txt_nuevo_saldo" value="#<nuevo_saldo>" disabled="disabled" readonly="readonly")
+                            input(
+                                class="form-control form-control-sm rounded-0 text-end"
+                                type="number"
+                                name="nuevo_saldo"
+                                value="#<nuevo_saldo>"
+                                id="txt_nuevo_saldo"
+                                disabled="disabled"
+                                readonly="readonly"
+                            )
                         }
                     }
                 }
@@ -252,6 +279,7 @@ module "cxp.bonidicacion.dk"
                     documento.bonificacion.dtCXP = #<to.json(info_dcxp)>;
                     documento.bonificacion.dvsPred = #<to.json(dvsPred)>;
                     documento.bonificacion.init();
+                    InduxsoftNumberFields.Init();
                 });
             '}
         }
