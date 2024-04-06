@@ -27,7 +27,7 @@ program
     query2 = "SELECT codigo FROM proveedor WHERE nombre = @nombre"
     query3 = "SELECT sys_pk FROM divisa WHERE codigo = @divisa"
     query4 = "SELECT id FROM ctasasiva WHERE const = @tasaiva"
-    query5 = "SELECT sys_pk FROM tipocliente WHERE codigo = @codigo"
+    query5 = "SELECT sys_pk FROM tipoproveedor WHERE codigo = @tipo"
     query6 = "SELECT sys_pk FROM ciudad WHERE nombre = @ciudad"
     query7 = "SELECT sys_pk FROM domicilio WHERE sys_guid = @sys_guid"
     query8 = "
@@ -37,8 +37,8 @@ program
     "
     query9 = "
         INSERT INTO proveedor
-        (codigo, nombre, idivisa, tipo, domicilio1, rfc, telefonos, email, website, sys_guid, sys_dtcreated, sys_timestamp)
-        VALUES (@codigo, @nombre, @idivisa, @tipo, @direccion, @rfc, @telefono, @email, @website, @sys_guid, @sys_dtcreated, @sys_timestamp)
+        (codigo, nombre, idivisa, tasaiva, tipo, domicilio1, rfc, telefonos, email, website, sys_guid, sys_dtcreated, sys_timestamp)
+        VALUES (@codigo, @nombre, @idivisa, @tasaiva, @tipo, @direccion, @rfc, @telefono, @email, @website, @sys_guid, @sys_dtcreated, @sys_timestamp)
     "
     query10 = "
         UPDATE proveedor
@@ -71,30 +71,30 @@ program
             email = length(@@(itm,"email"))
             website = length(@@(itm,"website"))
 
-            if (codigo < 1 || codigo > 5) {
-                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El código (" + @@(itm,"codigo") + ") debe ser de máximo 5 caracteres.")
+            if (codigo < 1 || codigo > 35) {
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El código (" + @@(itm,"codigo") + ") debe ser de mínimo 1 caracter y máximo 35 caracteres.")
             } else if (nombre < 1 || nombre > 150) {
-                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El nombre (" + @@(itm,"nombre") + ") debe ser de máximo 150 caracteres.")
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El nombre (" + @@(itm,"nombre") + ") debe ser de mínimo 1 caracter y máximo 150 caracteres.")
             } else if (divisa < 1 || divisa > 11) {
-                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. La divisa (" + @@(itm,"divisa") + ") debe ser de máximo 11 caracteres.")
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. La divisa (" + @@(itm,"divisa") + ") debe ser de mínimo 1 caracter y máximo 11 caracteres.")
             } else if (tasaiva < 1 || tasaiva > 11) {
-                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. La tasa IVA (" + @@(itm,"tasaiva") + ") debe ser de máximo 11 caracteres.")
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. La tasa IVA (" + @@(itm,"tasaiva") + ") debe ser de mínimo 1 caracter y máximo 11 caracteres.")
             } else if (tipo < 1 || tipo > 11) {
-                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El tipo (" + @@(itm,"tipo") + ") debe ser de máximo 11 caracteres.")
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El tipo (" + @@(itm,"tipo") + ") debe ser de mínimo 1 caracter y máximo 11 caracteres.")
             } else if (ciudad < 1 || ciudad > 100) {
-                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. La ciudad (" + @@(itm,"ciudad") + ") debe ser de máximo 100 caracteres.")
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. La ciudad (" + @@(itm,"ciudad") + ") debe ser de mínimo 1 caracter y máximo 100 caracteres.")
             } else if (direccion < 1 || direccion > 1024) {
-                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. La dirección (" + @@(itm,"direccion") + ") debe ser de máximo 1024 caracteres.")
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. La dirección (" + @@(itm,"direccion") + ") debe ser de mínimo 1 caracter y máximo 1024 caracteres.")
             } else if (cp < 1 || cp > 10) {
-                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El CP (" + @@(itm,"cp") + ") debe ser de máximo 10 caracteres.")
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El CP (" + @@(itm,"cp") + ") debe ser de mínimo 1 caracter y máximo 10 caracteres.")
             } else if (rfc < 1 || rfc > 15) {
-                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El RFC (" + @@(itm,"ciudad") + ") debe ser de máximo 15 caracteres.")
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El RFC (" + @@(itm,"ciudad") + ") debe ser de mínimo 1 caracter y máximo 15 caracteres.")
             } else if (tel < 1 || tel > 150) {
-                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El teléfono (" + @@(itm,"telefono") + ") debe ser de máximo 150 caracteres.")
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El teléfono (" + @@(itm,"telefono") + ") debe ser de mínimo 1 caracter y máximo 150 caracteres.")
             } else if (email < 1 || email > 80) {
-                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El email (" + @@(itm,"email") + ") debe ser de máximo 80 caracteres.")
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El email (" + @@(itm,"email") + ") debe ser de mínimo 1 caracter y máximo 80 caracteres.")
             } else if (website < 1 || website > 150) {
-                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El website (" + @@(itm,"website") + ") debe ser de máximo 150 caracteres.")
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El website (" + @@(itm,"website") + ") debe ser de mínimo 1 caracter y máximo 150 caracteres.")
             } else {
                 id_divisa = dbr.str(db,query3,itm)
 
