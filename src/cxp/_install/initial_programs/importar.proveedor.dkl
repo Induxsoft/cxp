@@ -45,6 +45,11 @@ program
         SET nombre = @nombre, idivisa = @idivisa, tasaiva = @tasaiva, tipo = @tipo, rfc = @rfc, telefonos = @telefono, email = @email, website = @website
         WHERE codigo = @codigo
     "
+    query11 = "
+        UPDATE domicilio
+        SET iciudad = @iciudad, direccion = @direccion, codpos = @cp
+        WHERE sys_pk = @id_domicilio
+    "
 
     if file.exists(data_file) {
         ref data = CsvRead(data_file,"")
@@ -112,12 +117,19 @@ program
 
                             if (id_ciudad != "") {
                                 itm<"iciudad">: id_ciudad
+                                itm<"direccion">: "||" + @@(itm,"direccion") + "|||" 
+
                                 duplicated =  dbr.str(db,query1,itm)
                                 nombre_duplicated = dbr.str(db,query2,itm)
 
                                 if (nombre_duplicated == @@(itm,"codigo") || nombre_duplicated == "") {
                                     if (duplicated != "") {
                                         do dbr.execute(db,query10,itm)
+
+                                        id_domicilio = dbr.str(db,"SELECT domicilio1 FROM proveedor WHERE codigo =" + @@(itm,"codigo"),@null)
+                                        itm<"id_domicilio">: id_domicilio
+
+                                        do dbr.execute(db,query11,itm)
                                     } else {
                                         itm<"sys_guid">: uuid()
                                         itm<"sys_dtcreated*">: now()
