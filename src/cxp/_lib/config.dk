@@ -45,6 +45,7 @@ module
 
 	//* ======================================== [ _PACKAGE ]
 	@CXP_MENU = "/!/cxp/"
+	@BATCH_TASKMAN="/!/batch/taskman/"
 
 	@URL_BUSCAR_PROVEEDOR = "/!/cxp/proveedores/?_view=buscar-proveedor&search=@search"
 	@URL_BUSCAR_CONTACTO = "/!/cxp/proveedores/?_view=buscar-contacto&search=@search"

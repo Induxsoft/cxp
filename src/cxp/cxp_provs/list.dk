@@ -4,9 +4,11 @@ module "list.dk"
 {
     #include "functions.dkh"
     #include "serialize.dkh"
-    #include "../_lib/icons.dk"
-    #include "../_lib/config.dk"
+    #include "dbr.dkh"
     #include "uielements.v12.dkl"
+    #include "../_lib/config.dk"
+    #include "../_lib/icons.dk"
+    #include "../_lib/lib.dk"
     
     do @context.begin(@crud_context)
     ref @http_context = @('&http')
@@ -32,11 +34,25 @@ module "list.dk"
 
     header_act::
     { 
+        jg = dbr.num(@("&database"),"SELECT sys_pk FROM jobsgroup WHERE name = 'CXP'",@null)
+
+        #! if AppExist(@("&database"),"batch") {
+            #$
+            a(href="#<@BATCH_TASKMAN>#<jg>/importar.proveedor?exit_url_encode=#<url_encode(@CXP_PROVS)>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" title="Importar proveedores") {
+                $"#<@ICON_FILE_CSV>"
+            }
+        }
+
         #$ a(href="#<@PDR_AGREGAR>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"){$"Agregar"}
+
         button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="proveedor.goTo('#<@PDR_EDO_CTA>')"){$"Estado de cuenta"}
+
         button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="proveedor.goTo('#<@PDR_XPAGAR>')"){$"Documentos por pagar"}
+
         button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="proveedor.goTo('#<@PDR_XAPLICAR>')"){$"Pagos por aplicar"}
+
         button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="proveedor.goTo('#<@PDR_PAGOS>')"){$"Pago a proveedor"}
+
         button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="proveedor.goTo('#<@PDR_BONIFICACION>')"){$"Bonificaciones"}
     }
     #! point general_act to header_act

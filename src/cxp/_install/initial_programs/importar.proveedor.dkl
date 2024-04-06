@@ -1,0 +1,169 @@
+#include "dkli.dkh"
+#!
+program
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "dbr.dkh"
+    #include "batch.v12.dkl"
+
+    ref db = @@(@batch_context,"&database")
+    ref @batchDB = db
+
+    token = @@(@batch_context,"$job/token")
+    steps = @@(@batch_context,"#job/steps")
+    data_file = @@(@batch_context,"$params/archivo")
+
+    if (right(data_file,4) != ".csv") {
+        do file.delete(data_file)
+        do batch.saveLog(token,"Extensión incorrecta del archivo, se esperaba un .csv")
+        return
+    }
+
+    ref lib_csv = _import_library("devkron.serialize.csv.dll")
+    do _map_function(lib_csv,"devkron.serialize.csv.csvHelper","CsvRead","CsvRead","System.String,System.String","*")
+
+    query1 = "SELECT codigo FROM proveedor WHERE codigo = @codigo"
+    query2 = "SELECT codigo FROM proveedor WHERE nombre = @nombre"
+    query3 = "SELECT sys_pk FROM divisa WHERE codigo = @divisa"
+    query4 = "SELECT id FROM ctasasiva WHERE const = @tasaiva"
+    query5 = "SELECT sys_pk FROM tipocliente WHERE codigo = @codigo"
+    query6 = "SELECT sys_pk FROM ciudad WHERE nombre = @ciudad"
+    query7 = "SELECT sys_pk FROM domicilio WHERE sys_guid = @sys_guid"
+    query8 = "
+        INSERT INTO domicilio
+        (iciudad, direccion, codpos, sys_guid, sys_dtcreated, sys_timestamp)
+        VALUES (@iciudad, @direccion, @cp, @sys_guid, @sys_dtcreated, @sys_timestamp)
+    "
+    query9 = "
+        INSERT INTO proveedor
+        (codigo, nombre, idivisa, tipo, domicilio1, rfc, telefonos, email, website, sys_guid, sys_dtcreated, sys_timestamp)
+        VALUES (@codigo, @nombre, @idivisa, @tipo, @direccion, @rfc, @telefono, @email, @website, @sys_guid, @sys_dtcreated, @sys_timestamp)
+    "
+    query10 = "
+        UPDATE proveedor
+        SET nombre = @nombre, idivisa = @idivisa, tasaiva = @tasaiva, tipo = @tipo, rfc = @rfc, telefonos = @telefono, email = @email, website = @website
+        WHERE codigo = @codigo
+    "
+
+    if file.exists(data_file) {
+        ref data = CsvRead(data_file,"")
+        do file.delete(data_file)
+
+        list_size = @count(data)
+        contador = 0
+        progreso = 0
+        div = (list_size/steps)
+        
+        for i=0; i<list_size {
+            ref itm = record.caseinsensitive(@item(data,i))
+
+            codigo = length(@@(itm,"codigo"))
+            nombre = length(@@(itm,"nombre"))
+            divisa = length(@@(itm,"divisa"))
+            tasaiva = length(@@(itm,"tasaiva"))
+            tipo = length(@@(itm,"tipo"))
+            ciudad = length(@@(itm,"ciudad"))
+            direccion = length(@@(itm,"direccion"))
+            cp = length(@@(itm,"cp"))
+            rfc = length(@@(itm,"rfc"))
+            tel = length(@@(itm,"telefono"))
+            email = length(@@(itm,"email"))
+            website = length(@@(itm,"website"))
+
+            if (codigo < 1 || codigo > 5) {
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El código (" + @@(itm,"codigo") + ") debe ser de máximo 5 caracteres.")
+            } else if (nombre < 1 || nombre > 150) {
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El nombre (" + @@(itm,"nombre") + ") debe ser de máximo 150 caracteres.")
+            } else if (divisa < 1 || divisa > 11) {
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. La divisa (" + @@(itm,"divisa") + ") debe ser de máximo 11 caracteres.")
+            } else if (tasaiva < 1 || tasaiva > 11) {
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. La tasa IVA (" + @@(itm,"tasaiva") + ") debe ser de máximo 11 caracteres.")
+            } else if (tipo < 1 || tipo > 11) {
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El tipo (" + @@(itm,"tipo") + ") debe ser de máximo 11 caracteres.")
+            } else if (ciudad < 1 || ciudad > 100) {
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. La ciudad (" + @@(itm,"ciudad") + ") debe ser de máximo 100 caracteres.")
+            } else if (direccion < 1 || direccion > 1024) {
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. La dirección (" + @@(itm,"direccion") + ") debe ser de máximo 1024 caracteres.")
+            } else if (cp < 1 || cp > 10) {
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El CP (" + @@(itm,"cp") + ") debe ser de máximo 10 caracteres.")
+            } else if (rfc < 1 || rfc > 15) {
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El RFC (" + @@(itm,"ciudad") + ") debe ser de máximo 15 caracteres.")
+            } else if (tel < 1 || tel > 150) {
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El teléfono (" + @@(itm,"telefono") + ") debe ser de máximo 150 caracteres.")
+            } else if (email < 1 || email > 80) {
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El email (" + @@(itm,"email") + ") debe ser de máximo 80 caracteres.")
+            } else if (website < 1 || website > 150) {
+                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. El website (" + @@(itm,"website") + ") debe ser de máximo 150 caracteres.")
+            } else {
+                id_divisa = dbr.str(db,query3,itm)
+
+                if (id_divisa != "") {
+                    itm<"idivisa">: id_divisa
+                    id_tasaiva = dbr.str(db,query4,itm)
+
+                    if (id_tasaiva != "") {
+                        itm<"tasaiva">: id_tasaiva
+                        id_tipo = dbr.str(db,query5,itm)
+
+                        if (id_tipo != "") {
+                            itm<"tipo">: id_tipo
+                            id_ciudad = dbr.str(db,query6,itm)
+
+                            if (id_ciudad != "") {
+                                itm<"iciudad">: id_ciudad
+                                duplicated =  dbr.str(db,query1,itm)
+                                nombre_duplicated = dbr.str(db,query2,itm)
+
+                                if (nombre_duplicated == @@(itm,"codigo") || nombre_duplicated == "") {
+                                    if (duplicated != "") {
+                                        do dbr.execute(db,query10,itm)
+                                    } else {
+                                        itm<"sys_guid">: uuid()
+                                        itm<"sys_dtcreated*">: now()
+                                        itm<"sys_timestamp*">: now()
+
+                                        do dbr.execute(db,query8,itm)
+
+                                        id_domicilio = dbr.str(db,query7,itm)
+                                        itm<"direccion">: id_domicilio
+
+                                        do dbr.execute(db,query9,itm)
+                                    }
+                                } else {
+                                    do batch.saveLog(token,"No se pudo insertar/actualizar el registro. Ya existe un cliente con nombre = '" + @@(itm,"nombre") + "'")
+                                }
+                            } else {
+                                do batch.saveLog(token,"No se pudo insertar/actualizar el registro. No existe una ciudad (" + @@(itm,"ciudad") + ") con ese valor.")
+                            }
+                        } else {
+                            do batch.saveLog(token,"No se pudo insertar/actualizar el registro. No existe un tipo (" + @@(itm,"tipo") + ") con ese valor.")
+                        }
+                    } else {
+                        do batch.saveLog(token,"No se pudo insertar/actualizar el registro. No existe una tasa IVA (" + @@(itm,"tasaiva") + ") con ese valor.")
+                    }
+                } else {
+                    do batch.saveLog(token,"No se pudo insertar/actualizar el registro. No existe una divisa (" + @@(itm,"divisa") + ") con ese valor.")
+                }
+            }
+
+            contador = contador + 1
+
+            if (contador >= div) {
+                contador = contador - div
+                progreso = progreso + steps
+                do batch.saveLog(token,"En proceso... " + str(progreso) + "%")
+            }
+        }
+
+        if (list_size < steps) {
+            do batch.saveLog(token,"En proceso... 100%")
+        }
+
+        exception 
+        {
+            do file.delete(data_file)
+            do batch.saveLog(token,last_error())
+        }
+    }
+}

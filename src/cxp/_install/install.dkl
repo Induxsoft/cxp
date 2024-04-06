@@ -15,9 +15,10 @@ program "instalador"
     src = _get(@_run_settings,"$SourceCodeFile")
 
     path_install = dir.name(src)
+    path_app_info = path.concat(path_install,"app_info")
     path_ddm = path.concat(path_install,"ddm")
     path_initial_data = path.concat(path_install,"initial_data")
-    path_app_info = path.concat(path_install,"app_info")
+    path_initial_programs = path.concat(path_install,"initial_programs")
 
     qname = trim(@@(args,"$db"))
     if qname == "" { qname = trim(@@(args,"$bd")) }
@@ -33,6 +34,9 @@ program "instalador"
 
     model_name = file.name(dir.name(path_install)) + ".ddm"
     model_file = path.concat(path_ddm, model_name)
+
+    import_proveedor_program = path.concat(path_initial_programs,"importar.proveedor.dkl")
+    import_proveedor_params = path.concat(path_initial_programs,"importar.proveedor.json")
 
     // Archivos de datos iniciales (Orden de instalación)
     ref files_to_import = from.json('[
@@ -181,6 +185,34 @@ program "instalador"
         admins_groupid = dbr.security.admins(database)
         do dbr.security.assign(database,admins_groupid,permissions_to_import)
     }
+
+    do print("\nCREANDO GRUPO DE TAREAS E IMPORTANDO PROGRAMAS")
+
+    query1 = "SELECT sys_guid FROM jobsgroup WHERE name='CXP';"
+    query2 = "INSERT INTO jobsgroup (name, apikey, sys_guid, sys_dtcreated, sys_timestamp) VALUES (@name, @apikey, @sys_guid, @sys_dtcreated, @sys_timestamp);"
+
+    sys_guid = dbr.str(database, query1, @null)
+
+    if (sys_guid == "") {
+        new data {
+            @"name": "CXP"
+            @"apikey": toupper(md5(uuid()))
+            @"sys_guid": uuid()
+            @"sys_dtcreated*": now()
+            @"sys_timestamp*": now()
+        }
+
+        do dbr.execute(database,query2,data)
+        
+        path_jobsgroup = path.concat("_tasks",@@(data,"sys_guid"))
+    } else {
+        path_jobsgroup = path.concat("_tasks",sys_guid)
+    }
+
+    do dir.ensure(path_jobsgroup)
+
+    do file.wtext(path_jobsgroup+"/importar.proveedor.dkl", file.rtext(import_proveedor_program))
+    do file.wtext(path_jobsgroup+"/importar.proveedor.json", file.rtext(import_proveedor_params))
 
     if dbr.is_open(database){ do dbr.close(database) }
 

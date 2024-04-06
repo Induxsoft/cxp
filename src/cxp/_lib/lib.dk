@@ -120,4 +120,14 @@ module "lib.dk"
         }
         return record
     }
+
+    function AppExist(&db,packId)
+    {
+        new p { @"id": packId }
+        ref InstalledApps = dbr.list(db,"SELECT * FROM sys_app_catalog WHERE pack_id = @id;",p)
+        exist = (list.count(InstalledApps) > 0)
+        return exist
+
+        exception{ return @false }
+    }
 }

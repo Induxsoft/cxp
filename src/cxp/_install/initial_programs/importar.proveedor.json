@@ -1,0 +1,7 @@
+{
+    "archivo": {
+        "control": "file",
+        "required": "true",
+        "caption": "Importar desde (.csv)"
+    }
+}
