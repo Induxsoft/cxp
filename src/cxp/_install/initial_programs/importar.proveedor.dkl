@@ -28,7 +28,7 @@ program
     query3 = "SELECT sys_pk FROM divisa WHERE codigo = @divisa"
     query4 = "SELECT id FROM ctasasiva WHERE const = @tasaiva"
     query5 = "SELECT sys_pk FROM tipoproveedor WHERE codigo = @tipo"
-    query6 = "SELECT sys_pk FROM ciudad WHERE nombre = @ciudad"
+    query6 = "SELECT sys_pk FROM ciudad WHERE codigo = @ciudad"
     query7 = "SELECT sys_pk FROM domicilio WHERE sys_guid = @sys_guid"
     query8 = "
         INSERT INTO domicilio
