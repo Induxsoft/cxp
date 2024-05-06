@@ -14,6 +14,7 @@
 "GC25","Pagos por aplicar del proveedor","Pagos por aplicar","","/!/cxp/proveedores/@_src_context_item_id/xaplicar/","0","cxp.proveedores","DET03F","1","action"
 "GC26","Pago a proveedor","Pago a proveedor","","/!/cxp/proveedores/@_src_context_item_id/pago/","0","cxp.proveedores","DET03F","1","action"
 "GC27","Bonificación a proveedor","Bonificaciones","","/!/cxp/proveedores/@_src_context_item_id/bonificacion/","0","cxp.proveedores","DET03F","1","action"
+"GC28","Importar proveedores","Importar","","/!/batch/taskman/GC/importar.proveedor/","0","cxp.proveedores","DET03F","0","action"
 
 "GC31","Agregar gasto","Agregar","","/!/cxp/gastos/_new/","0","cxp.gastos","DET024","0","action"
 "GC32","Consultar gasto","Consultar","","/!/cxp/gastos/@_src_context_item_id/","0","cxp.gastos","DET024","1","action"
