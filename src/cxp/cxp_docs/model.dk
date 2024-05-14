@@ -137,6 +137,7 @@ module "model"
     {
         do errordet(@false)
         if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_AGREGAR_DCXP)) { do rise_error(0,"No autorizado") }
+
         do erp.cxp.movimientos.crearCxP(db,data)
         @url_redir = @CXP_DOCS
 

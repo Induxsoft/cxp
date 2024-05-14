@@ -210,6 +210,8 @@ module ":erp.cxp.movimientos"
             @"tipocambio": @@(data,"#tcambio")
             @"iproveedor": @@(data,"#iproveedor")
         }
+        if @@(data,"#igasto")>0{dcxp<"uf_igasto">:@@(data,"#igasto")}
+
         do determinarImporteCxP(dcxp,@@(data,"#importe"))
 
         start_transaction = @false

@@ -11,6 +11,7 @@ module
 
     @STATUS_ADMINISTRATIVO = 3 // cProcesado
     @FORMA_PAGO = 1 // cContado
+    @FORMA_PAGO_CREDITO = 2 // credito
 
     //#region TiposCategorias
     @cIngreso = 1

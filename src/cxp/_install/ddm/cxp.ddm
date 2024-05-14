@@ -457,6 +457,7 @@ model "erp.cxp"
         @"statusadministrativo" ref:"cstatusadministrativos" required
         @"uf_color" int 
         @"uuid_fiscal" string(45)       // UUID de un comprobante fiscal digital
+        @"presupuestado" bool
     }
 
     //* ======================================== [ ... ]

@@ -46,7 +46,21 @@ module "form.dk"
         @"text_field": "nombre"
         @"selected": @("./icuenta")
     }
-        // do uie.dbSelect(params)
+        
+    new sel_documento
+    {
+        @"datatable*":@("&./tipo_documentos")
+        @"id": "sel_documento"
+        new member "attributes"
+        {
+            @"class": "form-select rounded-0"
+            @"name": "tipo_documento"
+        }
+        @"value_field": "id"
+        @"text_field": "const"
+        @"selected": @("#./dcdoc")
+    }
+
     #$
     div(class="container")
     {
@@ -136,38 +150,79 @@ module "form.dk"
                 #$ small(class="fw-bold" "for"="txt_concepto"){$"Concepto:"}
                 textarea(class="form-control rounded-0" name="concepto" id="txt_concepto" required=""){$"#<@('$input/concepto')>"}
 
-                div(class="d-flex gap-2 align-items-center justify-content-end mt-2")
+                div(class="row justify-content-end")
                 {
-                    small(class="form-label" "for"="txt_importe"){$"Importe:"}
-                    input(
-                        class="form-control rounded-0 induxsoft-num-field mw-100 w-25"
-                        type="number"
-                        name="importe"
-                        value="#<@('#input/importe')>"
-                        min="1"
-                        step="0.000001"
-                        id="txt_importe"
-                        required="true"
-                        "num-style"="currency"
-                        "num-decs"="6"
-                    )
+                    div(class="col-md-2")
+                    {
+                        small(class="form-label" "for"="txt_importe"){$"Importe:"}
+                        input(
+                            class="form-control rounded-0 induxsoft-num-field1 "
+                            type="number"
+                            name="importe"
+                            value="#<@('#input/importe')>"
+                            min="1"
+                            step="0.000001"
+                            id="txt_importe"
+                            required="true"
+                            "num-style"="currency"
+                            "num-decs"="6"
+                            onchange="CalImporte()"
+                        )
+                    }
+                    
+                    div(class="col-md-2")
+                    {
+                        small(class="form-label" "for"="txt_retencion"){$"Más ISR  retenido:"}
+                        input(type="number" onchange="CalImporte()" class="induxsoft-form-control" "#<ifstr(@('#./retisr')!=0,'readonly','')>"="true" name="retisr"  id="txt_retencion" value="#<@('#./retisr')>" )
+                   
+                    }
+                    div(class="col-md-2")
+                    {
+                        small(class="form-label" "for"="txt_retencion"){$"Más IVA retenido:"}
+                        input(type="number" onchange="CalImporte()" class="induxsoft-form-control" "#<ifstr(@('#./retiva')!=0,'readonly','')>"="true" name="retiva"  id="txt_retencion_iva" value="#<@('#./retiva')>" )
+                   
+                    }
+                    div(class="col-md-2")
+                    {
+                        small(class="form-label" "for"="txt_traslado"){$"Menos IVA trasladado:"}
+                        input(type="number" onchange="CalImporte()" class="induxsoft-form-control" "#<ifstr(@('#./iva')!=0,'readonly','')>"="true" name="iva" id="txt_traslado" value="#<@('#./iva')>" )
+                    }
+                    div(class="col-md-2")
+                    {
+                        h6{"Subtotal:"}
+                        input(type="number" readonly="true" id="subtotal" name="subtotal" class="induxsoft-form-control  induxsoft-num-field1" value="#<@('#./subtotal')>"){""}
+                    }
                 }
                 
-                small(class="form-label" "for"="txt_beneficiario"){$"Beneficiario:"}
-                input(type="text" class="induxsoft-form-control" name="beneficiario" id="txt_beneficiario" value="#<@('$./beneficiario')>")
+               
+                #$
+                div(class="d-flex mt-4")
+                {
+                    label{input(type="radio" id="forma_pago_contado" class="" name="formapago" "#<ifstr(@('#./fmpago')==@FORMA_PAGO || @('$./fmpago')=='','checked','')>"="true" value="#<@FORMA_PAGO>") " Contado" }
+                    label{input(type="radio" id="forma_pago_credito" class="ms-4" name="formapago" "#<ifstr(@('#./fmpago')==@FORMA_PAGO_CREDITO,'checked','')>"="true"  value="#<@FORMA_PAGO_CREDITO>") " Crédito" }
+                }
+                div(class="col-lg-4" id="div_contado") 
+                {
+                    small(class="form-label" "for"="txt_beneficiario"){$"Beneficiario:"}
+                    input(type="text" class="induxsoft-form-control" name="beneficiario" id="txt_beneficiario" value="#<@('$./beneficiario')>")
 
-                small{$"Documento:"}
-                #! do uie.dbSelect(tipo)
+                    small{$"Documento:"}
+                    #! do uie.dbSelect(tipo)
 
-                #$ small{$"Cuenta:"}
-                #! do uie.dbSelect(cuentas)
+                    #$ small{$"Cuenta:"}
+                    #! do uie.dbSelect(cuentas)
+                    #$
+                }
+                div(class="col-lg-4" id="div_credito") 
+                {
+                    label(class="form-label" "for"="sel_documento"){$"Tipo de documento:"}
+                    ##
+                    do uie.dbSelect(sel_documento)
+                    ##
 
-                // #$ div(class="d-flex gap-1 justify-content-end my-2")
-                // {
-                //     #!
-                //     if @("$./sys_pk")==""{#$button(type="submit" class="btn btn-primary"){$"Aceptar"}}
-                //     a(type="reset" class="btn btn-danger" href=".."){$"Cancelar"}
-                // }
+                    input(class="form-check-input" type="checkbox" name="aplicable" id="ch_aplicable" "checked"="" readonly="true" disabled="true")
+                    label(class="form-check-label" "for"="ch_aplicable"){$"Marcar como aplicable"}
+                }
             }
         }
 
@@ -192,9 +247,54 @@ module "form.dk"
                         if(itm)itm.setAttribute("disabled",true);
                     }
                 }
+                var radios=document.querySelectorAll("input[name=formapago]");
+                for(var i=0;i<radios.length;i++)
+                {
+                    var rd=radios[i];
+                    if(rd)rd.addEventListener("change",(e)=>
+                    {
+                        var target=e.target;
+                        var div_credito=document.getElementById("div_credito");
+                        var div_contado=document.getElementById("div_contado");
+                        if(target && Number(target.value)==#<@FORMA_PAGO_CREDITO>)
+                        {
+                            if(div_credito)div_credito.classList.remove("d-none");
+                            if(div_contado)div_contado.classList.add("d-none");
+                        }
+                        else
+                        {
+                            if(div_credito)div_credito.classList.add("d-none");
+                            if(div_contado)div_contado.classList.remove("d-none");
+                        }
+                        
+                    });
+                }
 
+                var forma_pago_contado=document.getElementById("forma_pago_contado");
+                var forma_pago_credito=document.getElementById("forma_pago_credito");
+                function trigger (element,event)
+                {
+                    var e=new Event(event);
+                    if(element)element.dispatchEvent(e);
+                }
+                if(#<@("#./fmpago")>==#<@FORMA_PAGO> || #<@("#./fmpago")>==0)trigger(forma_pago_contado,"change");
+                if(#<@("#./fmpago")>==#<@FORMA_PAGO_CREDITO>)trigger(forma_pago_credito,"change");
+                
                 InduxsoftNumberFields.Init();
             });
+            function CalImporte()
+            {
+                var txt_importe=document.getElementById("txt_importe");
+                var txt_retencion=document.getElementById("txt_retencion");
+                var txt_retencion_iva=document.getElementById("txt_retencion_iva");
+                var txt_traslado=document.getElementById("txt_traslado");
+
+                var importe=(Number(txt_importe.value) + Number(txt_retencion.value) + Number(txt_retencion_iva.value)) - Number(txt_traslado.value);
+            
+                var lbl_total=document.getElementById("subtotal");
+            
+                if(lbl_total)lbl_total.value=importe;
+            }
         '}
     }
 }

@@ -3,7 +3,7 @@
 module "model"
 {
     @read_query="SELECT 
-            ut.sys_pk,pdr.sys_pk pkproveedor,ut.subtotal importe,
+            ut.sys_pk,pdr.sys_pk pkproveedor,ut.total importe,
             cat.descripcion AS categoria,
             ut.referencia,
             DATE_FORMAT(ut.fecha,'%Y-%m-%d') AS fecha,
@@ -14,7 +14,8 @@ module "model"
             dvs.codigo AS divisa,
             ut.tipocambio AS tcambio,
             edo.const AS edo_admin,
-            fpg.const AS formapago,mc.icuenta,mc.tipo,mc.beneficiario
+            fpg.const AS formapago,mc.icuenta,mc.tipo,mc.beneficiario,
+            ut.iva,ut.retisr,ut.retiva,ut.subtotal,ut.formapago fmpago,dc.documento dcdoc
         FROM ut_gasto AS ut
             left JOIN proveedor AS pdr ON pdr.sys_pk = ut.iproveedor
             left JOIN categoria AS cat ON cat.sys_pk = ut.icategoria
@@ -22,6 +23,7 @@ module "model"
             left JOIN cformaspago AS fpg ON fpg.id = ut.formapago
             left JOIN cstatusadministrativos AS edo ON edo.id = ut.statusadministrativo
             left JOIN movcuenta mc on ut.imovchequera=mc.sys_pk
+            left join dcxp dc on ut.sys_pk=dc.uf_igasto
         WHERE TRUE and ut.sys_pk=@_entity_id"
 
     ut.prepareView::&db,&params,&data
@@ -52,9 +54,14 @@ module "model"
                     sql = "SELECT sys_pk, CONCAT('[',codigo,']',' ',descripcion) AS divisa FROM divisa ORDER BY sys_pk;"
                     data<"divisas*"> : dbr.list(db,sql,@null)
                 }
+                
+                
                 break
             }
         }
+        
+        sql_documentos = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.pagable,0);"
+        data<"tipo_documentos*">:dbr.list(db,sql_documentos,params)
     }
     mov.retiro::&db,&params,&data
     {
@@ -122,17 +129,39 @@ module "model"
             @"icategoria": @@(data,"#categoria")
             @"idivisa": @@(data,"#divisa")
             @"tipocambio": dbr.num(db,"select tcambio from divisa where sys_pk = @divisa;",data)
-            @"subtotal": @@(data,"#importe")
-            @"iva": 0.0
-            @"retiva": 0.0
-            @"retisr": 0.0
+            @"subtotal": @@(data,"#subtotal")
+            @"iva": @@(data,"#iva")
+            @"retiva": @@(data,"#retiva")
+            @"retisr": @@(data,"#retisr")
             @"total": @@(data,"#importe")
-            @"formapago": @FORMA_PAGO
+            @"formapago":@@(data,"#formapago") //@FORMA_PAGO
             @"statusadministrativo": @STATUS_ADMINISTRATIVO
         }
         do dbr.begin(db)
-            gasto<"imovchequera">:@@(mov.retiro(db,params,data),"#sys_pk")
+
+          if @@(data,"#formapago")==@FORMA_PAGO{ gasto<"imovchequera">:@@(mov.retiro(db,params,data),"#sys_pk")}
+            
             do dbr.insert(db,"ut_gasto",gasto)
+            
+            if @@(data,"#formapago")==@FORMA_PAGO_CREDITO
+            {
+                igasto=dbr.num(db,"select sys_pk from ut_gasto where sys_guid=@sys_guid",gasto)
+                new cxp
+                {
+                    @"iproveedor":@@(gasto,"#iproveedor")
+                    @"tcambio":@@(gasto,"#tipocambio")
+                    @"documento":@@(data,"#tipo_documento")
+                    @"referencia":@@(gasto,"$referencia")
+                    @"fecha*":@@(gasto,"&fecha")
+                    @"flimite*":@@(gasto,"&vencimiento")
+                    @"concepto":@@(gasto,"$concepto")
+                    @"aplicable":1
+                    @"importe":@@(gasto,"#total")
+                    @"igasto":igasto
+                }
+                
+                do erp.cxp.movimientos.crearCxP(db,cxp)
+            }
         do dbr.commit(db)
         exception
         {
@@ -240,6 +269,7 @@ module "model"
                     WHERE "
         new p{@"pvdr":@@(entity,"pkproveedor")}
         entity<"info_proveedor*"> : dbr.rec(db, sql+" pdr.sys_pk = @pvdr;",p)
+        do ut.prepareView(db,params,entity)
 
         do ut.data(db,entity)
         return entity
@@ -273,7 +303,7 @@ module "model"
     {
         if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
 
-        new data
+        new data{}
         do ut.prepareView(db,params,data)
         do ut.data(db,data)
         return data
@@ -288,7 +318,7 @@ module "model"
         do list.ins(list, 0, record)
         return list
     }
-
+   
     point @read to ut.read
     point @update to ut.update
 }
