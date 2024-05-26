@@ -105,7 +105,11 @@ module "model"
     }
     ut.agregarGasto::&db,&params,&data
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
+        @use_transaction = @false
+
+        do dbr.apps.action.pre("GC31")
+        do dbr.begin(db)
 
         new p{@"referencia":@@(data,"$referencia")}
         if trim(@@(data,"$referencia"))==""{do rise_error(500,"Debe indicar una referencia")}
@@ -137,46 +141,53 @@ module "model"
             @"formapago":@@(data,"#formapago") //@FORMA_PAGO
             @"statusadministrativo": @STATUS_ADMINISTRATIVO
         }
-        do dbr.begin(db)
 
-          if @@(data,"#formapago")==@FORMA_PAGO{ gasto<"imovchequera">:@@(mov.retiro(db,params,data),"#sys_pk")}
+        //do dbr.begin(db)
+
+        if @@(data,"#formapago")==@FORMA_PAGO{ gasto<"imovchequera">:@@(mov.retiro(db,params,data),"#sys_pk")}
             
-            do dbr.insert(db,"ut_gasto",gasto)
-            
-            if @@(data,"#formapago")==@FORMA_PAGO_CREDITO
+        do dbr.insert(db,"ut_gasto",gasto)
+        
+        if @@(data,"#formapago")==@FORMA_PAGO_CREDITO
+        {
+            igasto=dbr.num(db,"select sys_pk from ut_gasto where sys_guid=@sys_guid",gasto)
+            new cxp
             {
-                igasto=dbr.num(db,"select sys_pk from ut_gasto where sys_guid=@sys_guid",gasto)
-                new cxp
-                {
-                    @"iproveedor":@@(gasto,"#iproveedor")
-                    @"tcambio":@@(gasto,"#tipocambio")
-                    @"documento":@@(data,"#tipo_documento")
-                    @"referencia":@@(gasto,"$referencia")
-                    @"fecha*":@@(gasto,"&fecha")
-                    @"flimite*":@@(gasto,"&vencimiento")
-                    @"concepto":@@(gasto,"$concepto")
-                    @"aplicable":1
-                    @"importe":@@(gasto,"#total")
-                    @"igasto":igasto
-                }
-                
-                do erp.cxp.movimientos.crearCxP(db,cxp)
+                @"iproveedor":@@(gasto,"#iproveedor")
+                @"tcambio":@@(gasto,"#tipocambio")
+                @"documento":@@(data,"#tipo_documento")
+                @"referencia":@@(gasto,"$referencia")
+                @"fecha*":@@(gasto,"&fecha")
+                @"flimite*":@@(gasto,"&vencimiento")
+                @"concepto":@@(gasto,"$concepto")
+                @"aplicable":1
+                @"importe":@@(gasto,"#total")
+                @"igasto":igasto
             }
+            
+            do erp.cxp.movimientos.crearCxP(db,cxp)
+        }
+
+        do dbr.apps.action.pos(@null)
         do dbr.commit(db)
+        do dbr.apps.action.ext(@null)
+
         exception
         {
-            last_error=last_error()
+            do errordet(@false)
             if dbr.in_transaction(db){do dbr.rollback(db)}
-
+            code = last_error_code()
+            error = last_error()
             do ut.prepareView(db,params,data)
             do ut.data(db,data)
-            do rise_error(0,last_error)
+            do rise_error(code,error)
         }
     }
 
     ut.list::&db,&params
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_GASTOS)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_GASTOS)) { do rise_error(0,"No autorizado")}
+        do dbr.apps.action.grant("GC30")
 
         params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
         params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
@@ -243,11 +254,21 @@ module "model"
         }
 
         return response
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     ut.read::&db,&params
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_UN_GASTO)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_UN_GASTO)) { do rise_error(0,"No autorizado")}
+        do dbr.apps.action.grant("GC30")
             
         ref entity=entity.read(db,params)
 
@@ -273,6 +294,15 @@ module "model"
 
         do ut.data(db,entity)
         return entity
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     ut.update::&db,&params,&data
@@ -301,12 +331,22 @@ module "model"
     }
     ut.blank::&db,&params
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
+        do dbr.apps.action.grant("GC30")
 
         new data{}
         do ut.prepareView(db,params,data)
         do ut.data(db,data)
         return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
     prepare_filter::list
     {

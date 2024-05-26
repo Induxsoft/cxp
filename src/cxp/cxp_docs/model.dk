@@ -135,14 +135,23 @@ module "model"
 
     cxp.crearDocumentoPorPagar::&db,&params,&data
     {
-        do errordet(@false)
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_AGREGAR_DCXP)) { do rise_error(0,"No autorizado") }
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_AGREGAR_DCXP)) { do rise_error(0,"No autorizado") }
+        @use_transaction = @false
+
+        do dbr.apps.action.pre("GC11")
+        do dbr.begin(db)
 
         do erp.cxp.movimientos.crearCxP(db,data)
+
+        do dbr.apps.action.pos(@null)
+        do dbr.commit(db)
+        do dbr.apps.action.ext(@null)
+
         @url_redir = @CXP_DOCS
 
         exception
         {
+            do errordet(@false)
             if dbr.in_transaction(db) { do dbr.rollback(db) }
 
             ref formData = record.copy(data,"*")
@@ -153,19 +162,30 @@ module "model"
             data<"form*"> : formData
             
             do cxp.prepareView(db,params,data)
+            do dbr.apps.action.log()
             do rise_error(code,error)
         }
     }
 
     cxp.pagarDocumento::&db,&params,&data
     {
-        do errordet(@false)
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_ABONO)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_ABONO)) { do rise_error(0,"No autorizado")}
+        @use_transaction = @false
+
+        do dbr.apps.action.pre("GC13")
+        do dbr.begin(db)
+
         do erp.cxp.movimientos.pagarCxP(db,data)
+
+        do dbr.apps.action.pos(@null)
+        do dbr.commit(db)
+        do dbr.apps.action.ext(@null)
+
         @url_redir = @CXP_DOCS
 
         exception
         {
+            do errordet(@false)
             if dbr.in_transaction(db) { do dbr.rollback(db) }
 
             ref formData = record.copy(data,"*")
@@ -176,19 +196,30 @@ module "model"
             data<"form*"> : formData
             
             do cxp.prepareView(db,params,data)
+            do dbr.apps.action.log()
             do rise_error(code,error)
         }
     }
 
     cxp.crearBonificacion::&db,&params,&data
     {
-        do errordet(@false)
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_BONIFICACION)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_BONIFICACION)) { do rise_error(0,"No autorizado")}
+        @use_transaction = @false
+
+        do dbr.apps.action.pre("GC14")
+        do dbr.begin(db)
+
         do erp.cxp.movimientos.bonificarCxP(db,data)
+
+        do dbr.apps.action.pos(@null)
+        do dbr.commit(db)
+        do dbr.apps.action.ext(@null)
+
         @url_redir = @CXP_DOCS
 
         exception
         {
+            do errordet(@false)
             if dbr.in_transaction(db) { do dbr.rollback(db) }
 
             ref formData = record.copy(data,"*")
@@ -199,19 +230,30 @@ module "model"
             data<"form*"> : formData
             
             do cxp.prepareView(db,params,data)
+            do dbr.apps.action.log()
             do rise_error(code,error)
         }
     }
 
     cxp.aplicarIntMoratorios::&db,&params,&data
     {
-        do errordet(@false)
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CARGO_POR_MORA)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CARGO_POR_MORA)) { do rise_error(0,"No autorizado")}
+        @use_transaction = @false
+
+        do dbr.apps.action.pre("GC15")
+        do dbr.begin(db)
+
         do erp.cxp.movimientos.aplicarIntMor(db,data)
+
+        do dbr.apps.action.pos(@null)
+        do dbr.commit(db)
+        do dbr.apps.action.ext(@null)
+
         @url_redir = @CXP_DOCS
 
         exception
         {
+            do errordet(@false)
             if dbr.in_transaction(db) { do dbr.rollback(db) }
 
             ref formData = record.copy(data,"*")
@@ -222,6 +264,7 @@ module "model"
             data<"form*"> : formData
             
             do cxp.prepareView(db,params,data)
+            do dbr.apps.action.log()
             do rise_error(code,error)
         }
     }
@@ -290,7 +333,12 @@ module "model"
 
     cxp.aplicarPagos::&db,&params,&data
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_PAGOSBONIFICACION_DOCSPAGAR)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_PAGOSBONIFICACION_DOCSPAGAR)) { do rise_error(0,"No autorizado")}
+        @use_transaction = @false
+
+        do dbr.apps.action.pre("GC16")
+        //do dbr.begin(db)
+        
         // ref doc_origen = ifnull(@@(data,"&origen"),record.create())
         ref dxdestinos = ifnull(@@(data,"&aplicacion"),list.create())
 
@@ -331,9 +379,11 @@ module "model"
             "
             if not(dbr.execute(db,sql,dst)) { do rise_error(2,"Documento origen no encontrado o el importe aplicado es mayor al saldo disponible por aplicar.") }
 
+            dst<"aplicado"> : @@(dst,"#aplicar")
+
+            do dbr.apps.action.pos(dst)
             do dbr.commit(db)
 
-            dst<"aplicado"> : @@(dst,"#aplicar")
             exception
             {
                 if dbr.in_transaction(db) { do dbr.rollback(db) }
@@ -341,7 +391,21 @@ module "model"
             }
         }
 
+        //do dbr.apps.action.pos(dxdestinos)
+        //do dbr.commit(db)
+        do dbr.apps.action.ext(dxdestinos)
+
         return dxdestinos
+
+        exception
+        {
+            do errordet(@false)
+            if dbr.in_transaction(db){ do dbr.rollback(db) }
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     cxp.vFields::field
@@ -363,7 +427,8 @@ module "model"
 
     cxp.list::&db,&params
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_DOCS_POR_PAGAR)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_DOCS_POR_PAGAR)) { do rise_error(0,"No autorizado")}
+        do dbr.apps.action.grant("GC10")
 
         params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
         params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
@@ -444,26 +509,55 @@ module "model"
         }
         
         return response
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     cxp.read::&db,&params
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_DOC)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_DOC)) { do rise_error(0,"No autorizado")}
+        do dbr.apps.action.grant("GC10")
 
         ref data = entity.read(db,params)
         do cxp.prepareView(db,params,data)
 
         return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     cxp.blank::&db,&params
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_AGREGAR_DCXP)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_AGREGAR_DCXP)) { do rise_error(0,"No autorizado")}
+        do dbr.apps.action.grant("GC10")
 
         new data
         do cxp.prepareView(db,params,data)
 
         return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     cxp.update::&db,&params,&data

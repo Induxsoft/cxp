@@ -273,13 +273,23 @@ module "model"
 
     cxp.pagarProveedor::&db,&params,&data
     {
-        do errordet(@false)
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado") }
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado") }
+        @use_transaction = @false
+
+        do dbr.apps.action.pre("GC26")
+        do dbr.begin(db)
+
         do erp.cxp.movimientos.pagarProveedor(db,data)
+
+        do dbr.apps.action.pos(@null)
+        do dbr.commit(db)
+        do dbr.apps.action.ext(@null)
+
         @url_redir = @CXP_PROVS
 
         exception
         {
+            do errordet(@false)
             if dbr.in_transaction(db) { do dbr.rollback(db) }
 
             ref formData = record.copy(data,"*")
@@ -290,19 +300,30 @@ module "model"
             data<"form*"> : formData
             
             do cxp.prepareView(db,params,data)
+            do dbr.apps.action.log()
             do rise_error(code,error)
         }
     }
 
     cxp.bonificarProveedor::&db,&params,&data
     {
-        do errordet(@false)
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado")}
+        @use_transaction = @false
+
+        do dbr.apps.action.pre("GC27")
+        do dbr.begin(db)
+
         do erp.cxp.movimientos.bonificarProveedor(db,data)
+
+        do dbr.apps.action.pos(@null)
+        do dbr.commit(db)
+        do dbr.apps.action.ext(@null)
+
         @url_redir = @CXP_PROVS
 
         exception
         {
+            do errordet(@false)
             if dbr.in_transaction(db) { do dbr.rollback(db) }
 
             ref formData = record.copy(data,"*")
@@ -313,6 +334,7 @@ module "model"
             data<"form*"> : formData
             
             do cxp.prepareView(db,params,data)
+            do dbr.apps.action.log()
             do rise_error(code,error)
         }
     }
@@ -361,7 +383,8 @@ module "model"
 
     cxp.obtenerBalance::&db,&params
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ESTADO_CUENTA_PROVD)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ESTADO_CUENTA_PROVD)) { do rise_error(0,"No autorizado")}
+        do dbr.apps.action.grant("GC23")
 
         params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
         params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
@@ -392,11 +415,21 @@ module "model"
         data<"docs*"> : dbr.list(db,ftext(sql),params)
 
         return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     cxp.obtenerDocsPendientesDePago::&db,&params
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_DOCS_POR_PAGAR_PROVD)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_DOCS_POR_PAGAR_PROVD)) { do rise_error(0,"No autorizado")}
+        do dbr.apps.action.grant("GC24")
 
         params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
         params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
@@ -430,11 +463,21 @@ module "model"
         data<"docs*"> : dbr.list(db,ftext(sql),params)
 
         return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     cxp.obtenerPagosPorAplicar::&db,&params
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGOS_POR_APLICAR_PROVD)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGOS_POR_APLICAR_PROVD)) { do rise_error(0,"No autorizado")}
+        do dbr.apps.action.grant("GC25")
 
         sql = "
         SELECT
@@ -462,10 +505,21 @@ module "model"
         data<"docs*"> : dbr.list(db,ftext(sql),params)
 
         return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     pdr.list::&db,&params
     {
+        do dbr.apps.action.grant("GC20")
+
         buscar = trim(@@(params,"$buscar"))
         tipo = trim(@@(params,"$tipo"))
 
@@ -502,20 +556,51 @@ module "model"
         }
 
         return dbr.list(db,sql,params)
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     pdr.read::&db,&params
     {
+        do dbr.apps.action.grant("GC20")
+
         new data {}
         do cxp.prepareView(db,params,data)
         return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     pdr.blank::&db,&params
     {
+        do dbr.apps.action.grant("GC20")
+
         new data {}
         do cxp.prepareView(db,params,data)
         return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     cleanFormData::&fields,&data,&output
@@ -549,7 +634,6 @@ module "model"
 
     pdr.create::&db,&params,&data
     {
-        do errordet(@false)
         @use_transaction = @false
 
         ref fieldsProveedor = split("codcuenta,codigo,curp,diascredito,diasentrega,email,fax,limitecredito,nombre,notas,rfc,saldo,status,tasaiva,telefonos,website,contacto1,contacto2,contacto3,idivisa,izona,tipo,uf_vueltaviajero,uf_tipoop",",")
@@ -566,7 +650,9 @@ module "model"
         }
         do cleanFormData(fieldsProveedor,data,proveedor)
 
+        do dbr.apps.action.pre("GC21")
         do dbr.begin(db)
+
         // Datos de domicilios
         if chq_domicilio1
         {
@@ -618,7 +704,10 @@ module "model"
         }
         
         ref entity = @@(entity.create(db,params,proveedor),"&dtprov")
+        
+        do dbr.apps.action.pos(entity)
         do dbr.commit(db)
+        do dbr.apps.action.ext(entity)
 
         switch toupper(trim(@@(data,"$shortcut")))
         {
@@ -641,6 +730,7 @@ module "model"
 
         exception
         {
+            do errordet(@false)
             if dbr.in_transaction(db) { do dbr.rollback(db) }
 
             ref formData = record.copy(data,"*")
@@ -651,13 +741,13 @@ module "model"
             data<"form*"> : formData
             
             do cxp.prepareView(db,params,data)
+            do dbr.apps.action.log()
             do rise_error(code,error)
         }
     }
 
     pdr.update::&db,&params,&data
     {
-        do errordet(@false)
         @use_transaction = @false
 
         if trim(@@(data,"$codigo")) == "" { do rise_error(99,"Es necesario indicar el código del proveedor.") }
@@ -679,7 +769,9 @@ module "model"
         }
         do cleanFormData(fieldsProveedor,data,proveedor)
 
+        do dbr.apps.action.pre("GC22")
         do dbr.begin(db)
+
         // Datos de domicilios
         if chq_domicilio1
         {
@@ -740,7 +832,10 @@ module "model"
         }
         
         ref entity = @@(entity.update(db,params,proveedor),"&dtprov")
+        
+        do dbr.apps.action.pos(entity)
         do dbr.commit(db)
+        do dbr.apps.action.ext(entity)
 
         switch toupper(trim(@@(data,"$shortcut")))
         {
@@ -763,6 +858,7 @@ module "model"
 
         exception
         {
+            do errordet(@false)
             if dbr.in_transaction(db) { do dbr.rollback(db) }
 
             ref formData = record.copy(data,"*")
@@ -773,6 +869,7 @@ module "model"
             data<"form*"> : formData
             
             do cxp.prepareView(db,params,data)
+            do dbr.apps.action.log()
             do rise_error(code,error)
         }
     }
