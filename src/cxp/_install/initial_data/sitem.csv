@@ -1,0 +1,24 @@
+﻿itemid,description,itemparent
+cxp,Cuentas por pagar,\0
+cxp.documentos,Documentos por pagar,cxp
+GC10,Documentos por pagar,cxp.documentos
+GC11,Nuevo documento por pagar,cxp.documentos
+GC12,Consultar documento por pagar,cxp.documentos
+GC13,Pagar documento,cxp.documentos
+GC14,Bonificar documento,cxp.documentos
+GC15,Aplicar intereses moratorios a documento por pagar,cxp.documentos
+GC16,Aplicar abonos a documento por pagar,cxp.documentos
+cxp.gastos,Gastos,cxp
+GC30,Gastos,cxp.gastos
+GC31,Agregar gasto,cxp.gastos
+GC32,Consultar gasto,cxp.gastos
+cxp.proveedores,Proveedores y cuentas por pagar,cxp
+GC20,Proveedores y CxP,cxp.proveedores
+GC21,Nuevo proveedor,cxp.proveedores
+GC22,Editar proveedor,cxp.proveedores
+GC23,Estado de cuenta del proveedor,cxp.proveedores
+GC24,Documentos por pagar del proveedor,cxp.proveedores
+GC25,Pagos por aplicar del proveedor,cxp.proveedores
+GC26,Pago a proveedor,cxp.proveedores
+GC27,Bonificación a proveedor,cxp.proveedores
+GC28,Importar proveedores,cxp.proveedores
