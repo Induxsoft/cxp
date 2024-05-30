@@ -289,6 +289,7 @@ module "model"
         FROM dcxp AS cxp
             INNER JOIN cdocumentos AS doc ON doc.id = cxp.documento
         WHERE cxp.sys_pk = @_entity_id
+            AND IFNULL(cxp.debe,0) > 0
             -- AND IFNULL(cxp.xaplicar,0) > 0
         "
         // Documento por aplicar
