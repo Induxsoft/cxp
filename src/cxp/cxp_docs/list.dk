@@ -1,18 +1,19 @@
 #include "dkli.dkh"
 #!
-module "cxp.list"
+module "list.dk"
 {
     #include "functions.dkh"
     #include "serialize.dkh"
+    #include "dbr.dkh"
+    #include "dbr.apps.dkl"
+    #include "uielements.v12.dkl"
     #include "../_lib/icons.dk"
     #include "../_lib/config.dk"
-    #include "uielements.v12.dkl"
     
     do @context.begin(@crud_context)
     ref @http_context = @('&http')
-    ref db = @("&database")
     ref get = @@(@http_context,"&request/get")
-    ref docs = @('&./docs')
+    ref docs = ifnull(@('&./docs'),list.create())
 
     get<"filter-mode">: ifstr(trim(@@(get,"filter-mode"))!="", @@(get,"filter-mode"), "month")
     get<"year">: ifstr(trim(@@(get,"year"))!="", @@(get,"year"), str(ndatetime.year(ndatetime.now())))
@@ -50,21 +51,33 @@ module "cxp.list"
         }
     }
 
-    header_act::
-    { 
-        #$ a(href="#<@DOC_AGREGAR>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"){"Agregar"}
-        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_CONSULTAR>')"){"Consultar"}
-        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_PAGOS>')"){"Pagar documento"}
-        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_BONIFICACION>')"){"Bonificaciones"}
-        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_INTMORATORIOS>')"){"Int. Moratorios"}
-        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_APLICAR>')"){"Aplicar abonos"}
+    // header_act::
+    // { 
+    //     #$ a(href="#<@DOC_AGREGAR>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"){"Agregar"}
+    //     button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_CONSULTAR>')"){"Consultar"}
+    //     button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_PAGOS>')"){"Pagar documento"}
+    //     button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_BONIFICACION>')"){"Bonificaciones"}
+    //     button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_INTMORATORIOS>')"){"Int. Moratorios"}
+    //     button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_APLICAR>')"){"Aplicar abonos"}
+    // }
+    // #! point general_act to header_act
+
+    new nav_config
+    {
+        @"title": "Documentos por pagar"
+        @"buttons*": @null //general_act
+        @"urlexit": "/"
+        @"main": "GC11,GC12,GC13,GC16"
+        @"actions*": dbr.apps.itemactions(@('&database'),"DET01E","action","",0)
+        @"reports*": dbr.apps.itemactions(@('&database'),"DET01E","report","",0)
+        @"jscurrentcontext": "documento.getCurrentContext"
     }
-    #! point general_act to header_act
     
     #$
     div(class="container-fluid p-0")
     {
-        #! do uie.printMainBar(general_act, "Documentos por pagar", @true, "")
+        // #! do uie.printMainBar(general_act, "Documentos por pagar", @true, "")
+        #! do uie.printV12FormBar(nav_config)
 
         #$ div(id="work_area" class="container-section mt-1 p-2 pt-0")
         {
@@ -141,7 +154,6 @@ module "cxp.list"
                 document.addEventListener("DOMContentLoaded", () => {
                     documento.tableId = "tbl_cxp";
                     documento.init();
-                    documento.list.init();
                 });
             '}
         }

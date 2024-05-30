@@ -65,9 +65,9 @@ module "model"
 
                 if @@(params,"$_entity_id") == "_new"
                 {
-                    if @@(data,"#iproveedor") > 0 {
-                        condition = "pdr.sys_pk = @proveedor;"
-                        data<"info_proveedor*"> : dbr.rec(db,ftext(sql_get_proveedor),data)
+                    if @@(data,"#form/iproveedor") > 0 {
+                        condition = "pdr.sys_pk = @iproveedor;"
+                        data<"info_proveedor*"> : dbr.rec(db,ftext(sql_get_proveedor),@@(data,"&form"))
                     }
                     else if @@(params,"$prov") != "" {
                         condition = "pdr.sys_pk = @prov OR pdr.codigo = @prov;"
@@ -147,7 +147,7 @@ module "model"
         do dbr.commit(db)
         do dbr.apps.action.ext(@null)
 
-        @url_redir = @CXP_DOCS
+        // @url_redir = @CXP_DOCS
 
         exception
         {
@@ -274,7 +274,7 @@ module "model"
         params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
         params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
 
-        sql = "
+        sql_xaplicar = "
         SELECT
             cxp.sys_pk,
             cxp.sys_guid,
@@ -289,11 +289,18 @@ module "model"
         FROM dcxp AS cxp
             INNER JOIN cdocumentos AS doc ON doc.id = cxp.documento
         WHERE cxp.sys_pk = @_entity_id
-            AND IFNULL(cxp.xaplicar,0) > 0;
+            -- AND IFNULL(cxp.xaplicar,0) > 0
         "
-        ref xAplicar = dbr.rec(db,sql,params)
+        // Documento por aplicar
+        ref xAplicar = dbr.rec(db,sql_xaplicar,params)
+        
+        using params
+        {
+            @"idocumento": @@(xAplicar,"sys_pk")
+            @"iproveedor": @@(xAplicar,"iproveedor")
+        }
 
-        sql = "
+        sql_pendientes = "
         SELECT
             cxp.sys_pk,
             cxp.sys_guid,
@@ -317,15 +324,41 @@ module "model"
             AND IF(IFNULL(@year,'')='', true, YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@year)
             AND IF(IFNULL(@month,'')='', true, (YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=IFNULL(@year,YEAR(NOW())) AND MONTH(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@month))
             AND IF(IFNULL(@range,'-99')='-99', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
-            AND IF(IFNULL(@datefrom,'')='', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE(@datefrom) AND DATE(@dateto)));
+            AND IF(IFNULL(@datefrom,'')='', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE(@datefrom) AND DATE(@dateto)))
         "
-        params<"iproveedor">: @@(xAplicar, "iproveedor")
-        ref pendientes = dbr.list(db,sql,params)
+        // Documentos con saldo del proveedor
+        ref pendientes = dbr.list(db,sql_pendientes,params)
+
+        sql_aplicados = "
+        SELECT
+            cxp.sys_pk,
+            cxp.sys_guid,
+            doc.const AS documento,
+            cxp.referencia,
+            DATE_FORMAT(cxp.fecha,'%Y-%m-%d') AS emision,
+            DATE_FORMAT(cxp.aplicacion,'%Y-%m-%d') AS aplicacion,
+            IFNULL(cxp.bonificaciones,0) AS bonificaciones,
+            IFNULL(cxp.debe,0) AS debe,
+            IFNULL(cxp.haber,0) AS haber,
+            IFNULL(cxp.intmoratorios,0) AS int_moratorios,
+            IFNULL(cxp.pagos,0) AS pagos,
+            (IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) AS saldo,
+            SUM(IFNULL(apl.importe,0)) AS aplicado,
+            ((IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) + SUM(IFNULL(apl.importe,0))) AS santerior
+        FROM aplcxp AS apl
+            INNER JOIN dcxp AS cxp ON apl.fk_dcxp_aplicadoa = cxp.sys_pk
+            INNER JOIN cdocumentos AS doc ON cxp.documento = doc.id
+        WHERE apl.aplicadoa = @idocumento
+        GROUP BY cxp.sys_pk
+        "
+        // Documentos con importes aplicados del documento por aplicar
+        ref aplicados = dbr.list(db,sql_aplicados,params)
 
         new result
         {
             @"xaplicar*": xAplicar
             @"pendientes*": pendientes
+            @"aplicados*": aplicados
         }
 
         return result
@@ -333,6 +366,7 @@ module "model"
 
     cxp.aplicarPagos::&db,&params,&data
     {
+        if @@(params,"$_act") == "desaplicar" { return cxp.desaplicarPagos(db,params,data) }
         //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_PAGOSBONIFICACION_DOCSPAGAR)) { do rise_error(0,"No autorizado")}
         @use_transaction = @false
 
@@ -344,44 +378,131 @@ module "model"
 
         go foreach.lobj(value:dst) with(dxdestinos)
         {
-            dst<"aplicado">:0
+            if @@(dst,"#aplicar") > 0
+            {
+                do dbr.begin(db)
+
+                dst<"aplicado"> : 0
+
+                // Aumentar en pago al documento a aplicar
+                sql_aumentar_pago = "
+                UPDATE dcxp 
+                    SET pagos = (IFNULL(pagos,0) + @aplicar) 
+                WHERE sys_pk = @id_destino
+                    AND ((IFNULL(haber,0) + IFNULL(intmoratorios,0) - IFNULL(bonificaciones,0) - IFNULL(pagos,0) - @aplicar) >= 0);
+                "
+                if not(dbr.execute(db,sql_aumentar_pago,dst)) { do rise_error(1,"Documento destino no encontrado o el importe a aplicar es mayor al saldo del documento.") }
+                
+                // Disminuir en xaplicar al documento de origen
+                sql_disminuir_xaplicar = "
+                UPDATE dcxp 
+                    SET xaplicar = (IFNULL(xaplicar,0) - @aplicar)
+                WHERE sys_pk = @id_origen
+                    AND (IFNULL(debe,0) - (IFNULL(debe,0) - IFNULL(xaplicar,0)) - @aplicar) >= 0;
+                "
+                if not(dbr.execute(db,sql_disminuir_xaplicar,dst)) { do rise_error(2,"Documento origen no encontrado o el importe aplicado es mayor al saldo disponible por aplicar.") }
+
+                // Crear registro de aplicado
+                new aplcxp
+                {
+                    @"sys_pk": 0
+                    @"sys_guid": uuid()
+                    @"sys_dtcreated*": now()
+                    @"sys_timestamp*": now()
+                    @"sys_recver": 0
+                    @"destino": 4 //pagos
+                    @"fecha*": now()
+                    @"importe": @@(dst,"#aplicar")
+                    @"aplicadoa": @@(dst,"#id_origen")
+                    @"fk_dcxp_aplicadoa": @@(dst,"#id_destino")
+                }
+                do dbr.insert(db,"aplcxp",aplcxp)
+
+                dst<"aplicado"> : @@(dst,"#aplicar")
+
+                do dbr.apps.action.pos(dst)
+                do dbr.commit(db)
+
+                exception
+                {
+                    if dbr.in_transaction(db) { do dbr.rollback(db) }
+                    dst<"error"> : last_error()
+                }
+            }
+        }
+
+        //do dbr.apps.action.pos(dxdestinos)
+        //do dbr.commit(db)
+        do dbr.apps.action.ext(dxdestinos)
+
+        return dxdestinos
+
+        exception
+        {
+            do errordet(@false)
+            if dbr.in_transaction(db){ do dbr.rollback(db) }
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
+    }
+
+    cxp.desaplicarPagos::&db,&params,&data
+    {
+        @use_transaction = @false
+
+        do dbr.apps.action.pre("GC17")
+        //do dbr.begin(db)
+
+        sql_aplicados = "
+        SELECT
+            apl.sys_pk AS id_aplicado,
+            apl.aplicadoa AS id_origen,
+            apl.fk_dcxp_aplicadoa AS id_destino,
+            cxp.referencia,
+            IFNULL(cxp.bonificaciones,0) AS bonificaciones,
+            IFNULL(cxp.debe,0) AS debe,
+            IFNULL(cxp.haber,0) AS haber,
+            IFNULL(cxp.intmoratorios,0) AS int_moratorios,
+            IFNULL(cxp.pagos,0) AS pagos,
+            (IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) AS saldo,
+            IFNULL(apl.importe,0) AS aplicado,
+            ((IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) + IFNULL(apl.importe,0)) AS santerior
+        FROM aplcxp AS apl
+            INNER JOIN dcxp AS cxp ON apl.fk_dcxp_aplicadoa = cxp.sys_pk
+        WHERE apl.aplicadoa = @_entity_id
+        ORDER BY apl.sys_dtcreated ASC
+        "
+        // Documentos con importes aplicados del documento por aplicar
+        ref aplicados = dbr.list(db,sql_aplicados,params)
+
+        go foreach.lobj(value:apl) with(aplicados)
+        {
             do dbr.begin(db)
 
-            new aplcxp
-            {
-                @"sys_pk": 0
-                @"sys_guid": uuid()
-                @"sys_dtcreated*": now()
-                @"sys_timestamp*": now()
-                @"destino": 4 //pagos
-                @"fecha*": now()
-                @"importe": @@(dst,"#aplicar")
-                @"aplicadoa": @@(dst,"#id_origen")
-                @"fk_dcxp_aplicadoa": @@(dst,"#id_destino")
-                @"sys_recver": 0
-            }
-            do dbr.insert(db,"aplcxp",aplcxp)
-
-            // Aumentar en pago al documento a aplicar
-            sql = "
+            // Disminuir en pago al documento a aplicar
+            sql_disminuir_pago = "
             UPDATE dcxp 
-                SET pagos = (IFNULL(pagos,0) + @aplicar) 
+                SET pagos = (IFNULL(pagos,0) - @aplicado) 
             WHERE sys_pk = @id_destino
-                AND ((IFNULL(haber,0) + IFNULL(intmoratorios,0) - IFNULL(bonificaciones,0) - IFNULL(pagos,0) - @aplicar) >= 0);
             "
-            if not(dbr.execute(db,sql,dst)) { do rise_error(1,"Documento destino no encontrado o el importe a aplicar es mayor al saldo del documento.") }
-            // Disminuir en xaplicar al documento de origen
-            sql = "
+            do dbr.execute(db,sql_disminuir_pago,apl)
+            
+            // Aumentar en xaplicar al documento de origen
+            sql_aumentar_xaplicar = "
             UPDATE dcxp 
-                SET xaplicar = (IFNULL(xaplicar,0) - @aplicar)
+                SET xaplicar = (IFNULL(xaplicar,0) + @aplicado)
             WHERE sys_pk = @id_origen
-                AND (IFNULL(debe,0) - (IFNULL(debe,0) - IFNULL(xaplicar,0)) - @aplicar) >= 0;
             "
-            if not(dbr.execute(db,sql,dst)) { do rise_error(2,"Documento origen no encontrado o el importe aplicado es mayor al saldo disponible por aplicar.") }
+            do dbr.execute(db,sql_aumentar_xaplicar,apl)
 
-            dst<"aplicado"> : @@(dst,"#aplicar")
+            // Eliminar registro de aplicado
+            do dbr.delete(db,"aplcxp","sys_pk=@id_aplicado",apl)
 
-            do dbr.apps.action.pos(dst)
+            apl<"aplicado"> : 0
+
+            do dbr.apps.action.pos(apl)
             do dbr.commit(db)
 
             exception
@@ -391,11 +512,11 @@ module "model"
             }
         }
 
-        //do dbr.apps.action.pos(dxdestinos)
+        //do dbr.apps.action.pos(aplicados)
         //do dbr.commit(db)
-        do dbr.apps.action.ext(dxdestinos)
+        do dbr.apps.action.ext(aplicados)
 
-        return dxdestinos
+        return aplicados
 
         exception
         {

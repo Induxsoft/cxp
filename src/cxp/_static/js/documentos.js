@@ -33,25 +33,13 @@ var documento =
         window.location.href = url.replace("@doc",data.sys_pk);
     },
 
-    list: {
-        tbl_documentos: null,
-
-        init()
-        {
-            this.tbl_documentos = document.getElementById("tbl_cxp");
-            this.setEvents();
-        },
-
-        setEvents()
-        {
-            if (this.tbl_documentos)
-            {
-                this.tbl_documentos.hiddeSelector = true;
-                this.tbl_documentos.AutoAddRow = false;
-                this.tbl_documentos.AutoDelRow = false;
-            }
-        },
+    getCurrentContext()
+    {
+        const id = (this.table?.DataArray[this.table.CurrentRowIndex()]?.sys_pk ?? "");
+        return { item_id:id, context: {} }
     },
+
+    list: {},
 
     form: {},
 
@@ -302,4 +290,197 @@ var documento =
             }
         },
     },
+
+    aplicar: {
+        tbl_xaplicar:null, arr_xaplicar:[], tbl_aplicados:null, arr_aplicados:[],
+        source:{},
+
+        init()
+        {
+            this.tbl_xaplicar = document.getElementById("tbl_xaplicar");
+            this.tbl_aplicados = document.getElementById("tbl_aplicados");
+            const btn_aplicar = document.getElementById("btn_aplicar");
+            const btn_desaplicar = document.getElementById("btn_desaplicar");
+
+            btn_aplicar.addEventListener("click", (e) => this.aplicar());
+            btn_desaplicar.addEventListener("click", (e) => this.desaplicar());
+
+            this.setTableEvents();
+        },
+
+        setTableEvents()
+        {
+            if (this.tbl_xaplicar)
+            {
+                let table = this.tbl_xaplicar;
+                let events = table.EdiTable.Const.Events;
+                this.arr_xaplicar = table?.DataArray ?? [];
+
+                table.AutoAddRow = false;
+
+                table.Events[events.BeforeUpdateCell] = (e) => this.validarImportes(e);
+                table.Events[events.ConfirmEdition] = (e) => this.actualizarImportes(e);
+            }
+            
+            if (this.tbl_aplicados)
+            {
+                let table = this.tbl_aplicados;
+                let events = table.EdiTable.Const.Events;
+                this.arr_aplicados = table?.DataArray ?? [];
+
+                table.AutoAddRow = false;
+            }
+        },
+
+        submit(endpoint, data, callback=null)
+        {
+            // Opciones de la petición
+            const options =
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            };
+
+            // Hacer la petición
+            fetch(endpoint, options).then((response) => response.json())
+            .then((res) => {
+                // Manejar la respuesta del servidor
+                if (res.message) {
+                    alert(res.message);
+                    return;
+                }
+
+                if (callback) callback(res);
+                else console.log(res);
+            })
+            .catch((err) => {
+                // Manejar el error
+                alert(err.message);
+            });
+        },
+
+        aplicar()
+        {
+            let arr_xaplicar = this.tbl_xaplicar.DataArray;
+            
+            let lista = [];
+            for (let i = 0; i < arr_xaplicar.length; i++) {
+                const doc = arr_xaplicar[i];
+                let aplicar = Number(doc.aplicar);
+                
+                if (aplicar <= 0) continue;
+
+                let destino =
+                {
+                    id_origen: this.source.sys_pk,
+                    id_destino: doc.sys_pk,
+                    aplicar: aplicar
+                }
+
+                lista.push(destino);
+            }
+            
+            if (lista.length === 0) return;
+            let data = { aplicacion: lista }
+
+            this.submit("./?_act=aplicar", data, function(res){ window.location.reload() });
+        },
+
+        desaplicar()
+        {
+            let arr_aplicados = this.tbl_aplicados.DataArray;
+
+            if (arr_aplicados.length === 0) return;
+
+            this.submit("./?_act=desaplicar", {}, function(res){ window.location.reload() });
+        },
+
+        importesAplicar(e)
+        {
+            let cur_row = e.sender.RowIndexOfTd(e.td);
+            let arr_xaplicar = this.tbl_xaplicar.DataArray;
+                        
+            let saplicado = this.source.aplicado;
+            let sxaplicar = this.source.xaplicar;
+
+            let saldo = Number(e.sender.DataArray[cur_row]["saldo"]);
+            let aplicar = Number(e.text.trim());
+            let sfinal = (saldo - aplicar);
+
+            let aplicado = 0;
+            for (let i = 0; i < arr_xaplicar.length; i++) {
+                const impAplicar = Number(arr_xaplicar[i]["aplicar"]);
+                aplicado = Math.add(aplicado,impAplicar);
+            }
+            aplicado = Math.add(aplicado,aplicar);
+
+            let rst = 
+            {
+                aplicar: aplicar,
+                sfinal: sfinal,
+                aplicado: aplicado,
+                xaplicar: Math.sub(sxaplicar,aplicado),
+            }
+
+            return rst
+        },
+
+        validarImportes(e)
+        {
+            if (e.coldef.field === "aplicar")
+            {
+                let rst = this.importesAplicar(e);
+
+                if (rst.aplicar < 0) {
+                    alert("El importe a aplicar no puede ser menor a 0.");
+                    e.cancel = true;
+                    return;
+                }
+
+                if (rst.sfinal < 0) {
+                    alert("El importe a aplicar no puede ser mayor al saldo del documento.");
+                    e.cancel = true;
+                    return;
+                }
+
+                if (rst.xaplicar < 0) {
+                    alert("El importes aplicado no puede superar al saldo disponible para aplicar.");
+                    e.cancel = true;
+                    return;
+                }
+            }
+        },
+
+        actualizarImportes(e)
+        {
+            let cur_row = e.sender.RowIndexOfTd(e.td);
+                        
+            if (e.coldef.field === "aplicar")
+            {
+                let lbl_saldo = document.getElementById("lbl_saldo");
+                let lbl_aplicado = document.getElementById("lbl_aplicado");
+                let lbl_xaplicar = document.getElementById("lbl_xaplicar");
+
+                let rst = this.importesAplicar(e);
+
+                e.sender.DataArray[cur_row]["aplicar"] = rst.aplicar;
+                e.sender.DataArray[cur_row]["sfinal"] = rst.sfinal;
+                e.sender.UpdateRow(cur_row);
+
+                let langcode = (new Intl.NumberFormat()).resolvedOptions().locale;
+                const formatter = new Intl.NumberFormat(langcode, {
+                    style: "currency",
+                    currency: "MXN",
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                lbl_aplicado.textContent = formatter.format(rst.aplicado);
+                lbl_xaplicar.textContent = formatter.format(rst.xaplicar);
+            }
+        },
+    }
 }
