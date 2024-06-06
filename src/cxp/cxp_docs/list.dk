@@ -43,29 +43,44 @@ module "list.dk"
             member @"proveedor" { @"caption":"Proveedor" }
             member @"documento" { @"caption":"Documento" }
             member @"referencia" { @"caption":"Referencia" }
-            member @"emision" { @"caption":"Emisión" }
-            member @"aplicacion" { @"caption":"Aplicación" }
-            member @"debe" { @"caption":"Debe" }
-            member @"haber" { @"caption":"Haber" }
-            member @"divisa" { @"caption":"Divisa" }
+            member @"emision"
+            {
+                @"caption":"Emisión"
+                @"align": "center"
+            }
+            member @"aplicacion"
+            {
+                @"caption":"Aplicación"
+                @"align": "center"
+            }
+            member @"debe"
+            {
+                @"caption":"Debe"
+                @"align": "end"
+                @"format": @true
+                @"thousandssep": @true
+                @"decs": 2
+            }
+            member @"haber"
+            {
+                @"caption":"Haber"
+                @"align": "end"
+                @"format": @true
+                @"thousandssep": @true
+                @"decs": 2
+            }
+            member @"divisa"
+            {
+                @"caption":"Divisa"
+                @"align": "center"
+            }
         }
     }
-
-    // header_act::
-    // { 
-    //     #$ a(href="#<@DOC_AGREGAR>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"){"Agregar"}
-    //     button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_CONSULTAR>')"){"Consultar"}
-    //     button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_PAGOS>')"){"Pagar documento"}
-    //     button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_BONIFICACION>')"){"Bonificaciones"}
-    //     button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_INTMORATORIOS>')"){"Int. Moratorios"}
-    //     button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="documento.goTo('#<@DOC_APLICAR>')"){"Aplicar abonos"}
-    // }
-    // #! point general_act to header_act
 
     new nav_config
     {
         @"title": "Documentos por pagar"
-        @"buttons*": @null //general_act
+        @"buttons*": @null
         @"urlexit": "/"
         @"main": "GC11,GC12,GC13,GC16"
         @"actions*": dbr.apps.itemactions(@('&database'),"DET01E","action","",0)
@@ -73,16 +88,12 @@ module "list.dk"
         @"jscurrentcontext": "documento.getCurrentContext"
     }
     
-    #$
-    div(class="container-fluid p-0")
+    #$ div(class="container-fluid p-0")
     {
-        // #! do uie.printMainBar(general_act, "Documentos por pagar", @true, "")
         #! do uie.printV12FormBar(nav_config)
 
         #$ div(id="work_area" class="container-section mt-1 p-2 pt-0")
         {
-            p{$"#<@('$error/message')>"}
-
             form(action="./" method="GET" id="form_filter" class="no-print mb-1")
             {
                 div(class="d-flex align-items-center")

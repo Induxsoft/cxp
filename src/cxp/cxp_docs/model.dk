@@ -93,7 +93,7 @@ module "model"
             }
             case "bonificacion"
             {
-                if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_BONIFICACION)) { do rise_error(0,"No autorizado") }
+                // if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_BONIFICACION)) { do rise_error(0,"No autorizado") }
 
                 sql_documentos = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_bonific,0);"
 
@@ -104,7 +104,7 @@ module "model"
             }
             case "pago"
             {
-                if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_ABONO)) { do rise_error(0,"No autorizado") }
+                // if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_APLICAR_ABONO)) { do rise_error(0,"No autorizado") }
 
                 sql_documentos = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_pago,0);"
                 sql_doc_retiro = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_chq_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.retiros,0);"
@@ -121,7 +121,7 @@ module "model"
             }
             case "intmoratorios"
             {
-                if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CARGO_POR_MORA)) { do rise_error(0,"No autorizado") }
+                // if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CARGO_POR_MORA)) { do rise_error(0,"No autorizado") }
 
                 sql_documentos = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_int_mor,0);"
 

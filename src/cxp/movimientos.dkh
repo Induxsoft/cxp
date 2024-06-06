@@ -4,11 +4,18 @@ module ":erp.cxp.movimientos"
 {
     saveCxP::&db,&data
     {
+        fecha = trim(@@(data,"$fecha"))
+        aplicacion = trim(@@(data,"$aplicacion"))
+        
         if trim(@@(data,"$referencia")) == "" { do rise_error(500,"Debe indicar una referencia `referencia`.") }
-        if trim(@@(data,"$aplicacion")) == "" { do rise_error(500,"Debe indicar la fecha de aplicación `aplicacion`.") }
-        if trim(@@(data,"$fecha")) == "" { do rise_error(500,"Debe indicar la fecha del documento `fecha`.") }
+        if aplicacion == "" { do rise_error(500,"Debe indicar la fecha límite de pago `aplicacion`.") }
+        if fecha == "" { do rise_error(500,"Debe indicar la fecha de emisión del documento `fecha`.") }
         if @@(data,"#documento") <= 0 { do rise_error(500,"Debe indicar el tipo de documento `documento`.") }
         if @@(data,"#iproveedor") <= 0 { do rise_error(500,"No se ha indicado un proveedor `iproveedor`.") }
+
+        ndt_fecha = ndatetime.fromstr(fecha,"yyyy-MM-dd")
+        ndt_aplicacion = ndatetime.fromstr(aplicacion,"yyyy-MM-dd")
+        if ndatetime.diff(ndt_aplicacion,ndt_fecha,"d") < 0 { do rise_error(500,"La fecha límite no puede ser inferior a la fecha de emisión.") }
 
         new dcxp
         {

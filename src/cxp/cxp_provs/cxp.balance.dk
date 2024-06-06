@@ -4,39 +4,37 @@ module "cxp.balance.dk"
 {
     #include "functions.dkh"
     #include "serialize.dkh"
-    #include "../_lib/icons.dk"
-    #include "../_lib/config.dk"
+    #include "dbr.dkh"
+    #include "dbr.apps.dkl"
     #include "uielements.v12.dkl"
+    #include "../_lib/config.dk"
+    #include "../_lib/icons.dk"
     
     do @context.begin(@crud_context)
-    @_entity_id = @('$parameters/_entity_id')
     ref @http_context = @('&http')
     ref get = @@(@http_context,"&request/get")
-    ref docs = @('&./docs')
 
     get<"filter-mode">: ifstr(trim(@@(get,"filter-mode"))!="", @@(get,"filter-mode"), "month")
     get<"year">: ifstr(trim(@@(get,"year"))!="", @@(get,"year"), str(ndatetime.year(ndatetime.now())))
     get<"month">: ifstr(trim(@@(get,"month"))!="", @@(get,"month"), str(ndatetime.month(ndatetime.now())))
 
-    header_act::
-    { 
-        #$ a(href="#<@DOC_AGREGAR>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Agregar"}
-        a(href="#<@GST_AGREGAR>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Agregar gasto"}
-        a(href="#<replace(@PDR_XPAGAR,'@proveedor',@_entity_id)>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Docs. por pagar"}
-        a(href="#<replace(@PDR_XAPLICAR,'@proveedor',@_entity_id)>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Pagos por aplicar"}
-        a(href="#<replace(@PDR_PAGOS,'@proveedor',@_entity_id)>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Pago a prov."}
-        a(href="#<replace(@PDR_BONIFICACION,'@proveedor',@_entity_id)>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Bonificación a prov."}
-    }
-    #! point general_act to header_act
-    
-    #$ div(class="container")
+    new nav_config
     {
-        #! do uie.printMainBar(general_act, "Balance", @false, @CXP_PROVS)
+        @"title": "Balance"
+        @"buttons*": @null
+        @"urlexit": @CXP_PROVS
+        @"main": "GC11,GC12,GC13,GC16"
+        @"actions*": dbr.apps.itemactions(@('&database'),"DET01E","action","",0)
+        @"reports*": dbr.apps.itemactions(@('&database'),"DET01E","report","",0)
+        @"jscurrentcontext": "getCurrentContext"
+    }
+    
+    #$ div(class="container-fluid")
+    {
+        #! do uie.printV12FormBar(nav_config)
 
-        #$ div(id="work_area" class="container-section mt-1 p-2 pt-0")
+        #$ div(class="" id="work_area")
         {
-            p{$"#<@('$error/message')>"}
-
             form(action="./" method="GET" id="form_filter" class="no-print mb-1")
             {
                 div(class="d-flex align-items-center")
@@ -125,13 +123,6 @@ module "cxp.balance.dk"
                 }
             }
 
-            div(class="d-flex justify-content-end align-items-center my-1 gap-2")
-            {
-                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="aplicar('#<@DOC_BONIFICACION>')"){"Aplicar bonificación"}
-                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="aplicar('#<@DOC_PAGOS>')"){"Aplicar pago"}
-                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="aplicar('#<@DOC_INTMORATORIOS>')"){"Aplicar cargos por mora"}
-            }
-
             "edit-table"(class="w-100" id="lst_dcxp" data="#<to.json(@('&./docs'))>")
             {
                 "edit-thead"
@@ -154,21 +145,16 @@ module "cxp.balance.dk"
             }
         }
 
-        script
-        {$'
-            var table=document.getElementById("lst_dcxp");
+        p{$"#<@('$error/message')>"}
 
-            function aplicar(url="")
-            {
-                if(table.CurrentRowIndex()<0)
-                {
-                    alert("Debe seleccionar una fila");
-                    return;
-                }
-                var data=table.DataArray[table.CurrentRowIndex()];
-                var url=url.includes("@doc") ? url.replace("@doc",data.sys_pk) : url.replace("@proveedor",data.pkproveedor);
-                window.location.href=url;
-            }
-        '}
+        script(type="text/javascript")
+		{$'
+			function getCurrentContext()
+			{
+				const table = document.getElementById("lst_dcxp");
+				const id = (table?.DataArray[table.CurrentRowIndex()]?.sys_pk ?? "");
+    			return { item_id:id, context: {} }
+			}
+		'}
     }
 }

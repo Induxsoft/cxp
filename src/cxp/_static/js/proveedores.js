@@ -33,6 +33,12 @@ var proveedor =
         window.location.href = url.replace("@proveedor",data.sys_pk);
     },
 
+    getCurrentContext()
+    {
+        const id = (this.table?.DataArray[this.table.CurrentRowIndex()]?.sys_pk ?? "");
+        return { item_id:id, context: {} }
+    },
+
     list: {
         tbl_proveedores: null,
         tEvents: {},

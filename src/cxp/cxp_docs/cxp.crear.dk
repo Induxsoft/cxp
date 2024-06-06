@@ -38,7 +38,7 @@ module "cxp.crear.dk"
         act_btn_cls = "btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"
         
         #$
-        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action #<ifstr(@is_new,'','disable-ctrl')>" id="btn_save"){$"#<@ICON_SAVE> Guardar"}
+        button(class="#<act_btn_cls> #<ifstr(@is_new,'','disable-ctrl')>" type="button" id="btn_save"){$"#<@ICON_SAVE> Guardar"}
         #!
     }
     point print_buttons to fn_print_buttons
@@ -46,7 +46,7 @@ module "cxp.crear.dk"
     {
         @"title": ifstr(@is_new, "Nuevo", "Ver") + " documento por pagar"
         @"buttons*": print_buttons
-        @"urlexit": "javascript:window.history.back();"
+        // @"urlexit": "javascript:window.history.back();"
         member @"hidden" { @"print": @true }
     }
 
@@ -56,9 +56,7 @@ module "cxp.crear.dk"
         link(href="#<@CSS_MAIN>" rel="stylesheet")
         
         #! do uie.printV12FormBar(nav_config)
-        
-        #$
-        div(class="alert alert-danger overflow-auto mb-2 #<ifstr(@('$error/message')!='','','d-none')>" id="frm_alerts"){$"#<@('error/message')>"}
+        #$ div(class="alert alert-danger overflow-auto mb-2 #<ifstr(@('$error/message')!='','','d-none')>" id="frm_alerts"){$"#<@('error/message')>"}
 
         form(action="." method="POST" enctype="multipart/form-data" id="form_cxp" class="#<ifstr(@is_new,'','disable-form')>")
         {
