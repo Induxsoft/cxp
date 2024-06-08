@@ -23,7 +23,7 @@ module "cxp.balance.dk"
         @"title": "Balance"
         @"buttons*": @null
         @"urlexit": @CXP_PROVS
-        @"main": "GC11,GC12,GC13,GC16"
+        @"main": "GC11,GC12,GC13,GC14,GC15,GC16"
         @"actions*": dbr.apps.itemactions(@('&database'),"DET01E","action","",0)
         @"reports*": dbr.apps.itemactions(@('&database'),"DET01E","report","",0)
         @"jscurrentcontext": "getCurrentContext"

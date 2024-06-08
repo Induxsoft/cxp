@@ -1,4 +1,5 @@
 ﻿id,title,shorttitle,icon16x16,href,_blank,appid,itemtype,req_context_item_id,act_type
+GC10,Ver todos los documentos por pagar,Ver todos,,/!/cxp/documentos/,0,cxp.documentos,DET01E,0,action
 GC11,Nuevo documento por pagar,Agregar,,/!/cxp/documentos/_new/,0,cxp.documentos,DET01E,0,action
 GC12,Consultar documento por pagar,Consultar,,/!/cxp/documentos/@_src_context_item_id/,0,cxp.documentos,DET01E,1,action
 GC13,Pagar documento,Pagar,,/!/cxp/documentos/@_src_context_item_id/pago/,0,cxp.documentos,DET01E,1,action
