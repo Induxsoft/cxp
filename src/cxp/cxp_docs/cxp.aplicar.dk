@@ -33,7 +33,7 @@ module "cxp.aplicar.dk"
     {
         @"title": "Aplicación de pago o bonificación"
         @"buttons*": @null //general_act
-        @"urlexit": url_exit
+        @"urlexit": "javascript:window.history.back()" //url_exit
     }
 
     #$
