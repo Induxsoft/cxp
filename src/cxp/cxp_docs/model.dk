@@ -180,6 +180,9 @@ module "model"
 
         do dbr.apps.action.pre("GC13")
         do dbr.begin(db)
+        
+        if @@(data,"#pkparent")>0{params<"pkparent">:@@(data,"#pkparent")}
+        do cxcp.validateAplicable(db,params)
 
         do erp.cxp.movimientos.pagarCxP(db,data)
 
@@ -214,7 +217,8 @@ module "model"
 
         do dbr.apps.action.pre("GC14")
         do dbr.begin(db)
-
+        if @@(data,"#pkparent")>0{params<"pkparent">:@@(data,"#pkparent")}
+        do cxcp.validateAplicable(db,params)
         do erp.cxp.movimientos.bonificarCxP(db,data)
 
         do dbr.apps.action.pos(@null)
@@ -247,8 +251,9 @@ module "model"
         @use_transaction = @false
 
         do dbr.apps.action.pre("GC15")
-        do dbr.begin(db)
-
+        do dbr.begin(db)    
+        if @@(data,"#pkparent")>0{params<"pkparent">:@@(data,"#pkparent")}
+        do cxcp.validateAplicable(db,params)
         do erp.cxp.movimientos.aplicarIntMor(db,data)
 
         do dbr.apps.action.pos(@null)
@@ -329,10 +334,9 @@ module "model"
             (IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) AS sfinal
         FROM dcxp AS cxp
             INNER JOIN cdocumentos AS doc ON doc.id = cxp.documento
-            LEFT JOIN aplcxp AS mor ON mor.fk_dcxp_aplicadoa = cxp.sys_pk AND mor.destino = #<@CXP_DESTINO_APLICACION_INT_MORATORIOS>
         WHERE cxp.iproveedor = @iproveedor
             AND (IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) > 0
-            AND NOT IFNULL(mor.sys_pk,0)
+            AND IFNULL(cxp.aplicable,0)=1
             AND IF(IFNULL(@s,'')='', true, cxp.referencia LIKE CONCAT('%',@s,'%'))
             AND IF(IFNULL(@year,'')='', true, YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@year)
             AND IF(IFNULL(@month,'')='', true, (YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=IFNULL(@year,YEAR(NOW())) AND MONTH(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@month))
@@ -597,13 +601,17 @@ module "model"
             DATE_FORMAT(cxp.fecha, '%Y-%m-%d') AS emision,
             DATE_FORMAT(cxp.aplicacion, '%Y-%m-%d') AS aplicacion,
             IFNULL(cxp.debe,0) AS debe,
-            IFNULL(cxp.haber,0) AS haber,
+            IFNULL(cxp.haber,0) AS haber,            
+            IFNULL(cxp.intmoratorios,0) AS intmor,
+            IFNULL(cxp.bonificaciones,0) AS bonificacion,
+            IFNULL(cxp.pagos,0)pagos,
+            (IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) AS saldo,
             dvs.codigo AS divisa
         FROM dcxp AS cxp 
             INNER JOIN cdocumentos AS doc ON doc.id = cxp.documento
             INNER JOIN proveedor AS pdr ON pdr.sys_pk = cxp.iproveedor
             INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
-        WHERE TRUE"
+        WHERE ifnull(cxp.aplicable,0)=1 "
 
         if proveedor != "" {
             sql = sql + " AND (
@@ -673,11 +681,23 @@ module "model"
             do rise_error(code,error)
         }
     }
+    cxcp.validateAplicable::&db,&params
+    {
+        if @@(params,"#pkparent")>0{params<"doc">:@@(params,"#pkparent")}
+        else{params<"doc">:@@(params,"#_entity_id")}
+        
+        if @@(params,"#doc")<1{return}
+        
+        aplicable=dbr.num(db,"select aplicable from dcxp where sys_pk=@doc",params)
+        if not(aplicable){do rise_error(500,"El documento proporcionado es no aplicable")}
+    }
 
     cxp.blank::&db,&params
     {
         //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_AGREGAR_DCXP)) { do rise_error(0,"No autorizado")}
         do dbr.apps.action.grant("GC10")
+
+        do cxcp.validateAplicable(db,params)
 
         new data
         do cxp.prepareView(db,params,data)

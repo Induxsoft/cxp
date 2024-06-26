@@ -165,6 +165,65 @@ module "cxp.crear.dk"
             }
         }
 
+        #!
+        if @("#parameters/_entity_id")>0
+        {
+            #$
+             div(class="row")
+            {
+                div(class="col-lg-12")
+                {
+                    // div(class="row d-flex justify-content-end align-items-center")
+                    // {
+                    //     label(class="col-auto col-form-label fw-bolder"){$"Capital:"}
+                    //     div(class="col-2 text-end") {
+                    //         $"#<format(@@(info_dcxp,'#haber'),@FMT_MONEY)>"
+                    //     }
+                    // }
+
+                    div(class="row d-flex justify-content-end align-items-center")
+                    {
+                        label(class="col-auto col-form-label fw-bolder"){$"Intereses Financieros:"}
+                        div(class="col-2 text-end") {
+                            $"#<format(@@(info_dcxp,'#intfinancieros'),@FMT_MONEY)>"
+                        }
+                    }
+
+                    div(class="row d-flex justify-content-end align-items-center")
+                    {
+                        label(class="col-auto col-form-label fw-bolder"){$"Intereses Moratorios:"}
+                        div(class="col-2 text-end") {
+                            $"#<format(@@(info_dcxp,'#intmoratorios'),@FMT_MONEY)>"
+                        }
+                    }
+
+                    div(class="row d-flex justify-content-end align-items-center")
+                    {
+                        label(class="col-auto col-form-label fw-bolder"){$"Bonificaciones:"}
+                        div(class="col-2 text-end") {
+                            $"#<format(@@(info_dcxp,'#bonificaciones'),@FMT_MONEY)>"
+                        }
+                    }
+                    div(class="row d-flex justify-content-end align-items-center")
+                    {
+                        label(class="col-auto col-form-label fw-bolder"){$"Pagos:"}
+                        div(class="col-2 text-end") {
+                            $"#<format(@@(info_dcxp,'#pagos'),@FMT_MONEY)>"
+                        }
+                    }
+                    div(class="row d-flex justify-content-end align-items-center")
+                    {
+                        label(class="col-auto col-form-label fw-bolder"){$"Saldo:"}
+                        div(class="col-2 text-end") {
+                            $"#<format(@@(info_dcxp,'#saldo'),@FMT_MONEY)>"
+                        }
+                    }
+                    
+                    hr{}
+                }
+            }
+        }
+        #$
         div
         {
             script(src="#<@JS_DOCUMENTOS>"){$""}

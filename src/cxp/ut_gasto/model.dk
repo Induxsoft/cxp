@@ -164,7 +164,6 @@ module "model"
                 @"importe":@@(gasto,"#total")
                 @"igasto":igasto
             }
-            
             do erp.cxp.movimientos.crearCxP(db,cxp)
         }
 

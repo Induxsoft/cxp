@@ -150,6 +150,8 @@ module ":erp.cxp.movimientos"
 
         dcxp<"aplicable"> : (field.num(dcxp,"haber") > 0)
 
+        if field.exist(data,"aplicable") && trim(@@(data,"$aplicable"))!=""{dcxp<"aplicable"> :@@(data,"aplicable")}
+        
         start_transaction = @false
 
         if not(dbr.in_transaction(db)) {

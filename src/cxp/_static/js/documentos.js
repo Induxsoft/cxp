@@ -431,10 +431,10 @@ var documento =
 
         validarImportes(e)
         {
-            if (e.coldef.field === "aplicar")
+            if (e.coldef.field === "aplicar" && !e.cancel)
             {
                 let rst = this.importesAplicar(e);
-
+                
                 if (rst.aplicar < 0) {
                     alert("El importe a aplicar no puede ser menor a 0.");
                     e.cancel = true;

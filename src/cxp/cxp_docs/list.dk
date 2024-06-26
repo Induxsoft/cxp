@@ -53,17 +53,43 @@ module "list.dk"
                 @"caption":"Aplicación"
                 @"align": "center"
             }
-            member @"debe"
+ 
+            member @"haber"
             {
-                @"caption":"Debe"
+                @"caption":"Importe"
                 @"align": "end"
                 @"format": @true
                 @"thousandssep": @true
                 @"decs": 2
             }
-            member @"haber"
+            member @"intmor"
             {
-                @"caption":"Haber"
+                @"caption":"Mor."
+                @"align": "end"
+                @"format": @true
+                @"thousandssep": @true
+                @"decs": 2
+            }
+
+            member @"bonificacion"
+            {
+                @"caption":"Bonif."
+                @"align": "end"
+                @"format": @true
+                @"thousandssep": @true
+                @"decs": 2
+            }
+            member @"pagos"
+            {
+                @"caption":"Pagos"
+                @"align": "end"
+                @"format": @true
+                @"thousandssep": @true
+                @"decs": 2
+            }
+            member @"saldo"
+            {
+                @"caption":"Saldo"
                 @"align": "end"
                 @"format": @true
                 @"thousandssep": @true

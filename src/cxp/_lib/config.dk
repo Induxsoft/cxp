@@ -13,6 +13,11 @@ module
     @FORMA_PAGO = 1 // cContado
     @FORMA_PAGO_CREDITO = 2 // credito
 
+	//
+	@curr_ndt = ndatetime.now()
+    @curr_year = ndatetime.year(@curr_ndt)
+    @curr_month = ndatetime.month(@curr_ndt)
+    @curr_day = ndatetime.day(@curr_ndt)
     //#region TiposCategorias
     @cIngreso = 1
     @cEgreso = 2
