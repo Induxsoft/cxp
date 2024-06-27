@@ -49,7 +49,7 @@ module "cxp.crear.dk"
         // @"urlexit": "javascript:window.history.back();"
         member @"hidden" { @"print": @true }
     }
-
+    decs=@DECIMAL_PRECISION
     #$
     div(class="container")
     {
@@ -58,7 +58,7 @@ module "cxp.crear.dk"
         #! do uie.printV12FormBar(nav_config)
         #$ div(class="alert alert-danger overflow-auto mb-2 #<ifstr(@('$error/message')!='','','d-none')>" id="frm_alerts"){$"#<@('error/message')>"}
 
-        form(action="." method="POST" enctype="multipart/form-data" id="form_cxp" class="#<ifstr(@is_new,'','disable-form')>")
+        form(action="." method="POST" enctype="multipart/form-data" id="form_cxp" class="#<ifstr(@is_new,'','disable-form')>" onsubmit="return proveedor.form.ValidateForm(event)")
         {
             ##
             do uie.print_from_url_field()
@@ -150,7 +150,7 @@ module "cxp.crear.dk"
                     }
                     #$
                     input(
-                        class="form-control rounded-0 induxsoft-num-field mw-100"
+                        class="form-control rounded-0 induxsoft-num-field mw-100 validate-number"
                         type="number"
                         name="importe"
                         value="#<importe>"
@@ -159,7 +159,9 @@ module "cxp.crear.dk"
                         id="txt_importe"
                         required="true"
                         "num-style"="currency"
-                        "num-decs"="6"
+                        "num-decs"="#<decs>"
+                        required="true"
+                        onkeypress="return InduxsoftNumberFields.filterFloat(event,this,#<decs>)"
                     )
                 }
             }
@@ -227,6 +229,7 @@ module "cxp.crear.dk"
         div
         {
             script(src="#<@JS_DOCUMENTOS>"){$""}
+            script(src="#<@JS_PROVEEDORES>"){$""}
             script(type="text/javascript")
             {$'
                 document.addEventListener("DOMContentLoaded", () => {

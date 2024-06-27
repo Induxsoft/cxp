@@ -97,13 +97,14 @@ module "cxp.pago.dk"
         member @"hidden" { @"print": @true }
     }
 
+    decs=@DECIMAL_PRECISION
     #$
     div(class="container")
     {
         #! do uie.printV12FormBar(nav_config)
         #$ div(class="alert alert-danger overflow-auto mb-2 #<ifstr(@('$error/message')!='','','d-none')>" id="frm_alerts"){$"#<@('error/message')>"}
 
-        form(action="." method="POST" id="form_pagocxp")
+        form(action="." method="POST" id="form_pagocxp" onsubmit="return proveedor.form.ValidateForm(event)")
         {
             input(type="hidden" name="pkparent" value="#<@@(info_dcxp,'#sys_pk')>")
             input(type="hidden" name="iproveedor" value="#<@@(info_dcxp,'#iproveedor')>")
@@ -361,14 +362,16 @@ module "cxp.pago.dk"
                         div(class="col-6") {
                             div(class="input-group input-group-sm") {
                                 input(
-                                    class="form-control rounded-0 induxsoft-num-field mw-100"
+                                    class="form-control rounded-0 induxsoft-num-field mw-100 validate-number"
                                     type="number"
                                     name="importe"
                                     value="#<form('importe','nm',@null)>"
                                     min="1"
                                     step="0.000001"
                                     id="txt_importe"
-                                    "num-decs"="6"
+                                    "num-decs"="#<decs>"
+                                    required="true"
+                                    onkeypress="return InduxsoftNumberFields.filterFloat(event,this,#<decs>)"
                                 )
                                 span(class="input-group-text rounded-0"){$"#<@@(info_dcxp,'$divisa')>"}
                             }
@@ -428,6 +431,7 @@ module "cxp.pago.dk"
         div
         {
             script(src="#<@JS_DOCUMENTOS>"){$""}
+            script(src="#<@JS_PROVEEDORES>"){$""}
             script(type="text/javascript")
             {$'
                 document.addEventListener("DOMContentLoaded", () => {

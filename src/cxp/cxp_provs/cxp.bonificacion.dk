@@ -31,7 +31,7 @@ module "cxp.bonificacion.dk"
         @"text_field": "const"
         @"selected": form("documento","nm",@null)
     }
-
+    decs=@DECIMAL_PRECISION
     #$
     div(class="container")
     {
@@ -46,7 +46,7 @@ module "cxp.bonificacion.dk"
             }
         }
 
-        form(action="." method="POST" id="form_bonificacion_prov")
+        form(action="." method="POST" id="form_bonificacion_prov" onsubmit="return proveedor.form.ValidateForm(event)")
         {
             input(type="hidden" name="iproveedor" value="#<@@(dtprov,'#sys_pk')>")
 
@@ -133,7 +133,7 @@ module "cxp.bonificacion.dk"
                         div(class="col-6") {
                             div(class="input-group") {
                                 input(
-                                    class="form-control rounded-0 induxsoft-num-field mw-100"
+                                    class="form-control rounded-0 induxsoft-num-field mw-100 validate-number"
                                     type="number"
                                     name="importe"
                                     value="#<form('importe','nm',@null)>"
@@ -141,7 +141,9 @@ module "cxp.bonificacion.dk"
                                     step="0.000001"
                                     id="txt_importe"
                                     required=""
-                                    "num-decs"="6"
+                                    "num-decs"="#<decs>"
+                                    required="true"
+                                    onkeypress="return InduxsoftNumberFields.filterFloat(event,this,#<decs>)"
                                 )
                                 span(class="input-group-text rounded-0"){$"#<@@(dtprov,'$divisa')>"}
                             }

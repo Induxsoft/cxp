@@ -156,7 +156,50 @@ var proveedor =
             this.setEvents();
             this.setKeyboardShortcuts();
         },
+        ValidateForm(event)
+        {
+            if(!event)return true;
+            
+            event.stopPropagation();
+            event.preventDefault();
 
+            var form=event.target;
+      
+            if(!form)return true;
+
+            if(!form.reportValidity())return false;
+            if(!form.checkValidity())return false;
+
+            var fields_number=form.querySelectorAll(".validate-number");
+            
+            var break_for=false;
+            for (let i = 0; i < fields_number.length; i++) 
+            {
+                const field = fields_number[i];
+                if(field && field.hasAttribute("required"))
+                {
+                    var data_value=field.getAttribute("data-value");
+                    var value=field.getAttribute("value");
+                    var alert_text=field.getAttribute("alert");
+                    if(data_value.trim()!="")value=data_value;
+
+                    if(Number(value)<1)
+                    {
+                        var msg=field.message??"El campo "+field.name+" debe ser mayor a 0";
+                        break_for=true;
+                        field.focus();
+                        if(alert_text=="true")
+                        {
+                            alert(msg);
+                        }
+                    }
+                }
+                if(break_for)break;
+            }
+            if(break_for)return false;
+
+            return true;
+        },
         setEvents()
         {
             if (this.btnSave) { this.btnSave.addEventListener("click", () => { this.saveForm(); }); }
