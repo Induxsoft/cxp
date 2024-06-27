@@ -28,7 +28,9 @@ module
 	// Formato de presentación
 	@THOUSANDS_SEPARATOR = ","
 	@DECIMAL_SEPARATOR = "."
-	@DECIMAL_PRECISION = 2
+	@DECIMAL_PRECISION = 2 //cantidad de decimal
+
+	@STEP_DECIMAL="0.000001"//format(0,"0."+padright("",@DECIMAL_PRECISION-1,"0")+"1")
 
 	/**
 	* Clave Primaria (PK) de la divisa predeterminada

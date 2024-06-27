@@ -1,0 +1,60 @@
+#include "dkli.dkh"
+#!
+module "Reportes de Cuentas por Cobrar"
+{
+    antiguedadSaldos::&db,&params
+    {
+        do dbr.apps.action.grant("GC33")
+
+        sql_tiposproveedor = "SELECT sys_pk, descripcion FROM tipoproveedor WHERE NOT IFNULL(sys_deleted,0)"
+
+        sql_antiguedad_saldo = "
+        SELECT
+            dcxp.sys_pk,
+            DATE_FORMAT(dcxp.aplicacion,'%d/%m/%Y') AS aplicacion,
+            DATE_FORMAT(dcxp.fecha,'%d/%m/%Y') AS fecha,
+            dcxp.referencia,
+            z.codigo,
+            z.nombre,
+            z.rfc,
+            z.telefonos,
+            cdocumentos.const AS documento,
+            DATEDIFF(@fil_fcorte, dcxp.aplicacion) AS dias,
+            (dcxp.debe + dcxp.intmoratorios - dcxp.bonificaciones - dcxp.pagos) AS saldo
+        FROM
+            (
+                proveedor z
+                INNER JOIN (
+                    cdocumentos
+                    INNER JOIN dcxp ON cdocumentos.id = dcxp.documento
+                ) ON z.sys_pk = dcxp.iproveedor
+            )
+        WHERE
+            dcxp.aplicable <> 0
+            AND (dcxp.haber + dcxp.intmoratorios - dcxp.bonificaciones - dcxp.pagos) <> 0
+            #<conditions>
+        ORDER BY z.nombre;
+        "
+
+        conditions = ""
+        if not(field.exist(params,"fil_fcorte")) { params<"fil_fcorte"> : hoy("yyyy-MM-dd") }
+        if replace(@@(params,"$fil_tipo"),"*","") != "" { conditions = conditions + " AND z.tipo = @fil_tipo" }
+
+        new data
+        {
+            @"list*": dbr.list(db,ftext(sql_antiguedad_saldo),params)
+            @"list_tipos*": dbr.list(db,sql_tiposproveedor,@null)
+        }
+
+        return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
+    }
+}

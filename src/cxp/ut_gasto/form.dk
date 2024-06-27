@@ -8,6 +8,8 @@ module "form.dk"
     #include "../_lib/icons.dk"
     #include "../_lib/config.dk"
     #include "uielements.v12.dkl"
+    #include "dbr.vars.dkl"
+    #include "dbr.dkh"
 
     do @context.begin(@crud_context)
     ref infoProv = ifnull(@("&./info_proveedor"),record.create())
@@ -22,11 +24,12 @@ module "form.dk"
     new tipo
     {
         @"datatable*": ifnull(@("&./documentos"),list.create())
-        @"id": "sel_documento"
+        @"id": "sel_tipo"
         new member "attributes"
         {
             @"class": "induxsoft-form-select"
             @"name": "documento"
+            @"required":"true"
         }
         @"value_field": "id"
         @"text_field": "const"
@@ -55,11 +58,19 @@ module "form.dk"
         {
             @"class": "form-select rounded-0"
             @"name": "tipo_documento"
+            @"required":"true"
         }
         @"value_field": "id"
         @"text_field": "const"
         @"selected": @("#./dcdoc")
     }
+    
+    vdecs=dbr.vars.get(@("&database"),"CANT_DECS")
+    if trim(vdecs)==""{decs=@DECIMAL_PRECISION}
+    else{decs=parse.num(vdecs)}
+
+    format_decs=dbr.vars.get(@("&database"),"FORMAT_DECS")
+    if trim(format_decs)==""{format_decs="$ #,#.00"}
 
     #$
     div(class="container")
@@ -159,13 +170,13 @@ module "form.dk"
                             class="form-control rounded-0 induxsoft-num-field1 "
                             type="number"
                             name="importe"
-                            value="#<@('#input/importe')>"
+                            value="#<round(@('#input/importe'),decs)>"
                             min="1"
                             step="0.000001"
                             id="txt_importe"
                             required="true"
                             "num-style"="currency"
-                            "num-decs"="6"
+                            "num-decs"="#<decs>"
                             onchange="CalImporte()"
                         )
                     }
@@ -173,24 +184,24 @@ module "form.dk"
                     div(class="col-md-2")
                     {
                         small(class="form-label" "for"="txt_retencion"){$"Más ISR  retenido:"}
-                        input(type="number" onchange="CalImporte()" class="induxsoft-form-control" "#<ifstr(@('#./retisr')!=0,'readonly','')>"="true" name="retisr"  id="txt_retencion" value="#<@('#./retisr')>" )
+                        input(type="number" step="#<@STEP_DECIMAL>" onchange="CalImporte()" class="induxsoft-form-control" "#<ifstr(@('#./retisr')!=0,'readonly','')>"="true" name="retisr"  id="txt_retencion" value="#<round(@('#./retisr'),decs)>" )
                    
                     }
                     div(class="col-md-2")
                     {
                         small(class="form-label" "for"="txt_retencion"){$"Más IVA retenido:"}
-                        input(type="number" onchange="CalImporte()" class="induxsoft-form-control" "#<ifstr(@('#./retiva')!=0,'readonly','')>"="true" name="retiva"  id="txt_retencion_iva" value="#<@('#./retiva')>" )
+                        input(type="number" step="#<@STEP_DECIMAL>" onchange="CalImporte()" class="induxsoft-form-control" "#<ifstr(@('#./retiva')!=0,'readonly','')>"="true" name="retiva"  id="txt_retencion_iva" value="#<round(@('#./retiva'),decs)>" )
                    
                     }
                     div(class="col-md-2")
                     {
                         small(class="form-label" "for"="txt_traslado"){$"Menos IVA trasladado:"}
-                        input(type="number" onchange="CalImporte()" class="induxsoft-form-control" "#<ifstr(@('#./iva')!=0,'readonly','')>"="true" name="iva" id="txt_traslado" value="#<@('#./iva')>" )
+                        input(type="number" step="#<@STEP_DECIMAL>" onchange="CalImporte()" class="induxsoft-form-control" "#<ifstr(@('#./iva')!=0,'readonly','')>"="true" name="iva" id="txt_traslado" value="#<round(@('#./iva'),decs)>" )
                     }
                     div(class="col-md-2")
                     {
                         h6{"Subtotal:"}
-                        input(type="number" readonly="true" id="subtotal" name="subtotal" class="induxsoft-form-control  induxsoft-num-field1" value="#<@('#./subtotal')>"){""}
+                        input(type="number" readonly="true" id="subtotal" name="subtotal" class="induxsoft-form-control  induxsoft-num-field1" value="#<round(@('#./subtotal'),decs)>"){""}
                     }
                 }
                 
@@ -233,7 +244,11 @@ module "form.dk"
             {
                 var proveedor=document.getElementById("sel_proveedor");
                 var beneficiario=document.getElementById("txt_beneficiario");
-                
+
+                var sel_tipo=document.getElementById("sel_tipo");
+                var sel_documento=document.getElementById("sel_documento");
+                var sel_cuenta=document.getElementById("sel_cuenta");
+
                 if (proveedor) proveedor.addEventListener("change",() => {
                     if (beneficiario) beneficiario.value = proveedor.getValue()?.nombre ?? "";
                 });
@@ -258,13 +273,22 @@ module "form.dk"
                         var div_contado=document.getElementById("div_contado");
                         if(target && Number(target.value)==#<@FORMA_PAGO_CREDITO>)
                         {
-                            if(div_credito)div_credito.classList.remove("d-none");
+                            if(div_credito)
+                            {
+                                div_credito.classList.remove("d-none");    
+                            }
                             if(div_contado)div_contado.classList.add("d-none");
+
+                            requiredFileds({sel_tipo,sel_cuenta},false);
+                            requiredFileds({sel_documento});
                         }
                         else
                         {
                             if(div_credito)div_credito.classList.add("d-none");
                             if(div_contado)div_contado.classList.remove("d-none");
+
+                            requiredFileds({sel_tipo,sel_cuenta});
+                            requiredFileds({sel_documento},false);
                         }
                         
                     });
@@ -294,6 +318,20 @@ module "form.dk"
                 var lbl_total=document.getElementById("subtotal");
             
                 if(lbl_total)lbl_total.value=importe;
+            }
+            function requiredFileds(fields,required=true)
+            {
+                if(!fields)return;
+
+                for(var ff in fields)
+                {
+                    var field=fields[ff];
+                    if(field)
+                    {
+                        if(!required)field.removeAttribute("required");
+                        else field.setAttribute("required",true);
+                    }
+                }
             }
         '}
     }

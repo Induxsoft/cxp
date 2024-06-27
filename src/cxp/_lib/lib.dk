@@ -22,6 +22,10 @@ module "lib.dk"
         }
         return list
     }
+    function between(value, min, max)
+    {
+        return value >= min && value <= max
+    }
     function date_format(str,fmt)
     {
         fecha = trim(str(str))
