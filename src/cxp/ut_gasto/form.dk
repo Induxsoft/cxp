@@ -7,6 +7,7 @@ module "form.dk"
     #include "uielements.dkl"
     #include "../_lib/icons.dk"
     #include "../_lib/config.dk"
+    #include "../_lib/lib.dk"
     #include "uielements.v12.dkl"
     #include "dbr.vars.dkl"
     #include "dbr.dkh"
@@ -72,10 +73,12 @@ module "form.dk"
     format_decs=dbr.vars.get(@("&database"),"FORMAT_DECS")
     if trim(format_decs)==""{format_decs="$ #,#.00"}
 
+
+    ref adjuntos=getFiles(path.concat(@PATH_ADJUNTOS,@("$./sys_guid")),replace(@URL_ADJUNTOS,"@id",@("$./sys_guid")))
     #$
     div(class="container")
     {
-        form(action="." method="post")
+        form(action="." method="post" enctype="multipart/form-data")
         {
             #! do uie.printMainBar(general_act, "Gasto", @false, @UT_GASTO)
 
@@ -161,7 +164,7 @@ module "form.dk"
                 #$ small(class="fw-bold" "for"="txt_concepto"){$"Concepto:"}
                 textarea(class="form-control rounded-0" name="concepto" id="txt_concepto" required=""){$"#<@('$input/concepto')>"}
 
-                div(class="row justify-content-end")
+                div(class="row")
                 {
                     div(class="col-md-2")
                     {
@@ -203,6 +206,11 @@ module "form.dk"
                         h6{"Subtotal:"}
                         input(type="number" readonly="true" id="subtotal" name="subtotal" class="induxsoft-form-control  induxsoft-num-field1" value="#<round(@('#./subtotal'),decs)>"){""}
                     }
+                    div(class="col-md-2 mt-4")
+                    {
+                        input(type="file" class="d-none" id="file" name="file" )
+                        label(class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" "for"="file"){"Adjuntar documentos"}
+                    }
                 }
                 
                
@@ -212,32 +220,88 @@ module "form.dk"
                     label{input(type="radio" id="forma_pago_contado" class="" name="formapago" "#<ifstr(@('#./fmpago')==@FORMA_PAGO || @('$./fmpago')=='','checked','')>"="true" value="#<@FORMA_PAGO>") " Contado" }
                     label{input(type="radio" id="forma_pago_credito" class="ms-4" name="formapago" "#<ifstr(@('#./fmpago')==@FORMA_PAGO_CREDITO,'checked','')>"="true"  value="#<@FORMA_PAGO_CREDITO>") " Crédito" }
                 }
-                div(class="col-lg-4" id="div_contado") 
+                div(class="col-lg-12" id="div_contado") 
                 {
-                    small(class="form-label" "for"="txt_beneficiario"){$"Beneficiario:"}
-                    input(type="text" class="induxsoft-form-control" name="beneficiario" id="txt_beneficiario" value="#<@('$./beneficiario')>")
-
-                    small{$"Documento:"}
-                    #! do uie.dbSelect(tipo)
-
-                    #$ small{$"Cuenta:"}
-                    #! do uie.dbSelect(cuentas)
+                    div(class="row")
+                    {
+                        div(class="col-md-4")
+                        {
+                            small(class="form-label" "for"="txt_beneficiario"){$"Beneficiario:"}
+                            input(type="text" class="induxsoft-form-control" name="beneficiario" id="txt_beneficiario" value="#<@('$./beneficiario')>")
+                        }
+                        div(class="col-md-4")
+                        {
+                            small{$"Documento:"}
+                            #! 
+                            do uie.dbSelect(tipo)
+                            #$
+                        }
+                        div(class="col-md-4")
+                        {
+                            #$ small{$"Cuenta:"}
+                            #! do uie.dbSelect(cuentas)
+                        }
+                        #$ 
+                    }
+                    
+                }
+                div(class="col-lg-12" id="div_credito") 
+                {
+                    div(class="row")
+                    {
+                        div(class="col-md-4")
+                        {
+                            label(class="form-label" "for"="sel_documento"){$"Tipo de documento:"}
+                            ##
+                            do uie.dbSelect(sel_documento)
+                            ##
+                        }
+                        div(class="col-md-4 mt-4")
+                        {
+                            input(class="form-check-input" type="checkbox" name="aplicable" id="ch_aplicable" "checked"="" readonly="true" disabled="true")
+                            label(class="form-check-label" "for"="ch_aplicable"){$"Marcar como aplicable"}
+                        }
+                    }
+                }
+                #!
+                if @count(adjuntos)>0
+                {
                     #$
+                    div(class="row mt-2")
+                    {
+                        div(class="col-md-12")
+                        {
+                            div(class="card")
+                            {
+                                div(class="card-body")
+                                {
+                                    h5{"Adjuntos"}
+                                    button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print mb-1" onclick="gasto.form.preview();"){"Descargar"}
+                                    "media-list"(
+                                    id="media-list"
+                                    data='#<to.json(adjuntos)>'
+                                    "can-arrange"="true"
+                                    "can-drag"="true"
+                                    "can-drop"="true"
+                                    "can-delete"="false"
+                                    "highlight-first"="true"
+                                    "media-prop"="url"
+                                    "miniature-prop"="mini"
+                                    "outline-selected"="true"
+                                    "label-prop"="name"
+                                    ){""}
+                                }
+                            }
+                        }
+                    }
                 }
-                div(class="col-lg-4" id="div_credito") 
-                {
-                    label(class="form-label" "for"="sel_documento"){$"Tipo de documento:"}
-                    ##
-                    do uie.dbSelect(sel_documento)
-                    ##
-
-                    input(class="form-check-input" type="checkbox" name="aplicable" id="ch_aplicable" "checked"="" readonly="true" disabled="true")
-                    label(class="form-check-label" "for"="ch_aplicable"){$"Marcar como aplicable"}
-                }
+                
             }
         }
 
         #$
+        script(src="#<@JS_GASTO>"){""}
+
         script(type="text/javascript")
         {$'
             document.addEventListener("DOMContentLoaded", () =>
@@ -255,11 +319,13 @@ module "form.dk"
 
                 if(#<@("#./sys_pk")>>0)
                 {
+                    gasto.form.init();
+
                     var fields=document.querySelectorAll("input,select,input-key,textarea");
                     for(var i=0;i<fields.length;i++)
                     {
                         var itm=fields[i];
-                        if(itm)itm.setAttribute("disabled",true);
+                        if(itm && itm.name!="file")itm.setAttribute("disabled",true);
                     }
                 }
                 var radios=document.querySelectorAll("input[name=formapago]");

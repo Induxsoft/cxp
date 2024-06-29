@@ -156,4 +156,31 @@ module "lib.dk"
 
         exception{ return @false }
     }
+    getFiles::path_root,url_root
+    {
+        ref l=list.create()
+        if not(dir.exists(path_root)){return l}
+
+        ref files=list.files(path_root,"*")
+        
+        for i = 0; i < @count(files)
+        {
+            file=list.str(files,i)
+            filename=file.name(file)
+
+            url=path.concat(url_root,filename)
+            new obj
+            {
+                @"mini":url
+                @"name":filename
+                @"url":url
+            }
+            do list.add(l,obj)
+        }
+        return l
+    }
+    limpiarTexto::texto
+	{
+		return tolower(trim(replace(ranychars(texto,'$,/\n)("\'[]-%+/',' ')," ","_")))
+	}
 }

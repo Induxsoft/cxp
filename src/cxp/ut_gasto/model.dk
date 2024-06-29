@@ -3,7 +3,9 @@
 module "model"
 {
     @read_query="SELECT 
-            ut.sys_pk,pdr.sys_pk pkproveedor,ut.total importe,
+            ut.sys_pk,
+            ut.sys_guid,
+            pdr.sys_pk pkproveedor,ut.total importe,
             cat.descripcion AS categoria,
             ut.referencia,
             DATE_FORMAT(ut.fecha,'%Y-%m-%d') AS fecha,
@@ -166,6 +168,7 @@ module "model"
             }
             do erp.cxp.movimientos.crearCxP(db,cxp)
         }
+        do SaveAdjuntos(gasto)
 
         do dbr.apps.action.pos(@null)
         do dbr.commit(db)
@@ -239,7 +242,7 @@ module "model"
                 AND IF(IFNULL(@range,'-99')='-99', true, (DATE(IF(IFNULL(@tdate,'0')='0', ut.fecha, ut.vencimiento)) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
                 AND IF(IFNULL(@datefrom,'')='' AND IFNULL(@dateto,'')='', true, (DATE(IF(IFNULL(@tdate,'0')='0', ut.fecha, ut.vencimiento)) BETWEEN DATE(@datefrom) AND DATE(@dateto)))
                 AND IF(IFNULL(@edoadmin,'-1')='-1', true, edo.id = @edoadmin)
-            ORDER BY ut.fecha
+            ORDER BY ut.fecha desc
             LIMIT #<@default_max_rows>;
         ")
 
@@ -306,17 +309,25 @@ module "model"
 
     ut.update::&db,&params,&data
     {
-        if field.exist(data,"proveedor")
+        if parse.bool(@@(data,"onlyfile"))
         {
-            data<"iproveedor">:@@(data,"proveedor")
-            do field.remove(data,"proveedor")
+            ref gasto=dbr.rec(db,"select * from ut_gasto where sys_pk=@_entity_id",params)
+            do SaveAdjuntos(gasto)
+            return gasto
         }
         if field.exist(data,"proveedor")
         {
             data<"iproveedor">:@@(data,"proveedor")
             do field.remove(data,"proveedor")
         }
-        return entity.update(db,params,data)
+        if field.exist(data,"proveedor")
+        {
+            data<"iproveedor">:@@(data,"proveedor")
+            do field.remove(data,"proveedor")
+        }
+        ref entity= entity.update(db,params,data)
+
+        return entity
     }
 
     ut.data::&db,&data
@@ -357,7 +368,23 @@ module "model"
         do list.ins(list, 0, record)
         return list
     }
-   
+    
+    SaveAdjuntos::&entity
+    {
+        ref files=@@(@http_context,"&request/files")
+        if isnull(files) || @count(files)<1 || isnull(entity){return}
+
+        path=path.concat(@PATH_ADJUNTOS,@@(entity,"$sys_guid"))
+        do dir.ensure(path)
+        
+        for i = 0; i < @count(files)
+        {
+            ref file=@item(files,i)
+            filename=limpiarTexto(@@(file,"$filename"))
+            path_file=path.concat(path,filename)
+            do file.copy(@@(file,"$temp_file"),path_file)
+        }
+    }
     point @read to ut.read
     point @update to ut.update
 }

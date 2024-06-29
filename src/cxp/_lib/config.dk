@@ -50,6 +50,7 @@ module
 	@CSS_MAIN = "/$/cxp/css/main.css"
 	@JS_PROVEEDORES = "/$/cxp/js/proveedores.js"
 	@JS_DOCUMENTOS = "/$/cxp/js/documentos.js"
+	@JS_GASTO="/$/cxp/js/gasto.js"
 
 	//* ======================================== [ _PACKAGE ]
 	@CXP_MENU = "/!/cxp/"
@@ -87,6 +88,9 @@ module
 	@GST_CONSULTAR = "/!/cxp/gastos/@id/"
 	//#endregion
 	
+	//ruta para adjuntar archivos de gasto
+	@PATH_ADJUNTOS="cxp/_static/_adjuntos"
+	@URL_ADJUNTOS="/$/cxp/_adjuntos/@id/"
 	//* ======================================== [ AUTHORIZATIONS ]
 	
 	//- - - - - - - - - - - - - - - Documentos [dcxp]
