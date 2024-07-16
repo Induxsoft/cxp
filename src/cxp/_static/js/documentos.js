@@ -5,6 +5,7 @@ var documento =
     init()
     {
         if (this.tableId.trim() != "") { this.table = document.getElementById(this.tableId); }
+        this.setTableEvents();
     },
 
     trigger(element,event) {
@@ -37,6 +38,38 @@ var documento =
     {
         const id = (this.table?.DataArray[this.table.CurrentRowIndex()]?.sys_pk ?? "");
         return { item_id:id, context: {} }
+    },
+
+    setTableEvents()
+    {
+        if (!this.table) return;
+
+        const table = this.table;
+        const event = table.EdiTable.Const.Events;
+
+        table.Events[event.LostFocus] = (e) => {
+            v12navbar.toggleButtonInteraction(true);
+        }
+
+        table.Events[event.BeforeCellFocus] = (e) => {
+            v12navbar.toggleButtonInteraction(false);
+        }
+
+        table.Events[event.RowChanged] = (e) => {
+            let obj = table.DataArray[e.index];
+            
+            const btn_pagar = document.getElementById("v12_GC13");
+            const btn_bonif = document.getElementById("v12_GC14");
+            const btn_intmor = document.getElementById("v12_GC15");
+            const btn_aplicar = document.getElementById("v12_GC16");
+
+            if (btn_pagar) btn_pagar.parentElement.hidden = (Number(obj?.haber) <= 0);
+            if (btn_bonif) btn_bonif.parentElement.hidden = (Number(obj?.haber) <= 0);
+            if (btn_intmor) btn_intmor.parentElement.hidden = (Number(obj?.haber) <= 0);
+            if (btn_aplicar) btn_aplicar.parentElement.hidden = (Number(obj?.debe) <= 0);
+        }
+
+        v12navbar.toggleButtonInteraction(true);
     },
 
     list: {},

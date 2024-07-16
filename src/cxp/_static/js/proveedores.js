@@ -86,6 +86,16 @@ var proveedor =
 
                     tr.ondblclick = (event) => { proveedor.goTo("/!/cxp/proveedores/@proveedor/"); }
                 };
+
+                this.tbl_proveedores.Events[this.tEvents.BeforeCellFocus] = (e) => {
+                    v12navbar.toggleButtonInteraction(false);
+                }
+
+                this.tbl_proveedores.Events[this.tEvents.LostFocus] = (e) => {
+                    v12navbar.toggleButtonInteraction(true);
+                }
+
+                v12navbar.toggleButtonInteraction(true);
             }
         },
 
