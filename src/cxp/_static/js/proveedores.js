@@ -88,13 +88,16 @@ var proveedor =
                 };
 
                 this.tbl_proveedores.Events[this.tEvents.BeforeCellFocus] = (e) => {
-                    v12navbar.toggleButtonInteraction(false);
+                    // v12navbar.toggleButtonInteraction(false);
                 }
 
                 this.tbl_proveedores.Events[this.tEvents.LostFocus] = (e) => {
-                    v12navbar.toggleButtonInteraction(true);
+                    // v12navbar.toggleButtonInteraction(true);
                 }
-
+                this.tbl_proveedores.Events[this.tEvents.RowChanged] = (e) => {
+                    let obj = this.tbl_proveedores.DataArray[e.index];
+                    v12navbar.toggleButtonInteraction(!obj);
+                }
                 v12navbar.toggleButtonInteraction(true);
             }
         },

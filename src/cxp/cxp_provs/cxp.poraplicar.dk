@@ -146,16 +146,15 @@ module "cxp.poraplicar.dk"
                 const event = table.EdiTable.Const.Events;
 
                 table.Events[event.LostFocus] = (e) => {
-                    v12navbar.toggleButtonInteraction(true);
                 }
 
                 table.Events[event.BeforeCellFocus] = (e) => {
-                    v12navbar.toggleButtonInteraction(false);
                 }
 
                 table.Events[event.RowChanged] = (e) => {
                     let obj = table.DataArray[e.index];
-                    
+                    v12navbar.toggleButtonInteraction(!obj);
+
                     const btn_pagar = document.getElementById("v12_GC13");
                     const btn_bonif = document.getElementById("v12_GC14");
                     const btn_intmor = document.getElementById("v12_GC15");
