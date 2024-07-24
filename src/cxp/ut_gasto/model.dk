@@ -373,16 +373,19 @@ module "model"
     {
         ref files=@@(@http_context,"&request/files")
         if isnull(files) || @count(files)<1 || isnull(entity){return}
-
+        
         path=path.concat(@PATH_ADJUNTOS,@@(entity,"$sys_guid"))
         do dir.ensure(path)
         
         for i = 0; i < @count(files)
         {
             ref file=@item(files,i)
-            filename=limpiarTexto(@@(file,"$filename"))
-            path_file=path.concat(path,filename)
-            do file.copy(@@(file,"$temp_file"),path_file)
+            if trim(@@(file,"$filename"))!=""
+            {
+                filename=limpiarTexto(@@(file,"$filename"))
+                path_file=path.concat(path,filename)
+                do file.copy(@@(file,"$temp_file"),path_file)
+            }
         }
     }
     point @read to ut.read
