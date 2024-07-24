@@ -75,6 +75,14 @@ module "form.dk"
 
 
     ref adjuntos=getFiles(path.concat(@PATH_ADJUNTOS,@("$./sys_guid")),replace(@URL_ADJUNTOS,"@id",@("$./sys_guid")))
+
+    sys_guid=@('$./sys_guid')
+    if trim(sys_guid)==""{sys_guid=uuid()}
+
+    error=@('$error/message')
+    error=replace(error,"Error al invocar runscript.","")
+    error=replace(error,"(","")
+    error=replace(error,")","")
     #$
     div(class="container")
     {
@@ -84,7 +92,12 @@ module "form.dk"
 
             #$ div
             {
-                p{$"#<@('$error/message')>"}
+                #! if trim(error)!=""
+                {
+                    #$ p(class="alert alert-danger"){$"#<error>"}
+                }
+                
+                input(type="hidden" class="induxsoft-form-control" id="sys_guid" name="sys_guid" value="#<sys_guid>")
                 div(class="row mb-2")
                 {
                     div(class="col-lg-4 col-md-4 col-sm-12"){

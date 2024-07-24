@@ -108,9 +108,17 @@ module "model"
     ut.agregarGasto::&db,&params,&data
     {
         //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
+
         @use_transaction = @false
+        
+        if not(field.exist(data,"sys_guid")){data<"sys_guid">:uuid()}
 
         do dbr.apps.action.pre("GC31")
+
+        //validación si fue autorizado de una sola vez 
+        ref rec=dbr.rec(db,"select * from ut_gasto where sys_guid=@sys_guid",data)
+        if not(isnull(rec)){return @null}
+
         do dbr.begin(db)
 
         new p{@"referencia":@@(data,"$referencia")}
@@ -124,7 +132,7 @@ module "model"
         new gasto
         {
             @"sys_pk": 0
-            @"sys_guid": uuid()
+            @"sys_guid":@@(data,"$sys_guid")
             @"sys_dtcreated*": now()
             @"sys_timestamp*": now()
             @"referencia": @@(data,"$referencia")
@@ -384,7 +392,8 @@ module "model"
             {
                 filename=limpiarTexto(@@(file,"$filename"))
                 path_file=path.concat(path,filename)
-                do file.copy(@@(file,"$temp_file"),path_file)
+
+                if file.exists(@@(file,"$temp_file")){do file.copy(@@(file,"$temp_file"),path_file)}
             }
         }
     }
