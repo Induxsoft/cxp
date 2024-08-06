@@ -1,15 +1,27 @@
-"sys_pk","description","itemid","itemparent"
-"1","Operaciones ERP","FX1-00-00-000",\N
-"2","Catálogos","FX1-10-00-000","FX1-00-00-000"
-"3","Transacciones","FX1-20-00-000","FX1-00-00-000"
-"7","Proveedores y Cuentas por pagar","FX1-60-00-000","FX1-00-00-000"
-"26","Proveedores","FX1-10-260-000","FX1-10-00-000"
-"188","Compras","FX1-20-20-000","FX1-20-00-000"
-"296","Habilitar Acceso","FX1-60-01-000","FX1-60-00-000"
-"297","Permitir Crear nueva cuenta por pagar","FX1-60-10-000","FX1-60-00-000"
-"299","Permitir Bonificar documento","FX1-60-30-000","FX1-60-00-000"
-"300","Permitir Aplicar abonos","FX1-60-40-000","FX1-60-00-000"
-"305","Permitir Generar intereses moratorios","FX1-60-90-000","FX1-60-00-000"
-"399","Gastos","FX1-20-20-700","FX1-20-20-000"
-"400","Habilitar Acceso","FX1-20-20-701","FX1-20-20-700"
-"401","Permitir Agregar","FX1-20-20-702","FX1-20-20-700"
+﻿itemid,description,itemparent
+cxp,Cuentas por pagar,\0
+cxp.documentos,Documentos por pagar,cxp
+GC10,Documentos por pagar,cxp.documentos
+GC11,Nuevo documento por pagar,cxp.documentos
+GC12,Consultar documento por pagar,cxp.documentos
+GC13,Pagar documento,cxp.documentos
+GC14,Bonificar documento,cxp.documentos
+GC15,Aplicar intereses moratorios a documento por pagar,cxp.documentos
+GC16,Aplicar abonos a documentos por pagar,cxp.documentos
+GC17,Desaplicar abonos de documentos por pagar,cxp.documentos
+cxp.gastos,Gastos,cxp
+GC30,Gastos,cxp.gastos
+GC31,Agregar gasto,cxp.gastos
+GC32,Consultar gasto,cxp.gastos
+cxp.proveedores,Proveedores y cuentas por pagar,cxp
+GC20,Proveedores y CxP,cxp.proveedores
+GC21,Nuevo proveedor,cxp.proveedores
+GC22,Editar proveedor,cxp.proveedores
+GC23,Estado de cuenta del proveedor,cxp.proveedores
+GC24,Documentos por pagar del proveedor,cxp.proveedores
+GC25,Pagos por aplicar del proveedor,cxp.proveedores
+GC26,Pago a proveedor,cxp.proveedores
+GC27,Bonificación a proveedor,cxp.proveedores
+GC28,Importar proveedores,cxp.proveedores
+cxp.reports,Informes de Cuentas por Pagar,cxp
+GC33,Informe de antigüedad de saldos por pagar,cxp.reports

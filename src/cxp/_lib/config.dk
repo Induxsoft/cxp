@@ -13,6 +13,11 @@ module
     @FORMA_PAGO = 1 // cContado
     @FORMA_PAGO_CREDITO = 2 // credito
 
+	//
+	@curr_ndt = ndatetime.now()
+    @curr_year = ndatetime.year(@curr_ndt)
+    @curr_month = ndatetime.month(@curr_ndt)
+    @curr_day = ndatetime.day(@curr_ndt)
     //#region TiposCategorias
     @cIngreso = 1
     @cEgreso = 2
@@ -23,7 +28,9 @@ module
 	// Formato de presentación
 	@THOUSANDS_SEPARATOR = ","
 	@DECIMAL_SEPARATOR = "."
-	@DECIMAL_PRECISION = 2
+	@DECIMAL_PRECISION = 2 //cantidad de decimal
+
+	@STEP_DECIMAL="0.000001"//format(0,"0."+padright("",@DECIMAL_PRECISION-1,"0")+"1")
 
 	/**
 	* Clave Primaria (PK) de la divisa predeterminada
@@ -43,6 +50,7 @@ module
 	@CSS_MAIN = "/$/cxp/css/main.css"
 	@JS_PROVEEDORES = "/$/cxp/js/proveedores.js"
 	@JS_DOCUMENTOS = "/$/cxp/js/documentos.js"
+	@JS_GASTO="/$/cxp/js/gasto.js"
 
 	//* ======================================== [ _PACKAGE ]
 	@CXP_MENU = "/!/cxp/"
@@ -80,6 +88,9 @@ module
 	@GST_CONSULTAR = "/!/cxp/gastos/@id/"
 	//#endregion
 	
+	//ruta para adjuntar archivos de gasto
+	@PATH_ADJUNTOS="cxp/_static/_adjuntos"
+	@URL_ADJUNTOS="/$/cxp/_adjuntos/@id/"
 	//* ======================================== [ AUTHORIZATIONS ]
 	
 	//- - - - - - - - - - - - - - - Documentos [dcxp]

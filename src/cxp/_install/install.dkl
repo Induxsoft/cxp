@@ -5,6 +5,7 @@ program "instalador"
     #include "functions.dkh"
     #include "serialize.dkh"
     #include "dbr.dkh"
+    #include "dbr.apps.dkl"
 
     // Archivos de datos iniciales (Orden de importación)
     // deben estar en la carpeta _install/initial_data
@@ -28,18 +29,7 @@ program "instalador"
     ]')
 
     // Lista de privilegios iniciales (arreglo de id de privilegios)
-    ref @permissions_to_import = from.json('[
-        "FX1-60-10-000",
-		"FX1-60-40-000",
-		"FX1-60-30-000",
-		"FX1-60-90-000",
-		"FX1-60-01-000",
-		"FX1-10-260-000",
-		"FX1-60-00-000",
-		"FX1-20-20-700",
-		"FX1-20-20-702",
-		"FX1-20-20-701",
-    ]')
+    ref @permissions_to_import = from.json('[]')
 
     // Id del grupo de tareas (recomendado: prefijo del paquete), si se omite se calculará automáticamente.
     // https://docs.induxsoft.net/es/productos/v12/devops/official-v12-packs.dkl
@@ -54,4 +44,77 @@ program "instalador"
     
     /*************************************************************************************/
     #include "v12.install.lib.dk"
+
+    if not(dbr.is_open(database)){ref database=dbr.open(qname)}
+    do reconnect(database,qname)
+
+    new src_gasto
+    {
+        @"dte":"DET024"
+        @"text":"Gastos"
+        @"qry_pending":"SELECT
+                        ut.sys_pk,
+                        cat.descripcion AS categoria,
+                        ut.referencia,
+                        DATE_FORMAT(ut.fecha,'%Y-%m-%d') AS fecha,
+                        DATE_FORMAT(ut.vencimiento,'%Y-%m-%d') AS vencimiento,
+                        pdr.nombre AS proveedor,
+                        ut.concepto,
+                        ut.subtotal,
+                        IFNULL(ut.total,0) AS total,
+                        dvs.codigo AS divisa,
+                        ut.tipocambio AS tcambio,
+                        edo.const AS edo_admin,
+                        fpg.const AS formapago
+                    FROM ut_gasto AS ut
+                        INNER JOIN proveedor AS pdr ON pdr.sys_pk = ut.iproveedor
+                        INNER JOIN categoria AS cat ON cat.sys_pk = ut.icategoria
+                        INNER JOIN divisa AS dvs ON dvs.sys_pk = ut.idivisa
+                        INNER JOIN cformaspago AS fpg ON fpg.id = ut.formapago
+                        INNER JOIN cstatusadministrativos AS edo ON edo.id = ut.statusadministrativo
+                    WHERE IsNULL(ut.presupuestado) order by ut.sys_pk desc limit 250"
+        @"qry_select":"SELECT
+                        ut.sys_pk,
+                        cat.descripcion AS categoria,
+                        ut.referencia,
+                        DATE_FORMAT(ut.fecha,'%Y-%m-%d') AS fecha,
+                        DATE_FORMAT(ut.vencimiento,'%Y-%m-%d') AS vencimiento,
+                        pdr.nombre AS proveedor,
+                        ut.concepto,
+                        ut.subtotal,
+                        IFNULL(ut.total,0) total,
+                        dvs.codigo AS divisa,
+                        ut.tipocambio AS tcambio,
+                        edo.const AS edo_admin,
+                        fpg.const AS formapago
+                    FROM ut_gasto AS ut
+                        INNER JOIN proveedor AS pdr ON pdr.sys_pk = ut.iproveedor
+                        INNER JOIN categoria AS cat ON cat.sys_pk = ut.icategoria
+                        INNER JOIN divisa AS dvs ON dvs.sys_pk = ut.idivisa
+                        INNER JOIN cformaspago AS fpg ON fpg.id = ut.formapago
+                        INNER JOIN cstatusadministrativos AS edo ON edo.id = ut.statusadministrativo
+                    WHERE ut.referencia like concat('%',@filter_text,'%')  or 
+                    pdr.nombre like concat('%',@filter_text,'%')   or 
+                    pdr.rfc like concat('%',@filter_text,'%') or
+                    ut.concepto like concat('%',@filter_text,'%')
+                      
+                      "
+        @"max_field":"subtotal"
+        @"ref_field":"referencia"
+        @"key_show":"referencia"
+        @"show_text":"proveedor"
+        @"info_text":"concepto"
+    }
+    using src_gasto
+    {
+        @"sys_guid":uuid()
+        @"sys_recver":0
+        @"sys_dtcreated*":now()
+        @"sys_timestamp*":now()
+        @"sys_deleted":0
+    }
+    do dbr.apps.save(database,"gop_src",src_gasto)
+    do print("\nCreado operaciones por presupuestar: "+@@(src_gasto,"$dte")+" - "+@@(src_gasto,"$text"))
+
+    do dbr.close(database)
 }

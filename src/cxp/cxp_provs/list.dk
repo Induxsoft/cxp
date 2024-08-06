@@ -26,36 +26,62 @@ module "list.dk"
             member @"codigo" { @"caption":"Código" }
             member @"nombre" { @"caption":"Nombre" }
             member @"rfc" { @"caption":"RFC" }
-            member @"saldo" { @"caption":"Saldo" }
             member @"tipo" { @"caption":"Tipo de proveedor" }
-            member @"divisa" { @"caption":"Divisa" }
+            member @"saldo"
+            {
+                @"caption":"Saldo"
+                @"align": "end"
+                @"format": @true
+                @"thousandssep": @true
+                @"decs": 2
+            }
+            member @"divisa"
+            {
+                @"caption":"Divisa"
+                @"align": "center"
+            }
             member @"zona" { @"caption":"Zona" }
         }
     }
 
-    header_act::
-    {
-        if AppExist(@("&database"),"batch") {
-            ref act = dbr.apps.itemaction.get(@("&database"),"GC28")
-            url_act = path.concat(@@(act,"$href"),"?exit_url_encode="+url_encode(@CXP_PROVS))
+    // header_act::
+    // {
+    //     if AppExist(@("&database"),"batch") {
+    //         ref act = dbr.apps.itemaction.get(@("&database"),"GC28")
+    //         url_act = path.concat(@@(act,"$href"),"?exit_url_encode="+url_encode(@CXP_PROVS))
             
-            #$
-            a(href="#<url_act>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" title="Importar proveedores"){$"Importar"}
-        }
+    //         #$
+    //         a(href="#<url_act>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" title="Importar proveedores"){$"Importar"}
+    //     }
 
-        #$ a(href="#<@PDR_AGREGAR>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"){$"Agregar"}
-        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="proveedor.goTo('#<@PDR_EDO_CTA>')"){$"Estado de cuenta"}
-        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="proveedor.goTo('#<@PDR_XPAGAR>')"){$"Documentos por pagar"}
-        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="proveedor.goTo('#<@PDR_XAPLICAR>')"){$"Pagos por aplicar"}
-        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="proveedor.goTo('#<@PDR_PAGOS>')"){$"Pago a proveedor"}
-        button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="proveedor.goTo('#<@PDR_BONIFICACION>')"){$"Bonificaciones"}
-        #!
+    //     // #$ a(href="#<@PDR_AGREGAR>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"){$"Agregar"}
+    //     // button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="proveedor.goTo('#<@PDR_EDO_CTA>')"){$"Estado de cuenta"}
+    //     // button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="proveedor.goTo('#<@PDR_XPAGAR>')"){$"Documentos por pagar"}
+    //     // button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="proveedor.goTo('#<@PDR_XAPLICAR>')"){$"Pagos por aplicar"}
+    //     // button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="proveedor.goTo('#<@PDR_PAGOS>')"){$"Pago a proveedor"}
+    //     // button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" onclick="proveedor.goTo('#<@PDR_BONIFICACION>')"){$"Bonificaciones"}
+    //     // #!
+    // }
+    // point general_act to header_act
+
+    new nav_config
+    {
+        @"title": "Proveedores"
+        member @"hidden"
+        {
+            @"print": @false
+        }
+        @"buttons*": @null
+        @"urlexit": "/"
+        @"main": "GC28,GC21,GC22,GC23,GC24,GC25,GC26,GC27"
+        @"actions*": dbr.apps.itemactions(@('&database'),"DET03F","action","",0)
+        @"reports*": dbr.apps.itemactions(@('&database'),"DET03F","report","",0)
+        @"jscurrentcontext": "proveedor.getCurrentContext"
     }
-    point general_act to header_act
     
     #$ div(class="container-fluid p-0")
     {
-        #! do uie.printMainBar(general_act, "Proveedores", @true, "")
+        #! do uie.printV12FormBar(nav_config)
 
         #$ div(id="work_area" class="container-section mt-1 p-2 pt-0")
         {

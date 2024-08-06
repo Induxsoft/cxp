@@ -4,7 +4,7 @@ module "cxp.intereses.dk"
 {
     #include "functions.dkh"
     #include "serialize.dkh"
-    #include "uielements.dkl"
+    #include "uielements.v12.dkl"
     #include "../_lib/icons.dk"
     #include "../_lib/config.dk"
     #include "../_lib/lib.dk"
@@ -33,26 +33,36 @@ module "cxp.intereses.dk"
         @"selected": form("documento","nm",@null)
     }
 
+    fn_print_buttons::
+    {
+        act_btn_cls = "btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"
+        
+        #$
+        button(class="#<act_btn_cls>" type="button" id="btn_save"){$"#<@ICON_SAVE> Guardar"}
+        #!
+    }
+    point print_buttons to fn_print_buttons
+    new nav_config
+    {
+        @"title": "Aplicar intereses moratorios"
+        @"buttons*": print_buttons
+        // @"urlexit": "javascript:window.history.back();"
+        member @"hidden" { @"print": @true }
+    }
+    decs=@DECIMAL_PRECISION
     #$
     div(class="container")
     {
-        div(class="row container-section m-0 px-0 py-2 my-2 border-bottom sticky-top bg-white" id="main_action_bar")
-        {
-            div(class="col-4 d-flex align-items-center p-0") { h5(class="tex-no-break m-0"){$"Aplicar intereses moratorios"} }
-            div(class="col-8 d-flex justify-content-end align-items-center p-0 gap-2")
-            {
-                a(href="./" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Refrescar"){$"#<@ICON_ARROW_CLOCKWISE>"}
-                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" id="btn_save"){$"#<@ICON_SAVE> Guardar"}
-                #! url_bac = @CXP_DOCS
-                if trim(@@(get,"$url_back")) != "" { url_bac = url_dcode(@@(get,"$url_back")) }
-                #$ a(href="#<url_bac>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" title="Salir"){$"#<@ICON_X_LG>"}
-            }
-        }
+        #! do uie.printV12FormBar(nav_config)
+        #$ div(class="alert alert-danger overflow-auto mb-2 #<ifstr(@('$error/message')!='','','d-none')>" id="frm_alerts"){$"#<@('error/message')>"}
 
-        form(action="." method="POST" id="form_intmor")
+        form(action="." method="POST" id="form_intmor" onsubmit="return proveedor.form.ValidateForm(event)")
         {
             input(type="hidden" name="pkparent" value="#<@@(info_dcxp,'#sys_pk')>")
             input(type="hidden" name="iproveedor" value="#<@@(info_dcxp,'#iproveedor')>")
+            ##
+            do uie.print_from_url_field()
+            ##
 
             div(class="row")
             {
@@ -100,7 +110,7 @@ module "cxp.intereses.dk"
                     div(class="row d-flex justify-content-end align-items-center")
                     {
                         label(class="col-auto col-form-label fw-bolder"){$"Capital:"}
-                        div(class="col-6") {
+                        div(class="col-6 text-end") {
                             $"#<format(@@(info_dcxp,'#haber'),@FMT_MONEY)>"
                         }
                     }
@@ -108,7 +118,7 @@ module "cxp.intereses.dk"
                     div(class="row d-flex justify-content-end align-items-center")
                     {
                         label(class="col-auto col-form-label fw-bolder"){$"Intereses Financieros:"}
-                        div(class="col-6") {
+                        div(class="col-6 text-end") {
                             $"#<format(@@(info_dcxp,'#intfinancieros'),@FMT_MONEY)>"
                         }
                     }
@@ -116,7 +126,7 @@ module "cxp.intereses.dk"
                     div(class="row d-flex justify-content-end align-items-center")
                     {
                         label(class="col-auto col-form-label fw-bolder"){$"Intereses Moratorios:"}
-                        div(class="col-6") {
+                        div(class="col-6 text-end") {
                             $"#<format(@@(info_dcxp,'#intmoratorios'),@FMT_MONEY)>"
                         }
                     }
@@ -124,15 +134,21 @@ module "cxp.intereses.dk"
                     div(class="row d-flex justify-content-end align-items-center")
                     {
                         label(class="col-auto col-form-label fw-bolder"){$"Bonificaciones:"}
-                        div(class="col-6") {
+                        div(class="col-6 text-end") {
                             $"#<format(@@(info_dcxp,'#bonificaciones'),@FMT_MONEY)>"
                         }
                     }
-
+                     div(class="row d-flex justify-content-end align-items-center")
+                    {
+                        label(class="col-auto col-form-label fw-bolder"){$"Pagos:"}
+                        div(class="col-6 text-end") {
+                            $"#<format(@@(info_dcxp,'#pagos'),@FMT_MONEY)>"
+                        }
+                    }
                     div(class="row d-flex justify-content-end align-items-center")
                     {
                         label(class="col-auto col-form-label fw-bolder"){$"Saldo:"}
-                        div(class="col-6") {
+                        div(class="col-6 text-end") {
                             $"#<format(@@(info_dcxp,'#saldo'),@FMT_MONEY)>"
                         }
                     }
@@ -206,14 +222,16 @@ module "cxp.intereses.dk"
                         div(class="col-6") {
                             div(class="input-group input-group-sm") {
                                 input(
-                                    class="form-control form-control-sm rounded-0 induxsoft-num-field mw-100"
+                                    class="form-control form-control-sm rounded-0 induxsoft-num-field mw-100 validate-number"
                                     type="number"
                                     name="importe"
                                     value="#<form('importe','nm',@null)>"
                                     min="1"
                                     step="0.000001"
                                     id="txt_importe"
-                                    "num-decs"="6"
+                                    "num-decs"="#<decs>"
+                                    required="true"
+                                    onkeypress="return InduxsoftNumberFields.filterFloat(event,this,#<decs>)"
                                 )
                                 span(class="input-group-text rounded-0"){$"#<@@(info_dcxp,'$divisa')>"}
                             }
@@ -273,6 +291,7 @@ module "cxp.intereses.dk"
         div
         {
             script(src="#<@JS_DOCUMENTOS>"){$""}
+            script(src="#<@JS_PROVEEDORES>"){$""}
             script(type="text/javascript")
             {$'
                 document.addEventListener("DOMContentLoaded", () => {

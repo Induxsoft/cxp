@@ -4,74 +4,141 @@ module "cxp.balance.dk"
 {
     #include "functions.dkh"
     #include "serialize.dkh"
-    #include "../_lib/icons.dk"
-    #include "../_lib/config.dk"
+    #include "dbr.dkh"
+    #include "dbr.apps.dkl"
     #include "uielements.v12.dkl"
+    #include "../_lib/config.dk"
+    #include "../_lib/lib.dk"
+    #include "../_lib/icons.dk"
     
     do @context.begin(@crud_context)
-    @_entity_id = @('$parameters/_entity_id')
     ref @http_context = @('&http')
     ref get = @@(@http_context,"&request/get")
-    ref docs = @('&./docs')
-
+    ref @_GET=get
     get<"filter-mode">: ifstr(trim(@@(get,"filter-mode"))!="", @@(get,"filter-mode"), "month")
     get<"year">: ifstr(trim(@@(get,"year"))!="", @@(get,"year"), str(ndatetime.year(ndatetime.now())))
     get<"month">: ifstr(trim(@@(get,"month"))!="", @@(get,"month"), str(ndatetime.month(ndatetime.now())))
 
-    header_act::
-    { 
-        #$ a(href="#<@DOC_AGREGAR>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Agregar"}
-        a(href="#<@GST_AGREGAR>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Agregar gasto"}
-        a(href="#<replace(@PDR_XPAGAR,'@proveedor',@_entity_id)>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Docs. por pagar"}
-        a(href="#<replace(@PDR_XAPLICAR,'@proveedor',@_entity_id)>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Pagos por aplicar"}
-        a(href="#<replace(@PDR_PAGOS,'@proveedor',@_entity_id)>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Pago a prov."}
-        a(href="#<replace(@PDR_BONIFICACION,'@proveedor',@_entity_id)>" class="btn btn-sm border-secondary induxsoft-corners btn-main-action"){"Bonificación a prov."}
-    }
-    #! point general_act to header_act
-    
-    #$ div(class="container")
+    new nav_config
     {
-        #! do uie.printMainBar(general_act, "Balance", @false, @CXP_PROVS)
+        @"title": "Balance"
+        @"buttons*": @null
+        @"urlexit": @CXP_PROVS
+        @"main": "GC11,GC12,GC13,GC14,GC15,GC16"
+        @"actions*": dbr.apps.itemactions(@('&database'),"DET01E","action","",0)
+        @"reports*": dbr.apps.itemactions(@('&database'),"DET01E","report","",0)
+        @"jscurrentcontext": "getCurrentContext"
+    }
+    
+    ref list_years = list_years(10,0)
+    fdr_year_opt = ""
+    for i = 0; i < list.count(list_years) { fdr_year_opt = fdr_year_opt + list.str(list_years,i) + "," }
+    fdr_year_opt = rremove(fdr_year_opt,1)
 
-        #$ div(id="work_area" class="container-section mt-1 p-2 pt-0")
+    new fdr_init
+    {
+        @"fdr_mode": field.dstr(@_GET,"fdr_mode","month")
+        // [month]
+        @"fdr_year": field.dnum(@_GET,"fdr_year",@curr_year)
+        @"fdr_month": field.dnum(@_GET,"fdr_month",@curr_month)
+        // [lastdays]
+        @"fdr_range": field.dnum(@_GET,"fdr_range",30)
+        // [range]
+        @"fdr_from": field.dstr(@_GET,"fdr_from","")
+        @"fdr_to": field.dstr(@_GET,"fdr_to","")
+    }
+
+    new fil_fdr_field
+    {
+        @"datatable*": from.json('[
+            {"id":1, "const":"Emisión"},
+            {"id":2, "const":"Vencimiento"},
+        ]')
+        @"id": "fil_fdr_field"
+        member "attributes"
         {
-            p{$"#<@('$error/message')>"}
+            @"name": "fil_fdr_field"
+            @"class": "induxsoft-form-select"
+            @"title": "Elegir método de filtro para el rango de fechas"
+            @"onchange": "document.querySelector('#form_filter').submit();"
+        }
+        @"value_field": "id"
+        @"text_field": "const"
+        @"selected": @("#parameters/fil_fdr_field")
+    }
+    #$ div(class="container-fluid")
+    {
+        #! do uie.printV12FormBar(nav_config)
 
+        #$ div(class="" id="work_area")
+        {
             form(action="./" method="GET" id="form_filter" class="no-print mb-1")
             {
                 div(class="d-flex align-items-center")
                 {
-                    div
+                     div
                     {
-                        select(class="induxsoft-form-select" name="tdate" onchange="document.querySelector('#form_filter').submit();")
-                        {
-                            option(value="0" "#<ifstr(@@(get,'$tdate')=='0','selected','')>"="true"){$"Emisión"}
-                            option(value="1" "#<ifstr(@@(get,'$tdate')=='1','selected','')>"="true"){$"Aplicación"}
-                        }
+                        ##
+                        do uie.dbSelect(fil_fdr_field)
+                        ##
                     }
                     div(class="flex-grow-1")
                     {
                         "filter-date-range"(
-                            "mode-field"="filter-mode"
-                            "year-field"="year"
-                            "month-field"="month"
-                            "range-field"="range"
-                            "from-field"="datefrom"
-                            "to-field"="dateto"
-                            "selection"='#<to.json(get)>'
-                            "lastdays-options"="15,30,45,60,90"
-                            "years-options"="2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024"
-                            "custom-range"="true"
                             "form"="#form_filter"
                             "auto-submit"="true"
+                            "custom-range"="true"
+                            "selection"='#<to.json(fdr_init)>'
+
+                            "mode-field"="fdr_mode"
+                            "year-field"="fdr_year"
+                            "month-field"="fdr_month"
+                            "range-field"="fdr_range"
+                            "from-field"="fdr_from"
+                            "to-field"="fdr_to"
+                            
+                            "lastdays-options"="15,30,45,60,90"
+                            "years-options"="#<fdr_year_opt>"
+                            "month-names"="Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"
+                            
                             "label-months"="Ver por cada mes"
                             "label-days"="Últ. @lastdays días"
                             "label-custom"="Personalizado"
                             "label-from"="Desde:"
                             "label-to"="Hasta:"
-                            "month-names"="Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"
                         ){$""}
                     }
+                    // div
+                    // {
+                    //     select(class="induxsoft-form-select" name="tdate" onchange="document.querySelector('#form_filter').submit();")
+                    //     {
+                    //         option(value="0" "#<ifstr(@@(get,'$tdate')=='0','selected','')>"="true"){$"Emisión"}
+                    //         option(value="1" "#<ifstr(@@(get,'$tdate')=='1','selected','')>"="true"){$"Aplicación"}
+                    //     }
+                    // }
+                    // div(class="flex-grow-1")
+                    // {
+                    //     "filter-date-range"(
+                    //         "mode-field"="filter-mode"
+                    //         "year-field"="year"
+                    //         "month-field"="month"
+                    //         "range-field"="range"
+                    //         "from-field"="datefrom"
+                    //         "to-field"="dateto"
+                    //         "selection"='#<to.json(get)>'
+                    //         "lastdays-options"="15,30,45,60,90"
+                    //         "years-options"="2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024"
+                    //         "custom-range"="true"
+                    //         "form"="#form_filter"
+                    //         "auto-submit"="true"
+                    //         "label-months"="Ver por cada mes"
+                    //         "label-days"="Últ. @lastdays días"
+                    //         "label-custom"="Personalizado"
+                    //         "label-from"="Desde:"
+                    //         "label-to"="Hasta:"
+                    //         "month-names"="Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"
+                    //     ){$""}
+                    // }
                 }
 
                 div(class="py-1 w-100 d-flex gap-2 flex-wrap align-items-center")
@@ -125,13 +192,6 @@ module "cxp.balance.dk"
                 }
             }
 
-            div(class="d-flex justify-content-end align-items-center my-1 gap-2")
-            {
-                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="aplicar('#<@DOC_BONIFICACION>')"){"Aplicar bonificación"}
-                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="aplicar('#<@DOC_PAGOS>')"){"Aplicar pago"}
-                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="aplicar('#<@DOC_INTMORATORIOS>')"){"Aplicar cargos por mora"}
-            }
-
             "edit-table"(class="w-100" id="lst_dcxp" data="#<to.json(@('&./docs'))>")
             {
                 "edit-thead"
@@ -154,21 +214,45 @@ module "cxp.balance.dk"
             }
         }
 
-        script
-        {$'
-            var table=document.getElementById("lst_dcxp");
+        p{$"#<@('$error/message')>"}
 
-            function aplicar(url="")
-            {
-                if(table.CurrentRowIndex()<0)
-                {
-                    alert("Debe seleccionar una fila");
-                    return;
+        script(type="text/javascript")
+		{$'
+			function getCurrentContext()
+			{
+				const table = document.getElementById("lst_dcxp");
+				const id = (table?.DataArray[table.CurrentRowIndex()]?.sys_pk ?? "");
+    			return { item_id:id, context: {} }
+			}
+
+            document.addEventListener("DOMContentLoaded", () => {
+                const table = document.getElementById("lst_dcxp");
+                const event = table.EdiTable.Const.Events;
+
+                table.Events[event.LostFocus] = (e) => {
                 }
-                var data=table.DataArray[table.CurrentRowIndex()];
-                var url=url.includes("@doc") ? url.replace("@doc",data.sys_pk) : url.replace("@proveedor",data.pkproveedor);
-                window.location.href=url;
-            }
-        '}
+
+                table.Events[event.BeforeCellFocus] = (e) => {
+                    
+                }
+
+                table.Events[event.RowChanged] = (e) => {
+                    let obj = table.DataArray[e.index];
+                    v12navbar.toggleButtonInteraction(!obj);
+
+                    const btn_pagar = document.getElementById("v12_GC13");
+                    const btn_bonif = document.getElementById("v12_GC14");
+                    const btn_intmor = document.getElementById("v12_GC15");
+                    const btn_aplicar = document.getElementById("v12_GC16");
+
+                    if (btn_pagar) btn_pagar.parentElement.hidden = (Number(obj?.haber) <= 0);
+                    if (btn_bonif) btn_bonif.parentElement.hidden = (Number(obj?.haber) <= 0);
+                    if (btn_intmor) btn_intmor.parentElement.hidden = (Number(obj?.haber) <= 0);
+                    if (btn_aplicar) btn_aplicar.parentElement.hidden = (Number(obj?.debe) <= 0);
+                }
+
+                v12navbar.toggleButtonInteraction(true);
+            })
+		'}
     }
 }

@@ -459,6 +459,19 @@ model "erp.cxp"
         @"uuid_fiscal" string(45)       // UUID de un comprobante fiscal digital
         @"presupuestado" bool
     }
+    // Tipo de movimiento al presupuesto
+    entity "gop_src": "TableModel"
+	{
+		@"dte" ref:"sys_app_item_type" required
+		@"text" string(50) unique required
+		@"qry_pending" memo //Consulta para mostrar movimientos pendientes (sin ningún filtro)
+		@"qry_select" memo // Aceptar @filter_text para filtrar y seleccionar un movimiento
+		@"max_field" string(50) required // Este es el campo que se usa como máximo para afectar el presupuesto
+		@"ref_field" string(50) required // Campo a usar como referencia
+		@"key_show" string(50) required //Campo clave a mostrar
+		@"show_text" string(50) required // Campo de texto a mostrar
+		@"info_text" string(50) // Campo informativo
+	}
 
     //* ======================================== [ ... ]
     // Permisos disponibles
@@ -493,5 +506,25 @@ model "erp.cxp"
         @"_blank" bool
         @"appid" ref:"sys_app_catalog"
         @"cat" ref:"sys_app_category"
+    }
+    // Tipos de elementos de la aplicación
+    entity "sys_app_item_type"
+    {
+        @"id" string(32) key
+        @"title" string(255) required
+    }
+    // Acciones Generales o Especificas de elementos de la aplicación
+    entity "sys_app_item_action"
+    {
+        @"id" string(32) key
+        @"title" string(255) required
+        @"shorttitle" string(25) 
+        @"icon16x16" string(1024) required
+        @"href" string(1024) required
+        @"_blank" bool
+        @"appid" ref : "sys_app_catalog"
+        @"itemtype" ref : "sys_app_item_type"
+        @"req_context_item_id" bool
+        @"act_type" string(15) //Cadena con el tipo de acción: 'action' o 'report'
     }
 }

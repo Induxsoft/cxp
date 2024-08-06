@@ -1,0 +1,19 @@
+#include "dkli.dkh"
+#!
+module ""
+{
+    switch @@(@http_context,"$request/get/_entity_id")
+    {
+        case "antiguedad-saldos"
+        {
+            @form_view = "antiguedad.saldos.dk"
+            point @read to antiguedadSaldos
+            break
+        }
+        default
+        {
+            // code...
+            break
+        }
+    }
+}

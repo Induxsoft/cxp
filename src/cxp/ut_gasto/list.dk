@@ -40,15 +40,49 @@ module "form.dk"
         {
             member @"categoria" { @"caption":"Categoría" }
             member @"referencia" { @"caption":"Referencia" }
-            member @"fecha" { @"caption":"Fecha" }
-            member @"vencimiento" { @"caption":"Vencimiento" }
+            member @"fecha"
+            {
+                @"caption":"Fecha"
+                @"align":"center"
+            }
+            member @"vencimiento"
+            {
+                @"caption":"Vencimiento"
+                @"align":"center"
+            }
             member @"proveedor" { @"caption":"Proveedor" }
             member @"concepto" { @"caption":"Concepto" }
-            member @"total" { @"caption":"Total" }
-            member @"divisa" { @"caption":"Divisa" }
-            member @"tcambio" { @"caption":"TCambio" }
-            member @"edo_admin" { @"caption":"Estado administrativo" }
-            member @"formapago" { @"caption":"Forma de pago" }
+            member @"total"
+            {
+                @"caption":"Total"
+                @"align":"end"
+                @"format":@true
+                @"thousandssep": @true
+                @"decs":2
+            }
+            member @"divisa"
+            {
+                @"caption":"Divisa"
+                @"align":"center"
+            }
+            member @"tcambio"
+            {
+                @"caption":"TCambio"
+                @"align":"end"
+                @"format":@true
+                @"thousandssep": @true
+                @"decs":6
+            }
+            member @"edo_admin"
+            {
+                @"caption":"Estado administrativo"
+                @"align":"center"
+            }
+            member @"formapago"
+            {
+                @"caption":"Forma de pago"
+                @"align":"center"
+            }
         }
     }
 

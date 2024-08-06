@@ -4,29 +4,37 @@ module "cxp.poraplicar.dk"
 {
     #include "functions.dkh"
     #include "serialize.dkh"
-    #include "../_lib/icons.dk"
-    #include "../_lib/config.dk"
+    #include "dbr.dkh"
+    #include "dbr.apps.dkl"
     #include "uielements.v12.dkl"
+    #include "../_lib/config.dk"
+    #include "../_lib/icons.dk"
     
     do @context.begin(@crud_context)
     ref @http_context = @('&http')
     ref get = @@(@http_context,"&request/get")
 
-    current_url = url_encode(@@(@http_context,"request/headers/REQUEST_URI"))
-
     get<"filter-mode">: ifstr(trim(@@(get,"filter-mode"))!="", @@(get,"filter-mode"), "month")
     get<"year">: ifstr(trim(@@(get,"year"))!="", @@(get,"year"), str(ndatetime.year(ndatetime.now())))
     get<"month">: ifstr(trim(@@(get,"month"))!="", @@(get,"month"), str(ndatetime.month(ndatetime.now())))
 
-    #$
-    div(class="container")
+    new nav_config
     {
-        #! do uie.printMainBar(@null, "Pagos y bonificaciones por aplicar", @false, @CXP_PROVS)
+        @"title": "Pagos y bonificaciones por aplicar"
+        @"buttons*": @null
+        @"urlexit": @CXP_PROVS
+        @"main": "GC11,GC12,GC16"
+        @"actions*": dbr.apps.itemactions(@('&database'),"DET01E","action","",0)
+        @"reports*": dbr.apps.itemactions(@('&database'),"DET01E","report","",0)
+        @"jscurrentcontext": "getCurrentContext"
+    }
 
-       #$ div(id="work_area" class="container-section mt-1 p-2 pt-0")
+    #$ div(class="container-fluid")
+    {
+        #! do uie.printV12FormBar(nav_config)
+
+        #$ div(class="" id="work_area")
         {
-            p{$"#<@('$error/message')>"}
-
             form(action="./" method="GET" id="form_filter" class="no-print mb-1")
             {
                 div(class="d-flex align-items-center")
@@ -63,7 +71,7 @@ module "cxp.poraplicar.dk"
                         "filter-text"(
                             "id"="micontrol10"
                             "text-field"="s"
-                            "placeholder"="Referencia por referencia"
+                            "placeholder"="Buscar por referencia"
                             "form"="#form_filter"
                             "value"="#<@@(get,'$s')>"
                             "auto-submit"="true"
@@ -79,7 +87,7 @@ module "cxp.poraplicar.dk"
                 h6(class=""){$"#<@('$./divisa')>"}
             }
 
-            table(class="table table-bordered")
+            table(class="table table-sm table-bordered")
             {
                 thead
                 {
@@ -99,11 +107,6 @@ module "cxp.poraplicar.dk"
                         td(class="text-end"){$"#<format(@('#./saldos/por_aplicar'),'$ #,0.00')>"}
                     }
                 }
-            }
-
-            div(class="d-flex justify-content-end align-items-center my-1 gap-2")
-            {
-                button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action" onclick="aplicarPago('#<@DOC_APLICAR>')"){"Aplicar"}
             }
 
             "edit-table"(class="w-100" id="table_poraplicar" data="#<to.json(@('&./docs'))>")
@@ -129,29 +132,42 @@ module "cxp.poraplicar.dk"
 
         p{$"#<@('$error/message')>"}
 
-        script
-        {
-            $'
-            var table=document.getElementById("table_poraplicar");
-            var current_url="#<current_url>";
-            document.addEventListener("DOMContentLoaded",()=>
-            {
-               
-            });
+        script(type="text/javascript")
+		{$'
+			function getCurrentContext()
+			{
+				const table = document.getElementById("table_poraplicar");
+				const id = (table?.DataArray[table.CurrentRowIndex()]?.sys_pk ?? "");
+    			return { item_id:id, context: {} }
+			}
 
-             function aplicarPago(url="")
-                {
-                    if(table.CurrentRowIndex()<0)
-                    {
-                        alert("Debe seleccionar una fila");
-                        return;
-                    }
-                    var data=table.DataArray[table.CurrentRowIndex()];
-                    let _url=url.replace("@doc",data.sys_pk);
-                    _url += "?url_back=" + current_url;
-                    window.location.href=_url;
+            document.addEventListener("DOMContentLoaded", () => {
+                const table = document.getElementById("table_poraplicar");
+                const event = table.EdiTable.Const.Events;
+
+                table.Events[event.LostFocus] = (e) => {
                 }
-            '
-        }
+
+                table.Events[event.BeforeCellFocus] = (e) => {
+                }
+
+                table.Events[event.RowChanged] = (e) => {
+                    let obj = table.DataArray[e.index];
+                    v12navbar.toggleButtonInteraction(!obj);
+
+                    const btn_pagar = document.getElementById("v12_GC13");
+                    const btn_bonif = document.getElementById("v12_GC14");
+                    const btn_intmor = document.getElementById("v12_GC15");
+                    const btn_aplicar = document.getElementById("v12_GC16");
+
+                    if (btn_pagar) btn_pagar.parentElement.hidden = (Number(obj?.haber) <= 0);
+                    if (btn_bonif) btn_bonif.parentElement.hidden = (Number(obj?.haber) <= 0);
+                    if (btn_intmor) btn_intmor.parentElement.hidden = (Number(obj?.haber) <= 0);
+                    if (btn_aplicar) btn_aplicar.parentElement.hidden = (Number(obj?.debe) <= 0);
+                }
+
+                v12navbar.toggleButtonInteraction(true);
+            })
+		'}
     }
 }

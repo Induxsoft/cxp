@@ -1,0 +1,313 @@
+#include "dkli.dkh"
+#!
+module ""
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "dbr.dkh"
+    #include "dbr.vars.dkl"
+    #include "uielements.v12.dkl"
+    #include "../_lib/config.dk"
+    #include "../_lib/lib.dk"
+
+    do @context.begin(@crud_context)
+    ref db:@("&database")
+
+    ref list = ifnull(@("&./list"),list.create())
+    ref list_tipos = ifnull(@("&./list_tipos"),list.create())
+
+    rpt_encabezado_1 = dbr.vars.get(db,"FXCA108")
+    rpt_encabezado_2 = dbr.vars.get(db,"FXCA109")
+    rpt_encabezado_3 = dbr.vars.get(db,"FXCA110")
+    rpt_pie = dbr.vars.get(db,"FXCA111")
+
+    new fil_tipo
+    {
+        @"datatable*": list_tipos
+        @"id": "sel_tipo"
+        member "attributes"
+        {
+            @"name": "fil_tipo"
+            @"class": "form-select form-select-sm rounded-0"
+            @"title": "Filtrar por tipo de cliente"
+        }
+        @"value_field": "sys_pk"
+        @"text_field": "descripcion"
+        @"first_value": "*"
+        @"first_text": "(Todos los tipos)"
+        @"selected": @("parameters/fil_tipo")
+    }
+
+    new nav_config
+    {
+        @"title": "Antigüedad de saldos de clientes"
+        @"buttons*": @null
+        @"urlexit": "javascript:window.history.back()"
+    }
+
+    #$ div(class="container")
+    {
+        #!
+        do uie.printV12FormBar(nav_config)
+        #$
+
+        style
+        {$'
+            tr th { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; -o-text-overflow:ellipsis; }
+            tr td { font-size:.8rem; }
+            th { font-size:.9rem; outline:none!important; }
+
+            @media print {
+                body { visibility: hidden; }
+                #section-to-print {
+                    visibility: visible;
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    right: 0;
+                }
+            }
+
+            .bg-light-gray { background-color: #DCDCDC !important; }
+            .bg-yellow { background-color: #ffe484 !important; }
+            .fw-500 { font-weight:500!important; }
+        '}
+
+        form(class="no-print mb-2" method="GET" action="./" id="form-filter")
+        {
+            div(class="d-flex gap-1")
+            {
+                label(class="form-label my-0" "for"="sel_tipo")
+                {
+                    $"Tipo de proveedor:"
+                    ##
+                    do uie.dbSelect(fil_tipo)
+                    ##
+                }
+
+                label(class="form-label my-0" "for"="txt_fcorte")
+                {
+                    $"Fecha de corte:"
+                    input(class="form-control form-control-sm rounded-0" type="date" name="fil_fcorte" value="#<@('$parameters/fil_fcorte')>" id="txt_fcorte")
+                }
+
+                div(class="d-flex align-items-end"){ button(class="btn btn-sm btn-primary rounded-0" type="submit" id="btn_filter"){$"Aplicar"} }
+            }
+        }
+
+        div(class="bg-light w-100 p-2" style="max-height:83vh; overflow-y:auto;")
+        {
+        div(class="" style="box-shadow: inset 0 -3em 3em rgba(0, 0, 0, 0.1), 0.3em 0.3em 1em rgba(0, 0, 0, 0.3);")
+        {
+            div(class="bg-white p-1" id="section-to-print")
+            {
+                p(class="text-center mb-0"){$"#<rpt_encabezado_1>"}
+                p(class="text-center mb-0"){$"#<rpt_encabezado_2>"}
+                p(class="text-center mb-0"){$"#<rpt_encabezado_3>"}
+
+                div(class="row")
+                {
+                    div(class="col-3")
+                    {
+                        small(class="d-block"){ $"#<cut(@('$http/session/user/name'),25)>" }
+                        small(class="d-block"){ b{$"Impresión: "} $"#<hoy('dd/MMM/yyyy')>" }
+                    }
+                    div(class="col-6")
+                    {
+                        h4(class="text-center"){$"Antigüedad de saldos de proveedores"}
+                    }
+                    div(class="col-3 text-end")
+                    {
+                        small(class="d-block"){ b{$"Corte: "} $"#<@('$parameters/fil_fcorte')>" }
+                        small(class="d-block" id="lbl_tipo"){ $"" }
+                    }
+                }
+                
+                table(class="table table-sm table-bordered my-2")
+                {
+                    #!
+                    gral_sld_xvencer = 0
+                    gral_saldo = 0
+                    gral_sld_01_30 = 0
+                    gral_sld_31_60 = 0
+                    gral_sld_61_90 = 0
+                    gral_sld_mr_90 = 0
+                    #$
+                    
+                    thead
+                    {
+                        tr(class="bg-light-gray")
+                        {
+                            th(class="text-center" rowspan="2"){$"Emisión"}
+                            th(class="text-center" rowspan="2"){$"Vencimiento"}
+                            th(class="text-center" rowspan="2"){$"Referencia"}
+                            th(class="text-center" rowspan="2"){$"Documento"}
+                            th(class="text-center" rowspan="2"){$"Por vencer"}
+                            th(class="text-center" rowspan="2"){$"Saldo"}
+                            th(class="text-center" colspan="4"){$"Vencidos"}
+                        }
+                        tr(class="bg-light-gray")
+                        {   
+                            th(class="text-center fw-500"){$"1-30 días"}
+                            th(class="text-center fw-500"){$"31-60 días"}
+                            th(class="text-center fw-500"){$"61-90 días"}
+                            th(class="text-center fw-500"){$"más de 90 días"}
+                        }
+                    }
+                    tbody
+                    {
+                        #!
+                        ccliente = ""
+
+                        ttl_sld_xvencer = 0
+                        ttl_saldo = 0
+                        ttl_sld_01_30 = 0
+                        ttl_sld_31_60 = 0
+                        ttl_sld_61_90 = 0
+                        ttl_sld_mr_90 = 0
+                        
+                        for i = 0; i < list.count(list); i+1
+                        {
+                            ref obj = list.obj(list,i)
+
+                            if ccliente != @@(obj,"$codigo")
+                            {
+                                if ccliente!=""
+                                {
+                                    gral_sld_xvencer = gral_sld_xvencer + ttl_sld_xvencer
+                                    gral_saldo = gral_saldo + ttl_saldo
+                                    gral_sld_01_30 = gral_sld_01_30 + ttl_sld_01_30
+                                    gral_sld_31_60 = gral_sld_31_60 + ttl_sld_31_60
+                                    gral_sld_61_90 = gral_sld_61_90 + ttl_sld_61_90
+                                    gral_sld_mr_90 = gral_sld_mr_90 + ttl_sld_mr_90
+
+                                    #$
+                                    tr
+                                    {
+                                        td(class="text-end" colspan="4"){$""}
+                                        td(class="text-end fw-bolder"){$"#<format(ttl_sld_xvencer,@FMT_MONEY)>"}
+                                        td(class="text-end fw-bolder"){$"#<format(ttl_saldo,@FMT_MONEY)>"}
+                                        td(class="text-end fw-bolder"){$"#<format(ttl_sld_01_30,@FMT_MONEY)>"}
+                                        td(class="text-end fw-bolder"){$"#<format(ttl_sld_31_60,@FMT_MONEY)>"}
+                                        td(class="text-end fw-bolder"){$"#<format(ttl_sld_61_90,@FMT_MONEY)>"}
+                                        td(class="text-end fw-bolder"){$"#<format(ttl_sld_mr_90,@FMT_MONEY)>"}
+                                    }
+                                    #!
+
+                                    ttl_sld_xvencer = 0
+                                    ttl_saldo = 0
+                                    ttl_sld_01_30 = 0
+                                    ttl_sld_31_60 = 0
+                                    ttl_sld_61_90 = 0
+                                    ttl_sld_mr_90 = 0
+                                }
+
+                                #$
+                                tr{ td(class="fw-bolder" colspan="9"){$"[#<@@(obj,'$codigo')>] #<@@(obj,'$nombre')>"} }
+                                #!
+
+                                ccliente = @@(obj,"$codigo")
+                            }
+
+                            dias = @@(obj,"#dias")
+
+                            sld_xvencer = 0
+                            saldo = @@(obj,'#saldo')
+                            sld_01_30 = 0
+                            sld_31_60 = 0
+                            sld_61_90 = 0
+                            sld_mr_90 = 0
+
+                            if dias <= 0 { sld_xvencer = saldo }
+                            else if between(dias,1,30) { sld_01_30 = saldo }
+                            else if between(dias,31,60) { sld_31_60 = saldo }
+                            else if between(dias,61,90) { sld_61_90 = saldo }
+                            else { sld_mr_90 = saldo }
+
+                            ttl_sld_xvencer = ttl_sld_xvencer + sld_xvencer
+                            ttl_saldo = ttl_saldo + saldo
+                            ttl_sld_01_30 = ttl_sld_01_30 + sld_01_30
+                            ttl_sld_31_60 = ttl_sld_31_60 + sld_31_60
+                            ttl_sld_61_90 = ttl_sld_61_90 + sld_61_90
+                            ttl_sld_mr_90 = ttl_sld_mr_90 + sld_mr_90
+
+                            #$
+                            tr
+                            {
+                                td(class=""){$"#<@@(obj,'$fecha')>"}
+                                td(class=""){$"#<@@(obj,'$aplicacion')>"}
+                                td(class=""){$"#<@@(obj,'$referencia')>"}
+                                td(class=""){$"#<@@(obj,'$documento')>"}
+                                td(class="text-end"){$"#<format(sld_xvencer,@FMT_MONEY)>"}
+                                td(class="text-end"){$"#<format(saldo,@FMT_MONEY)>"}
+                                td(class="text-end"){$"#<format(sld_01_30,@FMT_MONEY)>"}
+                                td(class="text-end"){$"#<format(sld_31_60,@FMT_MONEY)>"}
+                                td(class="text-end"){$"#<format(sld_61_90,@FMT_MONEY)>"}
+                                td(class="text-end"){$"#<format(sld_mr_90,@FMT_MONEY)>"}
+                            }
+                            #!
+                        }
+
+                        if list.count(list) > 0
+                        {
+                            gral_sld_xvencer = gral_sld_xvencer + ttl_sld_xvencer
+                            gral_saldo = gral_saldo + ttl_saldo
+                            gral_sld_01_30 = gral_sld_01_30 + ttl_sld_01_30
+                            gral_sld_31_60 = gral_sld_31_60 + ttl_sld_31_60
+                            gral_sld_61_90 = gral_sld_61_90 + ttl_sld_61_90
+                            gral_sld_mr_90 = gral_sld_mr_90 + ttl_sld_mr_90
+
+                            #$
+                            tr
+                            {
+                                td(class="text-end" colspan="4"){$""}
+                                td(class="text-end fw-bolder"){$"#<format(ttl_sld_xvencer,@FMT_MONEY)>"}
+                                td(class="text-end fw-bolder"){$"#<format(ttl_saldo,@FMT_MONEY)>"}
+                                td(class="text-end fw-bolder"){$"#<format(ttl_sld_01_30,@FMT_MONEY)>"}
+                                td(class="text-end fw-bolder"){$"#<format(ttl_sld_31_60,@FMT_MONEY)>"}
+                                td(class="text-end fw-bolder"){$"#<format(ttl_sld_61_90,@FMT_MONEY)>"}
+                                td(class="text-end fw-bolder"){$"#<format(ttl_sld_mr_90,@FMT_MONEY)>"}
+                            }
+                            #!
+
+                            ttl_sld_xvencer = 0
+                            ttl_saldo = 0
+                            ttl_sld_01_30 = 0
+                            ttl_sld_31_60 = 0
+                            ttl_sld_61_90 = 0
+                            ttl_sld_mr_90 = 0
+                        }
+                        #$
+                    }
+                    tfoot
+                    {
+                        tr
+                        {
+                            td(class="text-end fw-bolder" colspan="4"){$"Totales Generales:"}
+                            td(class="text-end fw-bolder"){$"#<format(gral_sld_xvencer,@FMT_MONEY)>"}
+                            td(class="text-end fw-bolder"){$"#<format(gral_saldo,@FMT_MONEY)>"}
+                            td(class="text-end fw-bolder"){$"#<format(gral_sld_01_30,@FMT_MONEY)>"}
+                            td(class="text-end fw-bolder"){$"#<format(gral_sld_31_60,@FMT_MONEY)>"}
+                            td(class="text-end fw-bolder"){$"#<format(gral_sld_61_90,@FMT_MONEY)>"}
+                            td(class="text-end fw-bolder"){$"#<format(gral_sld_mr_90,@FMT_MONEY)>"}
+                        }
+                    }
+                }
+
+                p(class="text-center mb-0"){$"#<rpt_pie>"}
+            }
+        }
+        }
+
+        script(type="text/javascript")
+        {$'
+            document.addEventListener("DOMContentLoaded", () => {
+                const sel_tipo = document.getElementById("sel_tipo");
+                const lbl_tipo = document.getElementById("lbl_tipo");
+
+                const opt_tipo = sel_tipo.options[sel_tipo.selectedIndex];
+                lbl_tipo.textContent = opt_tipo.textContent;
+            });
+        '}
+    }
+}

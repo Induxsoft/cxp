@@ -5,6 +5,7 @@ module "Controller configs"
 	#include "functions.dkh"
 	#include "serialize.dkh"
 	#include "dbr.dkh"
+	#include "dbr.apps.dkl"
 	#include "dbr.vars.dkl"
 	#include "dbr.security.dkl"
 	#include "dbr.events.dkl"
@@ -43,6 +44,7 @@ module "Controller configs"
 	do crudl.routes.entity("/documentos/","cxp_docs")
 	do crudl.routes.entity("/proveedores/","cxp_provs")
 	do crudl.routes.entity("/gastos/","ut_gasto")
+	do crudl.routes.entity("/reports/","reports")
 	
 	@dbmvc_path="crudl/"
 	

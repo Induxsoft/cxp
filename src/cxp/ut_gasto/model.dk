@@ -3,7 +3,9 @@
 module "model"
 {
     @read_query="SELECT 
-            ut.sys_pk,pdr.sys_pk pkproveedor,ut.total importe,
+            ut.sys_pk,
+            ut.sys_guid,
+            pdr.sys_pk pkproveedor,ut.total importe,
             cat.descripcion AS categoria,
             ut.referencia,
             DATE_FORMAT(ut.fecha,'%Y-%m-%d') AS fecha,
@@ -105,7 +107,19 @@ module "model"
     }
     ut.agregarGasto::&db,&params,&data
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
+
+        @use_transaction = @false
+        
+        if not(field.exist(data,"sys_guid")){data<"sys_guid">:uuid()}
+
+        do dbr.apps.action.pre("GC31")
+
+        //validación si fue autorizado de una sola vez 
+        ref rec=dbr.rec(db,"select * from ut_gasto where sys_guid=@sys_guid",data)
+        if not(isnull(rec)){return @null}
+
+        do dbr.begin(db)
 
         new p{@"referencia":@@(data,"$referencia")}
         if trim(@@(data,"$referencia"))==""{do rise_error(500,"Debe indicar una referencia")}
@@ -118,7 +132,7 @@ module "model"
         new gasto
         {
             @"sys_pk": 0
-            @"sys_guid": uuid()
+            @"sys_guid":@@(data,"$sys_guid")
             @"sys_dtcreated*": now()
             @"sys_timestamp*": now()
             @"referencia": @@(data,"$referencia")
@@ -137,46 +151,53 @@ module "model"
             @"formapago":@@(data,"#formapago") //@FORMA_PAGO
             @"statusadministrativo": @STATUS_ADMINISTRATIVO
         }
-        do dbr.begin(db)
 
-          if @@(data,"#formapago")==@FORMA_PAGO{ gasto<"imovchequera">:@@(mov.retiro(db,params,data),"#sys_pk")}
+        //do dbr.begin(db)
+
+        if @@(data,"#formapago")==@FORMA_PAGO{ gasto<"imovchequera">:@@(mov.retiro(db,params,data),"#sys_pk")}
             
-            do dbr.insert(db,"ut_gasto",gasto)
-            
-            if @@(data,"#formapago")==@FORMA_PAGO_CREDITO
+        do dbr.insert(db,"ut_gasto",gasto)
+        
+        if @@(data,"#formapago")==@FORMA_PAGO_CREDITO
+        {
+            igasto=dbr.num(db,"select sys_pk from ut_gasto where sys_guid=@sys_guid",gasto)
+            new cxp
             {
-                igasto=dbr.num(db,"select sys_pk from ut_gasto where sys_guid=@sys_guid",gasto)
-                new cxp
-                {
-                    @"iproveedor":@@(gasto,"#iproveedor")
-                    @"tcambio":@@(gasto,"#tipocambio")
-                    @"documento":@@(data,"#tipo_documento")
-                    @"referencia":@@(gasto,"$referencia")
-                    @"fecha*":@@(gasto,"&fecha")
-                    @"flimite*":@@(gasto,"&vencimiento")
-                    @"concepto":@@(gasto,"$concepto")
-                    @"aplicable":1
-                    @"importe":@@(gasto,"#total")
-                    @"igasto":igasto
-                }
-                
-                do erp.cxp.movimientos.crearCxP(db,cxp)
+                @"iproveedor":@@(gasto,"#iproveedor")
+                @"tcambio":@@(gasto,"#tipocambio")
+                @"documento":@@(data,"#tipo_documento")
+                @"referencia":@@(gasto,"$referencia")
+                @"fecha*":@@(gasto,"&fecha")
+                @"flimite*":@@(gasto,"&vencimiento")
+                @"concepto":@@(gasto,"$concepto")
+                @"aplicable":1
+                @"importe":@@(gasto,"#total")
+                @"igasto":igasto
             }
+            do erp.cxp.movimientos.crearCxP(db,cxp)
+        }
+        do SaveAdjuntos(gasto)
+
+        do dbr.apps.action.pos(@null)
         do dbr.commit(db)
+        do dbr.apps.action.ext(@null)
+
         exception
         {
-            last_error=last_error()
+            do errordet(@false)
             if dbr.in_transaction(db){do dbr.rollback(db)}
-
+            code = last_error_code()
+            error = last_error()
             do ut.prepareView(db,params,data)
             do ut.data(db,data)
-            do rise_error(0,last_error)
+            do rise_error(code,error)
         }
     }
 
     ut.list::&db,&params
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_GASTOS)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_GASTOS)) { do rise_error(0,"No autorizado")}
+        do dbr.apps.action.grant("GC30")
 
         params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
         params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
@@ -229,7 +250,7 @@ module "model"
                 AND IF(IFNULL(@range,'-99')='-99', true, (DATE(IF(IFNULL(@tdate,'0')='0', ut.fecha, ut.vencimiento)) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
                 AND IF(IFNULL(@datefrom,'')='' AND IFNULL(@dateto,'')='', true, (DATE(IF(IFNULL(@tdate,'0')='0', ut.fecha, ut.vencimiento)) BETWEEN DATE(@datefrom) AND DATE(@dateto)))
                 AND IF(IFNULL(@edoadmin,'-1')='-1', true, edo.id = @edoadmin)
-            ORDER BY ut.fecha
+            ORDER BY ut.fecha desc
             LIMIT #<@default_max_rows>;
         ")
 
@@ -243,11 +264,21 @@ module "model"
         }
 
         return response
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     ut.read::&db,&params
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_UN_GASTO)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_UN_GASTO)) { do rise_error(0,"No autorizado")}
+        do dbr.apps.action.grant("GC30")
             
         ref entity=entity.read(db,params)
 
@@ -273,21 +304,38 @@ module "model"
 
         do ut.data(db,entity)
         return entity
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     ut.update::&db,&params,&data
     {
-        if field.exist(data,"proveedor")
+        if parse.bool(@@(data,"onlyfile"))
         {
-            data<"iproveedor">:@@(data,"proveedor")
-            do field.remove(data,"proveedor")
+            ref gasto=dbr.rec(db,"select * from ut_gasto where sys_pk=@_entity_id",params)
+            do SaveAdjuntos(gasto)
+            return gasto
         }
         if field.exist(data,"proveedor")
         {
             data<"iproveedor">:@@(data,"proveedor")
             do field.remove(data,"proveedor")
         }
-        return entity.update(db,params,data)
+        if field.exist(data,"proveedor")
+        {
+            data<"iproveedor">:@@(data,"proveedor")
+            do field.remove(data,"proveedor")
+        }
+        ref entity= entity.update(db,params,data)
+
+        return entity
     }
 
     ut.data::&db,&data
@@ -301,12 +349,22 @@ module "model"
     }
     ut.blank::&db,&params
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
+        do dbr.apps.action.grant("GC30")
 
         new data{}
         do ut.prepareView(db,params,data)
         do ut.data(db,data)
         return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
     prepare_filter::list
     {
@@ -318,7 +376,27 @@ module "model"
         do list.ins(list, 0, record)
         return list
     }
-   
+    
+    SaveAdjuntos::&entity
+    {
+        ref files=@@(@http_context,"&request/files")
+        if isnull(files) || @count(files)<1 || isnull(entity){return}
+        
+        path=path.concat(@PATH_ADJUNTOS,@@(entity,"$sys_guid"))
+        do dir.ensure(path)
+        
+        for i = 0; i < @count(files)
+        {
+            ref file=@item(files,i)
+            if trim(@@(file,"$filename"))!=""
+            {
+                filename=limpiarTexto(@@(file,"$filename"))
+                path_file=path.concat(path,filename)
+
+                if file.exists(@@(file,"$temp_file")){do file.copy(@@(file,"$temp_file"),path_file)}
+            }
+        }
+    }
     point @read to ut.read
     point @update to ut.update
 }

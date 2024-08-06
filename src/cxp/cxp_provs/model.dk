@@ -174,7 +174,7 @@ module "model"
         {
             case "bonificacion"
             {
-                if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado") }
+                // if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado") }
 
                 sql_documentos = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_bonific,0);"
 
@@ -185,7 +185,7 @@ module "model"
             }
             case "pago"
             {
-                if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado") }
+                // if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado") }
 
                 sql_documentos = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_pago,0);"
                 sql_cuentas = "SELECT c.sys_pk, d.codigo AS divisa, d.tcambio, CONCAT(c.nombre,' (',d.codigo,')') nombre FROM chequera c INNER JOIN divisa d ON d.sys_pk = c.idivisa WHERE NOT IFNULL(c.sys_deleted,0) ORDER BY c.sys_pk;"
@@ -273,13 +273,23 @@ module "model"
 
     cxp.pagarProveedor::&db,&params,&data
     {
-        do errordet(@false)
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado") }
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado") }
+        @use_transaction = @false
+
+        do dbr.apps.action.pre("GC26")
+        do dbr.begin(db)
+
         do erp.cxp.movimientos.pagarProveedor(db,data)
+
+        do dbr.apps.action.pos(@null)
+        do dbr.commit(db)
+        do dbr.apps.action.ext(@null)
+
         @url_redir = @CXP_PROVS
 
         exception
         {
+            do errordet(@false)
             if dbr.in_transaction(db) { do dbr.rollback(db) }
 
             ref formData = record.copy(data,"*")
@@ -290,19 +300,30 @@ module "model"
             data<"form*"> : formData
             
             do cxp.prepareView(db,params,data)
+            do dbr.apps.action.log()
             do rise_error(code,error)
         }
     }
 
     cxp.bonificarProveedor::&db,&params,&data
     {
-        do errordet(@false)
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado")}
+        @use_transaction = @false
+
+        do dbr.apps.action.pre("GC27")
+        do dbr.begin(db)
+
         do erp.cxp.movimientos.bonificarProveedor(db,data)
+
+        do dbr.apps.action.pos(@null)
+        do dbr.commit(db)
+        do dbr.apps.action.ext(@null)
+
         @url_redir = @CXP_PROVS
 
         exception
         {
+            do errordet(@false)
             if dbr.in_transaction(db) { do dbr.rollback(db) }
 
             ref formData = record.copy(data,"*")
@@ -313,14 +334,15 @@ module "model"
             data<"form*"> : formData
             
             do cxp.prepareView(db,params,data)
+            do dbr.apps.action.log()
             do rise_error(code,error)
         }
     }
 
     cxp.obtenerSaldos::&db,&params,&data
     {
-        ejercicio = @@(params,"#ejercicio")
-        periodo = @@(params,"#periodo")
+        ejercicio = @@(params,"#fdr_year")
+        periodo = @@(params,"#fdr_month")
 
         if ejercicio <= 0 { ejercicio = val(hoy("yyyy")) }
         if periodo <= 0 || periodo > 12 { periodo = val(hoy("MM")) }
@@ -331,16 +353,52 @@ module "model"
         params<"periodo"> : periodo
         params<"fd"> : first_day
 
-        sql_sinicial = "SELECT IFNULL(SUM(IFNULL(haber,0) - IFNULL(debe,0)),0) AS saldo_inicial FROM dcxp WHERE iproveedor = @_entity_id AND DATE(aplicacion) < @fd;"
-        sql_dbe_hbr = "SELECT IFNULL(SUM(IFNULL(haber,0)),0) AS haber, IFNULL(SUM(IFNULL(debe,0)),0) AS debe FROM dcxp WHERE iproveedor = @_entity_id AND DATE(aplicacion) BETWEEN @fd AND LAST_DAY(@fd);"
-        sql_stotal = "SELECT IFNULL(SUM(IFNULL(haber,0) - IFNULL(debe,0)),0) AS saldo_total FROM dcxp WHERE iproveedor = @_entity_id;"
-        sql_sdocs = "SELECT IFNULL(SUM(IFNULL(haber,0) + IFNULL(intmoratorios,0) - IFNULL(pagos,0) - IFNULL(bonificaciones,0)),0) AS saldo_docs FROM dcxp WHERE iproveedor = @_entity_id AND aplicable;"
+        conditions=@@(params,"$conditions")
+        
+        fdr_field=@@(params,"$fdr_field")
+        if trim(fdr_field)==""{fdr_field="aplicacion"}
 
-        sInicial = dbr.num(db,sql_sinicial,params)
-        ref DebeHaber = dbr.rec(db,sql_dbe_hbr,params)
-        sTotal = dbr.num(db,sql_stotal,params)
-        sDocs = dbr.num(db,sql_sdocs,params)
-        xAplicar = abs(sDocs - sTotal)
+        c_sql_sinicial = ""
+        c_sql_dbe_hbr=""
+        
+        switch @@(params,"$fdr_mode")
+        {
+            case "month"
+            {
+                c_sql_sinicial = c_sql_sinicial +  " and date(#<fdr_field>)< @fd; "
+                c_sql_dbe_hbr=c_sql_dbe_hbr + " AND DATE(#<fdr_field>) BETWEEN @fd AND LAST_DAY(@fd); "
+
+            }
+            default
+            {
+                c_sql_sinicial = c_sql_sinicial +" and DATE(#<fdr_field>) < @fdr_month;"
+                c_sql_dbe_hbr=c_sql_dbe_hbr + conditions
+                break
+            }
+        }
+
+        sql_sinicial = "SELECT IFNULL(SUM(IFNULL(haber,0) - IFNULL(debe,0)),0) AS saldo_inicial 
+        FROM dcxp as cxp WHERE iproveedor = @_entity_id #<ftext(c_sql_sinicial)>"
+
+        sql_dbe_hbr = "SELECT IFNULL(SUM(IFNULL(haber,0)),0) AS haber, IFNULL(SUM(IFNULL(debe,0)),0) AS debe 
+        FROM dcxp as cxp WHERE iproveedor = @_entity_id #<ftext(c_sql_dbe_hbr)>"
+
+        sql_stotal = "SELECT IFNULL(SUM(IFNULL(haber,0) - IFNULL(debe,0)),0) AS saldo_total 
+        FROM dcxp as cxp WHERE iproveedor = @_entity_id "
+
+        sql_sdocs = "SELECT IFNULL(SUM(IFNULL(haber,0) + ifnull(intmoratorios,0) - IFNULL(pagos,0) - IFNULL(bonificaciones,0)),0) AS saldo_docs 
+        FROM dcxp as cxp WHERE iproveedor = @_entity_id AND aplicable; "
+
+        sql_haber="select IFNULL(SUM(IFNULL(haber,0)-IFNULL(debe,0)),0) from dcxp as cxp WHERE iproveedor = @_entity_id "
+
+        debe=dbr.num(db,sql_haber,params)
+
+        sInicial = dbr.num(db,ftext(sql_sinicial),params)
+        ref DebeHaber = dbr.rec(db,ftext(sql_dbe_hbr),params)
+        sTotal = dbr.num(db,ftext(sql_stotal),params)
+        sDocs = dbr.num(db,ftext(sql_sdocs),params)
+        
+        xAplicar = abs(sDocs-debe)
         // Saldo al final del periodo
         sFinalP = (sInicial + @@(DebeHaber,"#haber") - @@(DebeHaber,"#debe"))
 
@@ -361,10 +419,89 @@ module "model"
 
     cxp.obtenerBalance::&db,&params
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ESTADO_CUENTA_PROVD)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ESTADO_CUENTA_PROVD)) { do rise_error(0,"No autorizado")}
+        do dbr.apps.action.grant("GC23")
 
         params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
         params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
+
+        // fdr_init
+        if not(field.exist(params,"fdr_mode")) { params<"fdr_mode"> : "month" }
+        // [month]
+        if not(field.exist(params,"fdr_year")) { params<"fdr_year"> : @curr_year }
+        if not(field.exist(params,"fdr_month")) { params<"fdr_month"> : @curr_month }
+        // [lastdays]
+        if not(field.exist(params,"fdr_range")) { params<"fdr_range"> : 30 }
+        // [range]
+        if not(field.exist(params,"fdr_from")) { params<"fdr_from"> : "" }
+        if not(field.exist(params,"fdr_to")) { params<"fdr_to"> : "" }
+        //#endregion
+
+        conditions = ""
+
+        //#region filter-date-range
+        new vnt_date_fields
+        {
+            @"1": "cxp.fecha" // Emisión
+            @"2": "cxp.aplicacion" // Vencimiento
+        }
+        fdr_field = @@(vnt_date_fields,str(@@(params,"#fil_fdr_field")))
+        if trim(fdr_field)==""{fdr_field=@@(vnt_date_fields,"1")}
+
+        switch @@(params,"$fdr_mode")
+        {
+            case "month"
+            {
+                curr_ndt = ndatetime.now()
+                curr_year = ndatetime.year(curr_ndt)
+                curr_month = ndatetime.month(curr_ndt)
+                curr_day = ndatetime.day(curr_ndt)
+
+                if not(field.exist(params,"fdr_year")) { params<"fdr_year"> : curr_year }
+                if not(field.exist(params,"fdr_month")) { params<"fdr_month"> : curr_month }
+
+                conditions = conditions + " AND YEAR(#<fdr_field>) = @fdr_year AND MONTH(#<fdr_field>) = @fdr_month"
+                break
+            }
+            case "lastdays"
+            {
+                if not(field.exist(params,"fdr_range")) { params<"fdr_range"> : 30 } // Últimos 30 días
+
+                conditions = conditions + " AND DATE(#<fdr_field>) BETWEEN ADDDATE(DATE(NOW()), INTERVAL -@fdr_range DAY) AND DATE(NOW())"
+                break
+            }
+            case "range"
+            {
+                if not(field.exist(params,"fdr_from"))
+                {
+                    curr_ndt = ndatetime.now()
+                    subt_ndt = ndatetime.add(curr_ndt, -30, "d")
+                    ult_30_days = ndatetime.tostr(subt_ndt, "yyyy-MM-dd")
+
+                    params<"fdr_from"> : ult_30_days
+                }
+                if not(field.exist(params,"fdr_to")) { params<"fdr_to"> : date_str(now(),"yyyy-MM-dd") }
+
+                if trim(@@(params,"$fdr_from")) != "" && trim(@@(params,"$fdr_to")) != ""
+                {
+                    conditions = conditions + " AND DATE(#<fdr_field>) BETWEEN @fdr_from AND @fdr_to"
+                }
+                else if trim(@@(params,"$fdr_from")) != "" && trim(@@(params,"$fdr_to")) == ""
+                {
+                    conditions = conditions + " AND DATE(#<fdr_field>) >= @fdr_from"
+                }
+                else if trim(@@(params,"$fdr_from")) == "" && trim(@@(params,"$fdr_to")) != ""
+                {
+                    conditions = conditions + " AND DATE(#<fdr_field>) <= @fdr_to"
+                }
+
+                break
+            }
+        }
+        //#endregion
+        conditions=ftext(conditions)
+        params<"fdr_field">:fdr_field
+        params<"conditions">:conditions
 
         sql = "
         SELECT
@@ -378,25 +515,35 @@ module "model"
         FROM dcxp AS cxp
             INNER JOIN cdocumentos AS doc ON doc.id = cxp.documento
         WHERE cxp.iproveedor = @_entity_id 
-            AND DATE(cxp.aplicacion) BETWEEN @fd AND LAST_DAY(@fd)
-            AND IF(IFNULL(@s,'')='', true, cxp.referencia LIKE CONCAT('%',@s,'%'))
-            AND IF(IFNULL(@year,'')='', true, YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@year)
-            AND IF(IFNULL(@month,'')='', true, (YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=IFNULL(@year,YEAR(NOW())) AND MONTH(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@month))
-            AND IF(IFNULL(@range,'-99')='-99', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
-            AND IF(IFNULL(@datefrom,'')='', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE(@datefrom) AND DATE(@dateto)))
+            #<conditions>
             ;
         "
-
+        // AND DATE(cxp.aplicacion) BETWEEN @fd AND LAST_DAY(@fd)
+        //     AND IF(IFNULL(@s,'')='', true, cxp.referencia LIKE CONCAT('%',@s,'%'))
+        //     AND IF(IFNULL(@year,'')='', true, YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@year)
+        //     AND IF(IFNULL(@month,'')='', true, (YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=IFNULL(@year,YEAR(NOW())) AND MONTH(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@month))
+        //     AND IF(IFNULL(@range,'-99')='-99', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
+        //     AND IF(IFNULL(@datefrom,'')='', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE(@datefrom) AND DATE(@dateto)))
         ref data = cxp.obtenerProveedor(db,@@(params,"_entity_id"))
         do cxp.obtenerSaldos(db,params,data)
         data<"docs*"> : dbr.list(db,ftext(sql),params)
 
         return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     cxp.obtenerDocsPendientesDePago::&db,&params
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_DOCS_POR_PAGAR_PROVD)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_DOCS_POR_PAGAR_PROVD)) { do rise_error(0,"No autorizado")}
+        do dbr.apps.action.grant("GC24")
 
         params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
         params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
@@ -430,11 +577,21 @@ module "model"
         data<"docs*"> : dbr.list(db,ftext(sql),params)
 
         return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     cxp.obtenerPagosPorAplicar::&db,&params
     {
-        if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGOS_POR_APLICAR_PROVD)) { do rise_error(0,"No autorizado")}
+        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGOS_POR_APLICAR_PROVD)) { do rise_error(0,"No autorizado")}
+        do dbr.apps.action.grant("GC25")
 
         sql = "
         SELECT
@@ -462,10 +619,21 @@ module "model"
         data<"docs*"> : dbr.list(db,ftext(sql),params)
 
         return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     pdr.list::&db,&params
     {
+        do dbr.apps.action.grant("GC20")
+
         buscar = trim(@@(params,"$buscar"))
         tipo = trim(@@(params,"$tipo"))
 
@@ -502,20 +670,51 @@ module "model"
         }
 
         return dbr.list(db,sql,params)
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     pdr.read::&db,&params
     {
+        do dbr.apps.action.grant("GC20")
+
         new data {}
         do cxp.prepareView(db,params,data)
         return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     pdr.blank::&db,&params
     {
+        do dbr.apps.action.grant("GC20")
+
         new data {}
         do cxp.prepareView(db,params,data)
         return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     cleanFormData::&fields,&data,&output
@@ -549,7 +748,6 @@ module "model"
 
     pdr.create::&db,&params,&data
     {
-        do errordet(@false)
         @use_transaction = @false
 
         ref fieldsProveedor = split("codcuenta,codigo,curp,diascredito,diasentrega,email,fax,limitecredito,nombre,notas,rfc,saldo,status,tasaiva,telefonos,website,contacto1,contacto2,contacto3,idivisa,izona,tipo,uf_vueltaviajero,uf_tipoop",",")
@@ -566,7 +764,9 @@ module "model"
         }
         do cleanFormData(fieldsProveedor,data,proveedor)
 
+        do dbr.apps.action.pre("GC21")
         do dbr.begin(db)
+
         // Datos de domicilios
         if chq_domicilio1
         {
@@ -618,7 +818,10 @@ module "model"
         }
         
         ref entity = @@(entity.create(db,params,proveedor),"&dtprov")
+        
+        do dbr.apps.action.pos(entity)
         do dbr.commit(db)
+        do dbr.apps.action.ext(entity)
 
         switch toupper(trim(@@(data,"$shortcut")))
         {
@@ -641,6 +844,7 @@ module "model"
 
         exception
         {
+            do errordet(@false)
             if dbr.in_transaction(db) { do dbr.rollback(db) }
 
             ref formData = record.copy(data,"*")
@@ -651,13 +855,13 @@ module "model"
             data<"form*"> : formData
             
             do cxp.prepareView(db,params,data)
+            do dbr.apps.action.log()
             do rise_error(code,error)
         }
     }
 
     pdr.update::&db,&params,&data
     {
-        do errordet(@false)
         @use_transaction = @false
 
         if trim(@@(data,"$codigo")) == "" { do rise_error(99,"Es necesario indicar el código del proveedor.") }
@@ -679,7 +883,9 @@ module "model"
         }
         do cleanFormData(fieldsProveedor,data,proveedor)
 
+        do dbr.apps.action.pre("GC22")
         do dbr.begin(db)
+
         // Datos de domicilios
         if chq_domicilio1
         {
@@ -740,7 +946,10 @@ module "model"
         }
         
         ref entity = @@(entity.update(db,params,proveedor),"&dtprov")
+        
+        do dbr.apps.action.pos(entity)
         do dbr.commit(db)
+        do dbr.apps.action.ext(entity)
 
         switch toupper(trim(@@(data,"$shortcut")))
         {
@@ -763,6 +972,7 @@ module "model"
 
         exception
         {
+            do errordet(@false)
             if dbr.in_transaction(db) { do dbr.rollback(db) }
 
             ref formData = record.copy(data,"*")
@@ -773,6 +983,7 @@ module "model"
             data<"form*"> : formData
             
             do cxp.prepareView(db,params,data)
+            do dbr.apps.action.log()
             do rise_error(code,error)
         }
     }
