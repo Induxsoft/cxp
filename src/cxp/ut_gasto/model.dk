@@ -376,7 +376,19 @@ module "model"
         do list.ins(list, 0, record)
         return list
     }
-    
+    deleteFile::&db,&params,&data
+    {
+        ref gasto=dbr.rec(db,"select sys_pk,sys_guid from ut_gasto where sys_pk=@_entity_id",params)
+        if isnull(gasto){do rise_error(500,"No se encontró datos del gasto.")}
+
+        path=path.concat(@PATH_ADJUNTOS,@@(gasto,"$sys_guid"))
+        file=path.concat(path,@@(data,"$file"))
+        if not(file.exists(file)){do rise_error(500,"No se encontró el archivo indicado")}
+
+        do file.delete(file)
+
+        return gasto
+    }
     SaveAdjuntos::&entity
     {
         ref files=@@(@http_context,"&request/files")
@@ -397,6 +409,5 @@ module "model"
             }
         }
     }
-    point @read to ut.read
-    point @update to ut.update
+   
 }

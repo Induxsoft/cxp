@@ -181,6 +181,12 @@ module "lib.dk"
     }
     limpiarTexto::texto
 	{
-		return tolower(trim(replace(ranychars(texto,'$,/\n)("\'[]-%+/',' ')," ","_")))
+		texto= tolower(trim(replace(ranychars(texto,'$,/\n)?("\'[]-%+/',' ')," ","_")))
+		texto=replace(texto,"á","a")
+		texto=replace(texto,"é","e")
+		texto=replace(texto,"í","i")
+		texto=replace(texto,"ó","o")
+		texto=replace(texto,"ú","u")
+		return texto
 	}
 }

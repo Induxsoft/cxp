@@ -277,7 +277,7 @@ module "form.dk"
                     }
                 }
                 #!
-                if @count(adjuntos)>0
+                if @count(adjuntos) > 0
                 {
                     #$
                     div(class="row mt-2")
@@ -289,7 +289,10 @@ module "form.dk"
                                 div(class="card-body")
                                 {
                                     h5{"Adjuntos"}
-                                    button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print mb-1" onclick="gasto.form.preview();"){"Descargar"}
+                                    
+                                    button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print mb-1 m-1" onclick="gasto.form.preview();"){"Descargar"}
+                                    button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print mb-1 m-1" onclick="gasto.form.DeleteFile();"){"Eliminar"}
+                                    
                                     "media-list"(
                                     id="media-list"
                                     data='#<to.json(adjuntos)>'
