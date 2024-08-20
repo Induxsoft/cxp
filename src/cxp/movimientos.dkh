@@ -237,14 +237,14 @@ module ":erp.cxp.movimientos"
         // Generar documento por pagar (dcxp).
         lastId = saveCxP(db,dcxp)
         // Afectar saldo del proveedor.
-        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) + @importe) WHERE sys_pk = @iproveedor;",data)
+        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) + @haber - @debe) WHERE sys_pk = @iproveedor;",dcxp)
         
         if start_transaction { do dbr.commit(db) }
         return lastId
 
         exception
         {
-            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            if start_transaction { do dbr.rollback(db) }
             do rise_error(last_error_code(),last_error())
         }
     }
@@ -334,7 +334,7 @@ module ":erp.cxp.movimientos"
 
         exception
         {
-            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            if start_transaction { do dbr.rollback(db) }
             do rise_error(last_error_code(),last_error())
         }
     }
@@ -400,7 +400,7 @@ module ":erp.cxp.movimientos"
 
         exception
         {
-            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            if start_transaction { do dbr.rollback(db) }
             do rise_error(last_error_code(),last_error())
         }
     }
@@ -466,7 +466,7 @@ module ":erp.cxp.movimientos"
 
         exception
         {
-            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            if start_transaction { do dbr.rollback(db) }
             do rise_error(last_error_code(),last_error())
         }
     }
@@ -537,7 +537,7 @@ module ":erp.cxp.movimientos"
 
         exception
         {
-            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            if start_transaction { do dbr.rollback(db) }
             do rise_error(last_error_code(),last_error())
         }
     }
@@ -584,7 +584,7 @@ module ":erp.cxp.movimientos"
 
         exception
         {
-            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            if start_transaction { do dbr.rollback(db) }
             do rise_error(last_error_code(),last_error())
         }
     }
