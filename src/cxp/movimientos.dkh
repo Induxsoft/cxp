@@ -4,6 +4,8 @@ module ":erp.cxp.movimientos"
 {
     saveCxP::&db,&data
     {
+        start_transaction = @false
+
         fecha = trim(@@(data,"$fecha"))
         aplicacion = trim(@@(data,"$aplicacion"))
         
@@ -151,8 +153,6 @@ module ":erp.cxp.movimientos"
         dcxp<"aplicable"> : (field.num(dcxp,"haber") > 0)
 
         if field.exist(data,"aplicable") && trim(@@(data,"$aplicable"))!=""{dcxp<"aplicable"> :@@(data,"aplicable")}
-        
-        start_transaction = @false
 
         if not(dbr.in_transaction(db)) {
             do dbr.begin(db)
@@ -166,7 +166,7 @@ module ":erp.cxp.movimientos"
 
         exception
         {
-            if dbr.in_transaction(db) { do dbr.rollback(db) }
+            if start_transaction { do dbr.rollback(db) }
             do rise_error(last_error_code(),last_error())
         }
     }
@@ -208,6 +208,8 @@ module ":erp.cxp.movimientos"
     {
         namespace "erp.cxp.movimientos"
 
+        start_transaction = @false
+
         new dcxp
         {
             @"aplicable": @@(data,"$aplicable")
@@ -226,8 +228,6 @@ module ":erp.cxp.movimientos"
         if @@(data,"#igasto")>0{dcxp<"uf_igasto">:@@(data,"#igasto")}
 
         do determinarImporteCxP(dcxp,@@(data,"#importe"))
-
-        start_transaction = @false
 
         if not(dbr.in_transaction(db)) {
             do dbr.begin(db)
@@ -252,6 +252,8 @@ module ":erp.cxp.movimientos"
     pagarCxP::&db,&data
     {
         namespace "erp.cxp.movimientos"
+
+        start_transaction = @false
 
         tcambio_doc = @@(data,"#tipocambio")
         tcambio_ret = @@(data,"#tcambio_retiro")
@@ -302,8 +304,6 @@ module ":erp.cxp.movimientos"
             @"aplicadoa": @@(data,"#pkparent")
         }
 
-        start_transaction = @false
-
         if not(dbr.in_transaction(db)) {
             do dbr.begin(db)
             start_transaction = @true
@@ -343,6 +343,8 @@ module ":erp.cxp.movimientos"
     {
         namespace "erp.cxp.movimientos"
 
+        start_transaction = @false
+
         new dcxp
         {
             @"aplicable": @false
@@ -369,8 +371,6 @@ module ":erp.cxp.movimientos"
             @"importe": @@(data,"#importe")
             @"aplicadoa": @@(data,"#pkparent")
         }
-
-        start_transaction = @false
 
         if not(dbr.in_transaction(db)) {
             do dbr.begin(db)
@@ -409,6 +409,8 @@ module ":erp.cxp.movimientos"
     {
         namespace "erp.cxp.movimientos"
 
+        start_transaction = @false
+
         new dcxp
         {
             @"aplicable": @false
@@ -435,8 +437,6 @@ module ":erp.cxp.movimientos"
             @"importe": @@(data,"#importe")
             @"aplicadoa": @@(data,"#pkparent")
         }
-
-        start_transaction = @false
 
         if not(dbr.in_transaction(db)) {
             do dbr.begin(db)
@@ -475,6 +475,8 @@ module ":erp.cxp.movimientos"
     {
         namespace "erp.cxp.movimientos"
 
+        start_transaction = @false
+
         tcambio_pdr = @@(data,"#tcambio")
         tcambio_ret = @@(data,"#tcambio_retiro")
         
@@ -512,8 +514,6 @@ module ":erp.cxp.movimientos"
             @"iproveedor": @@(data,"#iproveedor")
         }
 
-        start_transaction = @false
-
         if not(dbr.in_transaction(db)) {
             do dbr.begin(db)
             start_transaction = @true
@@ -546,6 +546,8 @@ module ":erp.cxp.movimientos"
     {
         namespace "erp.cxp.movimientos"
 
+        start_transaction = @false
+
         new dcxp
         {
             @"aplicable": @false
@@ -561,8 +563,6 @@ module ":erp.cxp.movimientos"
             @"iproveedor": @@(data,"#iproveedor")
         }
         do determinarImporteCxP(dcxp,@@(data,"#importe"))
-
-        start_transaction = @false
 
         if not(dbr.in_transaction(db)) {
             do dbr.begin(db)
