@@ -93,7 +93,7 @@ module "cxp.pago.dk"
             }
         }
 
-        form(action="." method="POST" id="form_pagoprov" onsubmit="return proveedor.form.ValidateForm(event)")
+        form(action="." method="POST" id="form_pagoprov") //onsubmit="return proveedor.form.ValidateForm(event)"
         {
             input(type="hidden" name="iproveedor" value="#<@@(dtprov,'#sys_pk')>")
 

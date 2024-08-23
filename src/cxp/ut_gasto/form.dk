@@ -75,14 +75,6 @@ module "form.dk"
 
 
     ref adjuntos=getFiles(path.concat(@PATH_ADJUNTOS,@("$./sys_guid")),replace(@URL_ADJUNTOS,"@id",@("$./sys_guid")))
-
-    sys_guid=@('$./sys_guid')
-    if trim(sys_guid)==""{sys_guid=uuid()}
-
-    error=@('$error/message')
-    error=replace(error,"Error al invocar runscript.","")
-    error=replace(error,"(","")
-    error=replace(error,")","")
     #$
     div(class="container")
     {
@@ -92,12 +84,7 @@ module "form.dk"
 
             #$ div
             {
-                #! if trim(error)!=""
-                {
-                    #$ p(class="alert alert-danger"){$"#<error>"}
-                }
-                
-                input(type="hidden" class="induxsoft-form-control" id="sys_guid" name="sys_guid" value="#<sys_guid>")
+                p{$"#<@('$error/message')>"}
                 div(class="row mb-2")
                 {
                     div(class="col-lg-4 col-md-4 col-sm-12"){
@@ -277,7 +264,7 @@ module "form.dk"
                     }
                 }
                 #!
-                if @count(adjuntos) > 0
+                if @count(adjuntos)>0
                 {
                     #$
                     div(class="row mt-2")
@@ -289,10 +276,7 @@ module "form.dk"
                                 div(class="card-body")
                                 {
                                     h5{"Adjuntos"}
-                                    
-                                    button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print mb-1 m-1" onclick="gasto.form.preview();"){"Descargar"}
-                                    button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print mb-1 m-1" onclick="gasto.form.DeleteFile();"){"Eliminar"}
-                                    
+                                    button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print mb-1" onclick="gasto.form.preview();"){"Descargar"}
                                     "media-list"(
                                     id="media-list"
                                     data='#<to.json(adjuntos)>'

@@ -9,6 +9,10 @@ var proveedor =
 
     trigger(element,event) {
         if (element) {
+            if (event=='submit') {
+                element.requestSubmit();
+                return
+            }
             let e = new Event(event);
             element.dispatchEvent(e);
         }
@@ -181,7 +185,6 @@ var proveedor =
             if(!form)return true;
 
             if(!form.reportValidity())return false;
-            if(!form.checkValidity())return false;
 
             var fields_number=form.querySelectorAll(".validate-number");
             
@@ -191,7 +194,7 @@ var proveedor =
                 const field = fields_number[i];
                 if(field && field.hasAttribute("required"))
                 {
-                    var data_value=field.getAttribute("data-value");
+                    var data_value=field.getAttribute("data-value") ?? field.value;
                     var value=field.getAttribute("value");
                     var alert_text=field.getAttribute("alert");
                     if(data_value.trim()!="")value=data_value;

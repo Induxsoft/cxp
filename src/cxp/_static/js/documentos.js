@@ -10,9 +10,18 @@ var documento =
 
     trigger(element,event) {
         if (element) {
+            if (event=='submit') {
+                element.requestSubmit();
+                return
+            }
             let e = new Event(event);
             element.dispatchEvent(e);
         }
+    },
+
+    submit(form) {
+        if (!form || !form.reportValidity()) return;
+        form.submit();
     },
 
     round(num, dec=2) {
@@ -113,6 +122,7 @@ var documento =
         btnSave: null,
         dtCXP: {},
         dvsPred: {},
+        decimals: 2,
 
         init()
         {
@@ -131,7 +141,7 @@ var documento =
                     let importe = Number(event.target.value);
                     let saldo = Number(this.dtCXP.saldo);
 
-                    this.elements["txt_nuevo_saldo"].value = Math.sub(saldo,importe);
+                    this.elements["txt_nuevo_saldo"].value = Math.RoundTo(Math.sub(saldo,importe),this.decimals);
                 });
 
                 this.elements["sel_cuenta_retiro"].addEventListener("change", (event) => {
@@ -153,7 +163,7 @@ var documento =
                     let importe_ret = Math.mul(importe_pdr,tcambio_pdr);
                     importe_ret = Math.div(importe_ret,tcambio_ret);
                     
-                    this.elements["txt_importe_retiro"].value = importe_ret;
+                    this.elements["txt_importe_retiro"].value = Math.RoundTo(importe_ret,this.decimals);
                 });
                 this.elements["txt_importe_retiro"].addEventListener("change", (event) => {
                     let tcambio_pdr = Number(this.elements["txt_tcambio"].value);
@@ -163,7 +173,7 @@ var documento =
                     let importe_pdr = Math.mul(importe_ret,tcambio_ret);
                     importe_pdr = Math.div(importe_pdr,tcambio_pdr);
 
-                    this.elements["txt_importe"].value = importe_pdr;
+                    this.elements["txt_importe"].value = Math.RoundTo(importe_pdr,this.decimals);
                     documento.trigger(this.elements["txt_importe"],"input");
                 });
 
@@ -175,8 +185,11 @@ var documento =
                     let importe_ret = Math.mul(importe_pdr,tcambio_pdr);
                     importe_ret = Math.div(importe_ret,tcambio_ret);
 
-                    this.elements["txt_importe_retiro"].value = importe_ret;
+                    this.elements["txt_importe_retiro"].value = Math.RoundTo(importe_ret,this.decimals);
                 });
+
+                documento.trigger(this.elements["txt_importe"],"input");
+                documento.trigger(this.elements["sel_cuenta_retiro"],"change");
             }
         },
 
@@ -271,6 +284,7 @@ var documento =
         btnSave: null,
         dtCXP: {},
         dvsPred: {},
+        decimals: 2,
 
         init()
         {
@@ -289,7 +303,7 @@ var documento =
                     let importe = Number(event.target.value);
                     let saldo = Number(this.dtCXP.saldo);
 
-                    this.elements["txt_nuevo_saldo"].value = Math.sub(saldo,importe);
+                    this.elements["txt_nuevo_saldo"].value = Math.RoundTo(Math.sub(saldo,importe),this.decimals);
                 });
             }
         },
@@ -301,6 +315,7 @@ var documento =
         btnSave: null,
         dtCXP: {},
         dvsPred: {},
+        decimals: 2,
 
         init()
         {
@@ -319,7 +334,7 @@ var documento =
                     let importe = Number(event.target.value);
                     let saldo = Number(this.dtCXP.saldo);
 
-                    this.elements["txt_nuevo_saldo"].value = Math.add(saldo,importe);
+                    this.elements["txt_nuevo_saldo"].value = Math.RoundTo(Math.add(saldo,importe),this.decimals);
                 });
             }
         },

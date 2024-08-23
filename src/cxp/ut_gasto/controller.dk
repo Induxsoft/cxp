@@ -5,16 +5,4 @@ module "controller"
     point @blank to ut.blank
     point @list to ut.list
     point @create to ut.agregarGasto
-    
-    point @read to ut.read
-    point @update to ut.update
-
-    switch @@(input_data,"$action")
-    {
-        case "delete_file"
-        {
-            point @update to deleteFile
-            break
-        }
-    }
 }

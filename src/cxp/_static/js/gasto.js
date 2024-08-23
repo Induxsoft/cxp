@@ -66,27 +66,5 @@ var gasto=
             data["index"]= this.media_list.getData(false).findIndex(e=>e.__internal_id__==id);
             return data;
         },
-        DeleteFile()
-        {
-            var data=this.data_preview;
-            if(!data)
-            {
-                alert("Debe seleccionar un elemento");
-                return;
-            }
-            var new_data=new FormData();
-            new_data.append("file",data.name??"");
-            new_data.append("action","delete_file");
-
-            InduxsoftCrudlModel.InvokeService(".",new_data,
-                (result)=>
-                {
-                    window.location.reload();
-                },
-                (error)=>
-                {
-                    alert(error.message??JSON.stringify(error));
-                },"PUT",false,true,"",true);
-        }
     }
 }

@@ -13,22 +13,22 @@ module "model"
         DATE_FORMAT(cxp.sys_timestamp,'%Y-%m-%d %H:%i:%s') AS sys_timestamp,
         IFNULL(cxp.sys_recver,0) AS sys_recver,
         cxp.aplicable,
-        DATE_FORMAT(cxp.aplicacion,'%Y-%m-%d') AS aplicacion,
-        IFNULL(cxp.bonificaciones,0) AS bonificaciones,
-        IFNULL(cxp.debe,0) AS debe,
+        cxp.referencia,
         cxp.documento,
         DATE_FORMAT(cxp.fecha,'%Y-%m-%d') AS emision,
         DATE_FORMAT(cxp.fultmoratorios,'%Y-%m-%d') AS fultmoratorios,
-        IFNULL(cxp.haber,0) AS haber,
-        IFNULL(cxp.intfinancieros,0) AS intfinancieros,
-        IFNULL(cxp.intmoratorios,0) AS intmoratorios,
-        (IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) AS saldo,
-        cxp.notas,
-        IFNULL(cxp.pagos,0) AS pagos,
-        cxp.referencia,
+        DATE_FORMAT(cxp.aplicacion,'%Y-%m-%d') AS aplicacion,
+        ROUND(IFNULL(cxp.debe,0),@decimals) AS debe,
+        ROUND(IFNULL(cxp.haber,0),@decimals) AS haber,
+        ROUND(IFNULL(cxp.intmoratorios,0),@decimals) AS intmoratorios,
+        ROUND(IFNULL(cxp.intfinancieros,0),@decimals) AS intfinancieros,
+        ROUND(IFNULL(cxp.pagos,0),@decimals) AS pagos,
+        ROUND(IFNULL(cxp.bonificaciones,0),@decimals) AS bonificaciones,
+        ROUND(IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0),@decimals) AS saldo,
         cxp.tipocambio,
         cxp.xaplicar,
         cxp.iproveedor,
+        cxp.notas,
         pdr.codigo AS cproveedor,
         pdr.nombre AS proveedor,
         pdr.saldo AS saldoprov,
@@ -41,8 +41,7 @@ module "model"
 
     cxp.prepareView::&db,&params,&data
     {
-        params<"pk_dvs"> : get_idivisa_predeterminada()
-        sql_divisa_predeterminada = "SELECT sys_pk, codigo, tcambio FROM divisa WHERE sys_pk = @pk_dvs;"
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
         sql_get_proveedor = "
         SELECT 
@@ -101,7 +100,6 @@ module "model"
 
                 data<"info_dcxp*"> : dcxp
                 data<"documentos*"> : dbr.list(db,sql_documentos,@null)
-                data<"dvs_pred*"> : dbr.rec(db,sql_divisa_predeterminada,params)
                 break
             }
             case "pago"
@@ -120,7 +118,6 @@ module "model"
                 data<"documentos_cuenta*"> : dbr.list(db,sql_doc_retiro,@null)
                 data<"cuentas*"> : dbr.list(db,sql_cuentas,@null)
                 data<"categorias*"> : dbr.list(db,sql_cat_egreso,@null)
-                data<"dvs_pred*"> : dbr.rec(db,sql_divisa_predeterminada,params)
                 break
             }
             case "intmoratorios"
@@ -133,9 +130,14 @@ module "model"
 
                 data<"info_dcxp*"> : dcxp
                 data<"documentos*"> : dbr.list(db,sql_documentos,@null)
-                data<"dvs_pred*"> : dbr.rec(db,sql_divisa_predeterminada,params)
                 break
             }
+        }
+
+        using data
+        {
+            @"dvs_pred*": dbr.localize.money(db,@dbr.localize.default.money_code)
+            @"decimals": @@(params,"#decimals")
         }
     }
 
@@ -667,6 +669,7 @@ module "model"
         //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_DOC)) { do rise_error(0,"No autorizado")}
         do dbr.apps.action.grant("GC10")
 
+        params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001"))
         ref data = entity.read(db,params)
         do cxp.prepareView(db,params,data)
 

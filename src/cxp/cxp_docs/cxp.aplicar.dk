@@ -143,9 +143,9 @@ module "cxp.aplicar.dk"
                                     "edit-th"(type="NoEditable" field="referencia"){$"Referencia"}
                                     "edit-th"(type="NoEditable" field="emision" textalign="center" width="8em"){$"Fecha"}
                                     "edit-th"(type="NoEditable" field="aplicacion" textalign="center" width="8em"){$"Vencimiento"}
-                                    "edit-th"(type="NoEditable" field="saldo" textalign="end" format="true" thousandssep="true" decs="2"){$"Saldo"}
-                                    "edit-th"(type="Number" field="aplicar" textalign="end" format="true" thousandssep="true" decs="2"){$"Aplicar"}
-                                    "edit-th"(type="NoEditable" field="sfinal" textalign="end" format="true" thousandssep="true" decs="2"){$"Saldo Final"}
+                                    "edit-th"(type="NoEditable" field="saldo" textalign="end" format="true" thousandssep="true" decs="4"){$"Saldo"}
+                                    "edit-th"(type="Number" field="aplicar" textalign="end" format="true" thousandssep="true" decs="4"){$"Aplicar"}
+                                    "edit-th"(type="NoEditable" field="sfinal" textalign="end" format="true" thousandssep="true" decs="4"){$"Saldo Final"}
                                 }
                             }
                         }

@@ -108,17 +108,9 @@ module "model"
     ut.agregarGasto::&db,&params,&data
     {
         //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
-
         @use_transaction = @false
-        
-        if not(field.exist(data,"sys_guid")){data<"sys_guid">:uuid()}
 
         do dbr.apps.action.pre("GC31")
-
-        //validación si fue autorizado de una sola vez 
-        ref rec=dbr.rec(db,"select * from ut_gasto where sys_guid=@sys_guid",data)
-        if not(isnull(rec)){return @null}
-
         do dbr.begin(db)
 
         new p{@"referencia":@@(data,"$referencia")}
@@ -132,7 +124,7 @@ module "model"
         new gasto
         {
             @"sys_pk": 0
-            @"sys_guid":@@(data,"$sys_guid")
+            @"sys_guid": uuid()
             @"sys_dtcreated*": now()
             @"sys_timestamp*": now()
             @"referencia": @@(data,"$referencia")
@@ -376,38 +368,23 @@ module "model"
         do list.ins(list, 0, record)
         return list
     }
-    deleteFile::&db,&params,&data
-    {
-        ref gasto=dbr.rec(db,"select sys_pk,sys_guid from ut_gasto where sys_pk=@_entity_id",params)
-        if isnull(gasto){do rise_error(500,"No se encontró datos del gasto.")}
-
-        path=path.concat(@PATH_ADJUNTOS,@@(gasto,"$sys_guid"))
-        file=path.concat(path,@@(data,"$file"))
-        if not(file.exists(file)){do rise_error(500,"No se encontró el archivo indicado")}
-
-        do file.delete(file)
-
-        return gasto
-    }
+    
     SaveAdjuntos::&entity
     {
         ref files=@@(@http_context,"&request/files")
         if isnull(files) || @count(files)<1 || isnull(entity){return}
-        
+
         path=path.concat(@PATH_ADJUNTOS,@@(entity,"$sys_guid"))
         do dir.ensure(path)
         
         for i = 0; i < @count(files)
         {
             ref file=@item(files,i)
-            if trim(@@(file,"$filename"))!=""
-            {
-                filename=limpiarTexto(@@(file,"$filename"))
-                path_file=path.concat(path,filename)
-
-                if file.exists(@@(file,"$temp_file")){do file.copy(@@(file,"$temp_file"),path_file)}
-            }
+            filename=limpiarTexto(@@(file,"$filename"))
+            path_file=path.concat(path,filename)
+            do file.copy(@@(file,"$temp_file"),path_file)
         }
     }
-   
+    point @read to ut.read
+    point @update to ut.update
 }
