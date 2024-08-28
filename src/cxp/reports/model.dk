@@ -86,6 +86,8 @@ module "Reportes de Cuentas por Cobrar"
 
     origenAplicacion::&db,&params
     {
+        do dbr.apps.action.grant("GC34")
+
         sql = "
         select
             a.destino,
@@ -118,6 +120,8 @@ module "Reportes de Cuentas por Cobrar"
         do prepareView(db,params,data)
 
         return data
+
+        exception{ do catch() }
     }
 
     NotImplemented::&db,&params { do rise_error(404,"Reporte no implementado") }

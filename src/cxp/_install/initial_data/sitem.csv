@@ -26,3 +26,4 @@ GC27,Bonificación a proveedor,cxp.proveedores
 GC28,Importar proveedores,cxp.proveedores
 cxp.reports,Informes de Cuentas por Pagar,cxp
 GC33,Informe de antigüedad de saldos por pagar,cxp.reports
+GC34,Origen y aplicación,cxp.reports
