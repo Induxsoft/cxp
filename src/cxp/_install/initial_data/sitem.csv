@@ -9,6 +9,7 @@ GC14,Bonificar documento,cxp.documentos
 GC15,Aplicar intereses moratorios a documento por pagar,cxp.documentos
 GC16,Aplicar abonos a documentos por pagar,cxp.documentos
 GC17,Desaplicar abonos de documentos por pagar,cxp.documentos
+GC18,Permitir exceder límite de crédito,cxp.documentos
 cxp.gastos,Gastos,cxp
 GC30,Gastos,cxp.gastos
 GC31,Agregar gasto,cxp.gastos

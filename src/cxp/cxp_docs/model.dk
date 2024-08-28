@@ -2,8 +2,6 @@
 #!
 module "model"
 {
-    #include "../_lib/config.dk"
-
     @table_name = "dcxp"
     @read_query = "
     SELECT
@@ -286,6 +284,7 @@ module "model"
     {
         do errordet(@false)
 
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
         params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
         params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
 
@@ -378,6 +377,7 @@ module "model"
             @"xaplicar*": xAplicar
             @"pendientes*": pendientes
             @"aplicados*": aplicados
+            @"decimals": @@(params,"#decimals")
         }
 
         return result

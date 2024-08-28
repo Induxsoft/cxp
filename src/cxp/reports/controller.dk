@@ -10,10 +10,14 @@ module ""
             point @read to antiguedadSaldos
             break
         }
+        case "origen-aplicacion"
+        {
+            @form_view = "origen.aplicacion.dk"
+            point @read to origenAplicacion
+        }
         default
         {
-            // code...
-            break
+            point @read to NotImplemented
         }
     }
 }

@@ -342,7 +342,7 @@ var documento =
 
     aplicar: {
         tbl_xaplicar:null, arr_xaplicar:[], tbl_aplicados:null, arr_aplicados:[],
-        source:{},
+        source:{}, decimals:2,
 
         init()
         {
@@ -458,21 +458,23 @@ var documento =
 
             let saldo = Number(e.sender.DataArray[cur_row]["saldo"]);
             let aplicar = Number(e.text.trim());
-            let sfinal = (saldo - aplicar);
+            let sfinal = Math.sub(saldo,aplicar);
 
             let aplicado = 0;
+            let xaplicar = 0;
             for (let i = 0; i < arr_xaplicar.length; i++) {
                 const impAplicar = Number(arr_xaplicar[i]["aplicar"]);
                 aplicado = Math.add(aplicado,impAplicar);
             }
-            aplicado = Math.add(aplicado,aplicar);
+            aplicado = Math.RoundTo(Math.add(aplicado,aplicar),this.decimals);
+            xaplicar = Math.RoundTo(Math.sub(sxaplicar,aplicado),this.decimals);
 
             let rst = 
             {
                 aplicar: aplicar,
                 sfinal: sfinal,
                 aplicado: aplicado,
-                xaplicar: Math.sub(sxaplicar,aplicado),
+                xaplicar: xaplicar,
             }
 
             return rst
@@ -497,7 +499,7 @@ var documento =
                 }
 
                 if (rst.xaplicar < 0) {
-                    alert("El importes aplicado no puede superar al saldo disponible para aplicar.");
+                    alert("El importe aplicado no puede superar al saldo disponible para aplicar.");
                     e.cancel = true;
                     return;
                 }
@@ -524,8 +526,8 @@ var documento =
                 const formatter = new Intl.NumberFormat(langcode, {
                     style: "currency",
                     currency: "MXN",
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
+                    minimumFractionDigits: this.decimals,
+                    maximumFractionDigits: this.decimals
                 });
 
                 lbl_aplicado.textContent = formatter.format(rst.aplicado);

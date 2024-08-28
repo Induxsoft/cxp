@@ -33,7 +33,7 @@ module "list.dk"
                 @"align": "end"
                 @"format": @true
                 @"thousandssep": @true
-                @"decs": 2
+                @"decs": 4
             }
             member @"divisa"
             {

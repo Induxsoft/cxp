@@ -6,6 +6,7 @@ module "cxp.aplicar.dk"
     #include "serialize.dkh"
     #include "uielements.v12.dkl"
     #include "../_lib/config.dk"
+    #include "../_lib/lib.dk"
     #include "../_lib/icons.dk"
     
     do @context.begin(@crud_context)
@@ -20,8 +21,9 @@ module "cxp.aplicar.dk"
     ref pendientes = ifnull(@("&./pendientes"),list.create())
     ref aplicados = ifnull(@("&./aplicados"),list.create())
 
+    @DECIMAL_PRECISION = @("#./decimals")
+    
     url_exit = @CXP_DOCS
-    fmoneda = "$ #,0.00"
     show_tab = ""
 
     if @("$parameters/_act") == "desaplicar" { show_tab = "aplicados" }
@@ -102,9 +104,9 @@ module "cxp.aplicar.dk"
                 b(title="Tipo de documento"){$"#<@@(xaplicar,'$documento')>"}
                 b(title="Referencia del documento"){$"#<@@(xaplicar,'$referencia')>"}
                 b(title="Fecha de emisión del documento"){$"#<@@(xaplicar,'$emision')>"}
-                b(id="lbl_saldo" title="Debe del documento"){$"#<format(@@(xaplicar,'#debe'),fmoneda)>"}
-                b(id="lbl_aplicado" title="Saldo aplicado del documento"){$"#<format(@@(xaplicar,'#aplicado'),fmoneda)>"}
-                b(id="lbl_xaplicar" title="Saldo por aplicar del documento"){$"#<format(@@(xaplicar,'#xaplicar'),fmoneda)>"}
+                b(id="lbl_saldo" title="Debe del documento"){$"$ #<number_format(@@(xaplicar,'#debe'))>"}
+                b(id="lbl_aplicado" title="Saldo aplicado del documento"){$"$ #<number_format(@@(xaplicar,'#aplicado'))>"}
+                b(id="lbl_xaplicar" title="Saldo por aplicar del documento"){$"$ #<number_format(@@(xaplicar,'#xaplicar'))>"}
             }
 
             nav(class="")
@@ -143,9 +145,9 @@ module "cxp.aplicar.dk"
                                     "edit-th"(type="NoEditable" field="referencia"){$"Referencia"}
                                     "edit-th"(type="NoEditable" field="emision" textalign="center" width="8em"){$"Fecha"}
                                     "edit-th"(type="NoEditable" field="aplicacion" textalign="center" width="8em"){$"Vencimiento"}
-                                    "edit-th"(type="NoEditable" field="saldo" textalign="end" format="true" thousandssep="true" decs="4"){$"Saldo"}
-                                    "edit-th"(type="Number" field="aplicar" textalign="end" format="true" thousandssep="true" decs="4"){$"Aplicar"}
-                                    "edit-th"(type="NoEditable" field="sfinal" textalign="end" format="true" thousandssep="true" decs="4"){$"Saldo Final"}
+                                    "edit-th"(type="NoEditable" field="saldo" textalign="end" format="true" thousandssep="true" decs="#<@DECIMAL_PRECISION>"){$"Saldo"}
+                                    "edit-th"(type="Number" field="aplicar" textalign="end" format="true" thousandssep="true" decs="#<@DECIMAL_PRECISION>"){$"Aplicar"}
+                                    "edit-th"(type="NoEditable" field="sfinal" textalign="end" format="true" thousandssep="true" decs="#<@DECIMAL_PRECISION>"){$"Saldo Final"}
                                 }
                             }
                         }
@@ -177,9 +179,9 @@ module "cxp.aplicar.dk"
                                     "edit-th"(type="NoEditable" field="referencia"){$"Referencia"}
                                     "edit-th"(type="NoEditable" field="emision" textalign="center" width="8em"){$"Fecha"}
                                     "edit-th"(type="NoEditable" field="aplicacion" textalign="center" width="8em"){$"Vencimiento"}
-                                    "edit-th"(type="NoEditable" field="saldo" textalign="end" format="true" thousandssep="true" decs="2"){$"Saldo"}
-                                    "edit-th"(type="NoEditable" field="aplicado" textalign="end" format="true" thousandssep="true" decs="2"){$"Aplicado"}
-                                    "edit-th"(type="NoEditable" field="santerior" textalign="end" format="true" thousandssep="true" decs="2"){$"Saldo Anterior"}
+                                    "edit-th"(type="NoEditable" field="saldo" textalign="end" format="true" thousandssep="true" decs="#<@DECIMAL_PRECISION>"){$"Saldo"}
+                                    "edit-th"(type="NoEditable" field="aplicado" textalign="end" format="true" thousandssep="true" decs="#<@DECIMAL_PRECISION>"){$"Aplicado"}
+                                    "edit-th"(type="NoEditable" field="santerior" textalign="end" format="true" thousandssep="true" decs="#<@DECIMAL_PRECISION>"){$"Saldo Anterior"}
                                 }
                             }
                         }
@@ -195,6 +197,7 @@ module "cxp.aplicar.dk"
             {$'
                 document.addEventListener("DOMContentLoaded", () => {
                     documento.aplicar.source = #<to.json(xaplicar)> ?? {};
+                    documento.aplicar.decimals = #<@DECIMAL_PRECISION>;
                     documento.aplicar.init();
                 });
             '}

@@ -2,11 +2,44 @@
 #!
 module "Reportes de Cuentas por Cobrar"
 {
+    prepareView::&db,&params,&data
+    {
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
+
+        sql_tiposproveedor = "SELECT sys_pk, descripcion FROM tipoproveedor WHERE NOT IFNULL(sys_deleted,0)"
+
+        switch @@(@http_context,"$request/get/_entity_id")
+        {
+            case "antiguedad-saldos"
+            {
+                using data
+                {
+                    @"list_tipos*": dbr.list(db,sql_tiposproveedor,@null)
+                }
+                break
+            }
+        }
+
+        do prepareDefaultReportData(db,data)
+    }
+
+    prepareDefaultReportData::&db,&data
+    {
+        using data
+        {
+            member @"titles"
+            {
+                @"title": dbr.vars.getd(db,"FXCA108","")
+                @"subtitle": dbr.vars.getd(db,"FXCA109","")
+                @"subtitle_2": dbr.vars.getd(db,"FXCA110","")
+                @"footer": dbr.vars.getd(db,"FXCA111","")
+            }
+        }
+    }
+
     antiguedadSaldos::&db,&params
     {
         do dbr.apps.action.grant("GC33")
-
-        sql_tiposproveedor = "SELECT sys_pk, descripcion FROM tipoproveedor WHERE NOT IFNULL(sys_deleted,0)"
 
         sql_antiguedad_saldo = "
         SELECT
@@ -43,18 +76,59 @@ module "Reportes de Cuentas por Cobrar"
         new data
         {
             @"list*": dbr.list(db,ftext(sql_antiguedad_saldo),params)
-            @"list_tipos*": dbr.list(db,sql_tiposproveedor,@null)
         }
+        do prepareView(db,params,data)
 
         return data
 
-        exception
+        exception{ do catch() }
+    }
+
+    origenAplicacion::&db,&params
+    {
+        sql = "
+        select
+            a.destino,
+            a.sys_pk kapp,
+            x.aplicacion fapl,
+            x.referencia origen,
+            y.fecha fdoc,
+            y.aplicacion fcxp,
+            y.referencia aplicacion,
+            if(a.destino=3,a.importe,0) bonificaciones,
+            if(a.destino=4,a.importe,0) pagos,
+            p.codigo,
+            p.nombre,
+            y.haber importe,
+            y.bonificaciones ac_bonificaciones,
+            y.pagos ac_pagos,
+            y.haber+y.intmoratorios - y.bonificaciones-y.pagos saldo
+        from aplcxp a
+            inner join dcxp x on a.fk_dcxp_aplicadoa=x.sys_pk
+            inner join dcxp y on a.aplicadoa=y.sys_pk 
+            inner join proveedor p on y.iproveedor=p.sys_pk
+        where y.fecha between @finicio and @ffinal
+        order by y.fecha, y.sys_pk, x.aplicacion
+        ;"
+
+        new data
         {
-            do errordet(@false)
-            code = last_error_code()
-            error = last_error()
-            do dbr.apps.action.log()
-            do rise_error(code,error)
+            @"data*": dbr.list(db,sql,params)
         }
+        do prepareView(db,params,data)
+
+        return data
+    }
+
+    NotImplemented::&db,&params { do rise_error(404,"Reporte no implementado") }
+
+    catch::
+    {
+        do errordet(@false)
+        code = last_error_code()
+        error = last_error()
+
+        if isset("@@_action_context"){ do dbr.apps.action.log() }
+        do rise_error(code,error)
     }
 }
