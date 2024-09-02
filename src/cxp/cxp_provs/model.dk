@@ -749,22 +749,27 @@ module "model"
     pdr.create::&db,&params,&data
     {
         @use_transaction = @false
+        do dbr.apps.action.pre("GC21")
 
         ref fieldsProveedor = split("codcuenta,codigo,curp,diascredito,diasentrega,email,fax,limitecredito,nombre,notas,rfc,saldo,status,tasaiva,telefonos,website,contacto1,contacto2,contacto3,idivisa,izona,tipo,uf_vueltaviajero,uf_tipoop",",")
 
         chq_domicilio1 = parse.bool(@@(data,"$chq_domicilio1"))
         chq_domicilio2 = parse.bool(@@(data,"$chq_domicilio2"))
         chq_domicilio3 = parse.bool(@@(data,"$chq_domicilio3"))
+        otorgar_credito = parse.bool(@@(data,"$chq_otorgar_credito"))
+        limitar_credito = parse.bool(@@(data,"$rd_limitar_credito"))
 
         // Datos del nuevo proveedor
         ref proveedor = record.create()
         if trim(@@(data,"$codigo")) == "" {
             sql_gen_code = "SELECT (IF(COUNT(*) >= 1,CONCAT('PV',LPAD(CAST(MAX(SUBSTR(codigo,4,4))+1 AS CHAR),'4','0')),'PV0001')) AS codigo FROM proveedor WHERE codigo LIKE 'PV%';"
-            proveedor<"codigo"> : dbr.str(db,sql_gen_code,@null)
+            codigo = dbr.str(db,sql_gen_code,@null)
+            proveedor<"codigo"> : codigo
+            data<"codigo"> : codigo
         }
         do cleanFormData(fieldsProveedor,data,proveedor)
+        if otorgar_credito && not(limitar_credito) { proveedor<"limitecredito"> : -1 }
 
-        do dbr.apps.action.pre("GC21")
         do dbr.begin(db)
 
         // Datos de domicilios
@@ -863,6 +868,7 @@ module "model"
     pdr.update::&db,&params,&data
     {
         @use_transaction = @false
+        do dbr.apps.action.pre("GC22")
 
         if trim(@@(data,"$codigo")) == "" { do rise_error(99,"Es necesario indicar el código del proveedor.") }
         if trim(@@(data,"$nombre")) == "" { do rise_error(99,"Es necesario indicar un nombre para el proveedor.") }
@@ -873,6 +879,8 @@ module "model"
         chq_domicilio1 = parse.bool(@@(data,"$chq_domicilio1"))
         chq_domicilio2 = parse.bool(@@(data,"$chq_domicilio2"))
         chq_domicilio3 = parse.bool(@@(data,"$chq_domicilio3"))
+        otorgar_credito = parse.bool(@@(data,"$chq_otorgar_credito"))
+        limitar_credito = parse.bool(@@(data,"$rd_limitar_credito"))
 
         // Datos del nuevo proveedor
         new proveedor
@@ -881,9 +889,15 @@ module "model"
             @"sys_timestamp*": now()
             @"sys_recver": @@(data,"#sys_recver")
         }
+        if trim(@@(data,"$codigo")) == "" {
+            sql_gen_code = "SELECT (IF(COUNT(*) >= 1,CONCAT('PV',LPAD(CAST(MAX(SUBSTR(codigo,4,4))+1 AS CHAR),'4','0')),'PV0001')) AS codigo FROM proveedor WHERE codigo LIKE 'PV%';"
+            codigo = dbr.str(db,sql_gen_code,@null)
+            proveedor<"codigo"> : codigo
+            data<"codigo"> : codigo
+        }
         do cleanFormData(fieldsProveedor,data,proveedor)
+        if otorgar_credito && not(limitar_credito) { proveedor<"limitecredito"> : -1 }
 
-        do dbr.apps.action.pre("GC22")
         do dbr.begin(db)
 
         // Datos de domicilios

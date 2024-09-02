@@ -9,22 +9,22 @@ module ":erp.cxp.movimientos"
         fecha = trim(@@(data,"$fecha"))
         aplicacion = trim(@@(data,"$aplicacion"))
         
-        if trim(@@(data,"$referencia")) == "" { do rise_error(500,"Debe indicar una referencia `referencia`.") }
-        if aplicacion == "" { do rise_error(500,"Debe indicar la fecha límite de pago `aplicacion`.") }
-        if fecha == "" { do rise_error(500,"Debe indicar la fecha de emisión del documento `fecha`.") }
-        if @@(data,"#documento") <= 0 { do rise_error(500,"Debe indicar el tipo de documento `documento`.") }
-        if @@(data,"#iproveedor") <= 0 { do rise_error(500,"No se ha indicado un proveedor `iproveedor`.") }
+        if trim(@@(data,"$referencia")) == "" { do rise_error(511,"Debe indicar una referencia `referencia`.") }
+        if aplicacion == "" { do rise_error(512,"Debe indicar la fecha límite de pago `aplicacion`.") }
+        if fecha == "" { do rise_error(513,"Debe indicar la fecha de emisión del documento `fecha`.") }
+        if @@(data,"#documento") <= 0 { do rise_error(514,"Debe indicar el tipo de documento `documento`.") }
+        if @@(data,"#iproveedor") <= 0 { do rise_error(515,"No se ha indicado un proveedor `iproveedor`.") }
 
         ndt_fecha = ndatetime.fromstr(fecha,"yyyy-MM-dd")
         ndt_aplicacion = ndatetime.fromstr(aplicacion,"yyyy-MM-dd")
-        if ndatetime.diff(ndt_aplicacion,ndt_fecha,"d") < 0 { do rise_error(500,"La fecha límite no puede ser inferior a la fecha de emisión.") }
+        if ndatetime.diff(ndt_aplicacion,ndt_fecha,"d") < 0 { do rise_error(516,"La fecha límite no puede ser inferior a la fecha de emisión.") }
 
         new dcxp
         {
             @"sys_pk": 0
             @"sys_guid": uuid()
-            @"sys_dtcreated*": now()
-            @"sys_timestamp*": now()
+            @"sys_dtcreated*": dbr.sql("now()")
+            @"sys_timestamp*": dbr.sql("now()")
             @"sys_info": ""
             @"sys_user": ""
             @"sys_lastuser": ""
@@ -34,14 +34,14 @@ module ":erp.cxp.movimientos"
             @"sys_deleted": @false
             @"sys_lock": 0
             @"aplicable": @true
-            @"aplicacion*": now()
+            @"aplicacion*": dbr.sql("now()")
             @"auditado": @false
             @"basecm*": @null
             @"bonificaciones": 0.0
             @"contabilizado": @false
             @"debe": 0.0
             @"documento*": @null
-            @"fecha*": now()
+            @"fecha*": dbr.sql("now()")
             @"fultmoratorios*": @null
             @"haber": 0.0
             @"intfinancieros": 0.0
@@ -151,18 +151,39 @@ module ":erp.cxp.movimientos"
         }
 
         dcxp<"aplicable"> : (field.num(dcxp,"haber") > 0)
-
-        if field.exist(data,"aplicable") && trim(@@(data,"$aplicable"))!=""{dcxp<"aplicable"> :@@(data,"aplicable")}
+        if field.exist(data,"aplicable") { dcxp<"aplicable"> : parse.bool(@@(data,"$aplicable")) }
 
         if not(dbr.in_transaction(db)) {
             do dbr.begin(db)
             start_transaction = @true
         }
+
+        ref params = record.copy(dcxp,"debe,haber,intmoratorios,bonificaciones,pagos,iproveedor")
+
+        // Validar crédito del proveedor.
+        ref credit_limit = dbr.rec(db,"
+            SELECT
+                IFNULL(limitecredito,0) limite_credito,
+                IFNULL(diascredito,0) dias_credito,
+                IF(IFNULL(limitecredito,0) = -1, FALSE, ((IFNULL(saldo,0) + (@haber - @debe)) > IFNULL(limitecredito,0))) AS limite_excedido
+            FROM proveedor
+            WHERE sys_pk = @iproveedor
+        ",params)
+        if @@(credit_limit,"#limite_excedido") {
+            // Permitir exceder límite de crédito.
+            priv_id = "GC18:DET03F:"+@@(params,"$iproveedor")
+            if not(dbr.security.isauth(db,priv_id)) { do rise_error(598,"Denegado por falta de privilegio requerido: '"+priv_id+"' Esta operación excede el límite de crédito del proveedor.") }
+        }
         
+        // Generar documento por pagar (dcxp).
         do dbr.insert(db,"dcxp",dcxp)
+        pk_dcxp = dbr.num(db,"select last_insert_id();",@null)
+
+        // Afectar saldo del proveedor.
+        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) + @haber - @debe) WHERE sys_pk = @iproveedor;",params)
         
         if start_transaction { do dbr.commit(db) }
-        return dbr.num(db,"select last_insert_id();",@null)
+        return pk_dcxp
 
         exception
         {
@@ -234,13 +255,11 @@ module ":erp.cxp.movimientos"
             start_transaction = @true
         }
 
-        // Generar documento por pagar (dcxp).
-        lastId = saveCxP(db,dcxp)
-        // Afectar saldo del proveedor.
-        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) + @haber - @debe) WHERE sys_pk = @iproveedor;",dcxp)
+        // Generar documento por pagar (dcxp) y Adectar saldo del proveedor.
+        pk_dcxp = saveCxP(db,dcxp)
         
         if start_transaction { do dbr.commit(db) }
-        return lastId
+        return pk_dcxp
 
         exception
         {
@@ -316,21 +335,24 @@ module ":erp.cxp.movimientos"
             @"pkparent": @@(data,"#pkparent")
         }
 
+        do determinarImporteCxP(dcxp,importe_doc)
         // Realizar retiro a la cuenta.
         dcxp<"imovchequera"> : erp.efectivo.movimientos.retiro(db,retiro)
-        // Generar documento por pagar (dcxp).
-        do determinarImporteCxP(dcxp,importe_doc)
-        aplcxp<"fk_dcxp_aplicadoa"> : saveCxP(db,dcxp)
+        // Generar documento por pagar (dcxp) y Afectar saldo del proveedor.
+        pk_dcxp = saveCxP(db,dcxp)
         // Aplicar pago.
+        aplcxp<"fk_dcxp_aplicadoa"> : pk_dcxp
         do dbr.insert(db,"aplcxp",aplcxp)
         
-        sql_aplicar_pago = "UPDATE dcxp SET pagos = (IFNULL(pagos,0) + @importe_doc) WHERE sys_pk = @pkparent 
-        AND ((IFNULL(haber,0) + IFNULL(intmoratorios,0) - IFNULL(bonificaciones,0) - IFNULL(pagos,0) - @importe_doc) >= 0);"
+        sql_aplicar_pago = "
+        UPDATE dcxp SET pagos = (IFNULL(pagos,0) + @importe_doc)
+        WHERE sys_pk = @pkparent
+            AND ((IFNULL(haber,0) + IFNULL(intmoratorios,0) - IFNULL(bonificaciones,0) - IFNULL(pagos,0) - @importe_doc) >= 0)
+        "
         if not(dbr.execute(db,sql_aplicar_pago,p)) { do rise_error(500,"Documento destino no encontrado o el importe a pagar es mayor al saldo.") }
-        // Afectar saldo del proveedor.
-        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe_doc) WHERE sys_pk = @iproveedor;",p)
 
         if start_transaction { do dbr.commit(db) }
+        return pk_dcxp
 
         exception
         {
@@ -384,19 +406,22 @@ module ":erp.cxp.movimientos"
             @"pkparent": @@(data,"#pkparent")
         }
 
-        // Generar documento por pagar (dcxp).
         do determinarImporteCxP(dcxp,@@(data,"#importe"))
-        aplcxp<"fk_dcxp_aplicadoa"> : saveCxP(db,dcxp)
+        // Generar documento por pagar (dcxp) y Afectar saldo del proveedor.
+        pk_dcxp = saveCxP(db,dcxp)
         // Aplicar bonificación.
+        aplcxp<"fk_dcxp_aplicadoa"> : pk_dcxp
         do dbr.insert(db,"aplcxp",aplcxp)
 
-        sql_aplicar_bonific = "UPDATE dcxp SET bonificaciones = (IFNULL(bonificaciones,0) + @importe) WHERE sys_pk = @pkparent 
-        AND ((IFNULL(haber,0) + IFNULL(intmoratorios,0) - IFNULL(bonificaciones,0) - IFNULL(pagos,0) - @importe) >= 0);"
+        sql_aplicar_bonific = "
+        UPDATE dcxp SET bonificaciones = (IFNULL(bonificaciones,0) + @importe)
+        WHERE sys_pk = @pkparent
+            AND ((IFNULL(haber,0) + IFNULL(intmoratorios,0) - IFNULL(bonificaciones,0) - IFNULL(pagos,0) - @importe) >= 0)
+        "
         if not(dbr.execute(db,sql_aplicar_bonific,p)) { do rise_error(500,"Documento destino no encontrado o la bonificación es mayor al saldo") }
-        // Afectar saldo del proveedor.
-        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe) WHERE sys_pk = @iproveedor;",p)
 
         if start_transaction { do dbr.commit(db) }
+        return pk_dcxp
 
         exception
         {
@@ -450,19 +475,22 @@ module ":erp.cxp.movimientos"
             @"pkparent": @@(data,"#pkparent")
         }
 
-        // Generar documento por pagar (dcxp).
         do determinarImporteCxP(dcxp,@@(data,"#importe"))
-        aplcxp<"fk_dcxp_aplicadoa"> : saveCxP(db,dcxp)
+        // Generar documento por pagar (dcxp) y Afectar saldo del proveedor.
+        pk_dcxp = saveCxP(db,dcxp)
         // Aplicar IntMor
+        aplcxp<"fk_dcxp_aplicadoa"> : pk_dcxp
         do dbr.insert(db,"aplcxp",aplcxp)
 
-        sql_aplicar_intmor = "UPDATE dcxp SET intmoratorios = (IFNULL(intmoratorios,0) + @importe) WHERE sys_pk = @pkparent 
-        AND ((IFNULL(haber,0) + IFNULL(intmoratorios,0) - IFNULL(bonificaciones,0) - IFNULL(pagos,0) - @importe) >= 0);"
+        sql_aplicar_intmor = "
+        UPDATE dcxp SET intmoratorios = (IFNULL(intmoratorios,0) + @importe)
+        WHERE sys_pk = @pkparent
+            AND ((IFNULL(haber,0) + IFNULL(intmoratorios,0) - IFNULL(bonificaciones,0) - IFNULL(pagos,0) - @importe) >= 0)
+        "
         if not(dbr.execute(db,sql_aplicar_intmor,p)) { do rise_error(500,"Documento destino no encontrado o el importe es mayor al saldo.") }
-        // Afectar saldo del proveedor
-        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) + @importe) WHERE sys_pk = @iproveedor;",p)
 
         if start_transaction { do dbr.commit(db) }
+        return pk_dcxp
 
         exception
         {
@@ -527,13 +555,12 @@ module ":erp.cxp.movimientos"
 
         // Realizar retiro a la cuenta.
         dcxp<"imovchequera"> : erp.efectivo.movimientos.retiro(db,retiro)
-        // Generar documento por pagar (dcxp).
+        // Generar documento por pagar (dcxp) y Afectar saldo del proveedor.
         do determinarImporteCxP(dcxp,importe_pdr)
-        do saveCxP(db,dcxp)
-        // Afectar saldo del proveedor.
-        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe_pdr) WHERE sys_pk = @iproveedor;",p)
+        pk_dcxp = saveCxP(db,dcxp)
 
         if start_transaction { do dbr.commit(db) }
+        return pk_dcxp
 
         exception
         {
@@ -562,25 +589,20 @@ module ":erp.cxp.movimientos"
             @"xaplicar": @@(data,"#importe")
             @"iproveedor": @@(data,"#iproveedor")
         }
-        do determinarImporteCxP(dcxp,@@(data,"#importe"))
+
+        if @@(data,"#icompra") > 0 { dcxp<"icompra"> : @@(data,"#icompra") }
 
         if not(dbr.in_transaction(db)) {
             do dbr.begin(db)
             start_transaction = @true
         }
 
-        new p
-        {
-            @"iproveedor": @@(data,"#iproveedor")
-            @"importe": @@(data,"#importe")
-        }
-
-        // Generar documento por pagar (dcxp).
-        do saveCxP(db,dcxp)
-        // Afectar saldo del proveedor.
-        do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @importe) WHERE sys_pk = @iproveedor;",p)
+        // Generar documento por pagar (dcxp) y Afectar saldo del proveedor.
+        do determinarImporteCxP(dcxp,@@(data,"#importe"))
+        pk_dcxp = saveCxP(db,dcxp)
 
         if start_transaction { do dbr.commit(db) }
+        return pk_dcxp
 
         exception
         {

@@ -1,6 +1,6 @@
 #include "dkli.dkh"
 #!
-module "Reportes de Cuentas por Cobrar"
+module "Reportes de Cuentas por Pagar"
 {
     prepareView::&db,&params,&data
     {

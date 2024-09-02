@@ -40,14 +40,14 @@ section(class="" id="")
                 div(class="form-check form-check-inline")
                 {
                     label(class="form-check-label") {
-                        input(class="form-check-input" type="radio" name="rd_limitar_credito" id="rd_credito_ilimitado" "#<ifstr(not(hasLimit),'checked','')>"="")
+                        input(class="form-check-input" type="radio" name="rd_limitar_credito" value="0" id="rd_credito_ilimitado" "#<ifstr(not(hasLimit),'checked','')>"="")
                         $"Ilimitado"
                     }
                 }
                 div(class="form-check form-check-inline")
                 {
                     label(class="form-check-label") {
-                        input(class="form-check-input" type="radio" name="rd_limitar_credito" id="rd_credito_limitado" value="1" "#<ifstr(hasLimit,'checked','')>"="")
+                        input(class="form-check-input" type="radio" name="rd_limitar_credito" value="1" id="rd_credito_limitado" "#<ifstr(hasLimit,'checked','')>"="")
                         $"Limite"
                     }
                 }
