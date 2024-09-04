@@ -4,9 +4,9 @@ module "form.dk"
 {
     #include "functions.dkh"
     #include "serialize.dkh"
-    #include "../_lib/icons.dk"
-    #include "../_lib/config.dk"
     #include "uielements.v12.dkl"
+    #include "../_lib/config.dk"
+    #include "../_lib/icons.dk"
 
     do @context.begin(@crud_context)
     ref @http_context = @('&http')
@@ -17,6 +17,8 @@ module "form.dk"
     get<"filter-mode">: ifstr(trim(@@(get,"filter-mode"))!="", @@(get,"filter-mode"), "month")
     get<"year">: ifstr(trim(@@(get,"year"))!="", @@(get,"year"), str(ndatetime.year(ndatetime.now())))
     get<"month">: ifstr(trim(@@(get,"month"))!="", @@(get,"month"), str(ndatetime.month(ndatetime.now())))
+
+    @DECIMAL_PRECISION = @("#parameters/decimals")
 
     new def_edo_admin
     {
@@ -58,7 +60,7 @@ module "form.dk"
                 @"align":"end"
                 @"format":@true
                 @"thousandssep": @true
-                @"decs":2
+                @"decs":@DECIMAL_PRECISION
             }
             member @"divisa"
             {
@@ -71,7 +73,7 @@ module "form.dk"
                 @"align":"end"
                 @"format":@true
                 @"thousandssep": @true
-                @"decs":6
+                @"decs":@DECIMAL_PRECISION
             }
             member @"edo_admin"
             {

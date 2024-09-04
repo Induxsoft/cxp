@@ -5,9 +5,9 @@ module "form.dk"
     #include "functions.dkh"
     #include "serialize.dkh"
     #include "uielements.dkl"
-    #include "../_lib/icons.dk"
     #include "../_lib/config.dk"
     #include "../_lib/lib.dk"
+    #include "../_lib/icons.dk"
 
     do @context.begin(@crud_context)
     ref listTipoProveedor = ifnull(@("&./list_tproveedores"),list.create())
@@ -25,7 +25,10 @@ module "form.dk"
     ref domicilio2 = ifnull(@("&./domicilio2"),record.create())
     ref domicilio3 = ifnull(@("&./domicilio3"),record.create())
 
-    // do rise_error(0,to.json(@("&.")))
+    @DECIMAL_PRECISION = @("#parameters/decimals")
+
+    num_step = "0."+padright("",(@DECIMAL_PRECISION-1),"0")+"1"
+    num_max = "9999999999."+padright("",@DECIMAL_PRECISION,"9")
 
     new sel_tipo
     {

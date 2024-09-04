@@ -47,6 +47,8 @@ module
 	// Formato de moneda (dkl)
 	@FMT_MONEY = "$ "+"#"+@THOUSANDS_SEPARATOR+"0"+@DECIMAL_SEPARATOR+padright("",@DECIMAL_PRECISION,"0")
 
+	@default_gasto_attachment_path = "data/@qname/cxp/gastos/@gasto/"
+
 	//* ======================================== [ _STATIC RESOURCES ]
 	@CSS_MAIN = "/$/cxp/css/main.css"
 	@JS_PROVEEDORES = "/$/cxp/js/proveedores.js"

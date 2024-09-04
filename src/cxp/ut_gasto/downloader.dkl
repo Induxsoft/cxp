@@ -1,0 +1,24 @@
+#include "dkli.dkh"
+#!
+program "download-file"
+{
+    ref db = @@(@http_context,"&session/idp/database")
+
+    qa_issues_path = dbr.vars.getd(db,"qa_issues_path",@_default_entity_attachments_path)
+    qa_issues_path = replace_path_macros(qa_issues_path)
+
+    if qa_issues_path == "" { do rise_error(500,"Ruta física de base no esta definida.") }
+
+    file_name = @@(@http_context,"$request/get/filename")
+    file_path = path.concat(qa_issues_path,file_name)
+    
+    // Establecer encabezado de respuesta http
+    @http_context<"response/headers/content-type"> : "application/octet-stream;"
+    // Indicar que se trata de un archivo adjunto y su nombre
+    // Más información en: https://developer.mozilla.org/es/docs/Web/HTTP/Headers/Content-Disposition
+    @http_context<"response/headers/content-disposition"> : "attachment; filename="+file_name
+    // Indicar tipo de respuesta
+    @http_context<"response/output"> : "binary"
+    // Asignar la respuesa de salida
+    @http_context<"response/binary*"> : file.rbytes(file_path) //Lee y devuelve el array de bytes del archivo
+}

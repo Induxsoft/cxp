@@ -1,6 +1,3 @@
-
-
-
 var gasto=
 {
     form:
@@ -57,8 +54,21 @@ var gasto=
                 alert("Debe seleccionar un elemento");
                 return;
             }
+
+            let pk_gasto = document.querySelector("input[name='sys_pk']").value;
+            let id_gasto = document.querySelector("input[name='sys_guid']").value;
             
-            window.open(data.url,"_blank");
+            let url = "/!/cxp/gasto-files/"+pk_gasto+"/files/?_act=download&gasto="+id_gasto+"&filename="+data.name;
+            window.location.href = url;
+            // fetch(url).then(response => response.json())
+            // .then(data => {
+            //     if (data.message) {
+            //         alert(data.message);
+            //         return
+            //     }
+            //     console.log(data)
+            // })
+            // .catch(error => { alert(error.message ?? JSON.stringify(error)) })
         },
         getDataById(id)
         {

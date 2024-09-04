@@ -167,8 +167,7 @@ module "model"
 
     cxp.prepareView::&db,&params,&data
     {
-        params<"pk_dvs"> : get_idivisa_predeterminada()
-        sql_divisa_predeterminada = "SELECT sys_pk, codigo, tcambio FROM divisa WHERE sys_pk = @pk_dvs;"
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
         switch @@(params,"$_view")
         {
@@ -180,7 +179,6 @@ module "model"
 
                 data<"info_prov*"> : cxp.obtenerProveedor(db,@@(params,"_entity_id"))
                 data<"documentos*"> : dbr.list(db,sql_documentos,@null)
-                data<"dvs_pred*"> : dbr.rec(db,sql_divisa_predeterminada,params)
                 break
             }
             case "pago"
@@ -197,7 +195,6 @@ module "model"
                 data<"cuentas*"> : dbr.list(db,sql_cuentas,@null)
                 data<"categorias*"> : dbr.list(db,sql_categorias,@null)
                 data<"documentos_cuenta*"> : dbr.list(db,sql_documentos_retiro,@null)
-                data<"dvs_pred*"> : dbr.rec(db,sql_divisa_predeterminada,params)
 
                 break
             }
@@ -268,6 +265,12 @@ module "model"
                 data<"list_tasasiva*"> : dbr.list(db,sql_tasasiva,@null)
                 break
             }
+        }
+
+        using data
+        {
+            @"dvs_pred*": dbr.localize.money(db,@dbr.localize.default.money_code)
+            @"decimals": @@(params,"#decimals")
         }
     }
 
@@ -746,6 +749,35 @@ module "model"
         }
     }
 
+    validateFields::&data
+    {
+        if trim(@@(data,"$nombre")) == "" { do rise_error(511,"El valor de 'Nombre' es requerido.") }
+        if @@(data,"#tipo") < 1 { do rise_error(512,"El valor de 'Tipo' es requerido.") }
+        if @@(data,"#idivisa") < 1 { do rise_error(513,"El valor de 'Divisa' es requerido.") }
+        if @@(data,"#tasaiva") < 1 { do rise_error(514,"El valor de 'Tasa IVA' es requerido.") }
+
+        curp = toupper(trim(@@(data,"$curp")))
+        if curp != ""
+        {
+            if length(curp) != 18 { do rise_error(515,"El valor de 'CURP' no tiene la longitud requerida (18).") }
+            // Validar formato general.
+            curp_regex = "^([A-Z][AEIOUX][A-Z]{2}\\d{2}(?:0\\d|1[0-2])(?:[0-2]\\d|3[01])[HM](?:AS|B[CS]|C[CLMSH]|D[FG]|G[TR]|HG|JC|M[CNS]|N[ETL]|OC|PL|Q[TR]|S[PLR]|T[CSL]|VZ|YN|ZS)[B-DF-HJ-NP-TV-Z]{3}[A-Z\\d])(\\d)$"
+            if not(Regex.IsMatch(curp,curp_regex)) { do rise_error(516,"El valor de 'CURP' no tiene un formato válido.") }
+
+            data<"curp"> : curp
+        }
+        rfc = toupper(trim(@@(data,"$rfc")))
+        if rfc != ""
+        {
+            if not(between(length(rfc),12,13)) { do rise_error(517,"El valor de 'RFC' no tinene la longitud requerida (12-13).") }
+            // Validar formato general.
+            rfc_regex = "^[A-Z&Ñ]{3,4}[0-9]{2}(0[1-9]|1[012])(0[1-9]|[12][0-9]|3[01])[A-Z0-9]{2}[0-9A]$"
+            if not(Regex.IsMatch(rfc,rfc_regex)) { do rise_error(518,"El valor de 'RFC' no tiene un formato válido.") }
+
+            data<"rfc"> : rfc
+        }
+    }
+
     pdr.create::&db,&params,&data
     {
         @use_transaction = @false
@@ -769,6 +801,8 @@ module "model"
         }
         do cleanFormData(fieldsProveedor,data,proveedor)
         if otorgar_credito && not(limitar_credito) { proveedor<"limitecredito"> : -1 }
+
+        do validateFields(proveedor)
 
         do dbr.begin(db)
 
@@ -897,6 +931,8 @@ module "model"
         }
         do cleanFormData(fieldsProveedor,data,proveedor)
         if otorgar_credito && not(limitar_credito) { proveedor<"limitecredito"> : -1 }
+
+        do validateFields(proveedor)
 
         do dbr.begin(db)
 

@@ -38,14 +38,25 @@ module "Controller configs"
     //    //Si es la ruta indicada esto es @true pero no se modifica _entities_type
     // }
 
-	// do rise_error(0,to.json(@http_context))
-
 	//No modifique a menos que sepa lo que está haciendo
 	do crudl.routes.pattern("/_program/")
 	do crudl.routes.entity("/documentos/","cxp_docs")
 	do crudl.routes.entity("/proveedores/","cxp_provs")
 	do crudl.routes.entity("/gastos/","ut_gasto")
 	do crudl.routes.entity("/reports/","reports")
+
+	if crudl.route("/gasto-files/")
+	{
+		package_path = path.concat(@path_root,@base_path)
+		gasto_path = path.concat(package_path,"ut_gasto")
+		
+		if @@(@http_context,"$request/get/_act") == "download" {
+			include path.concat(gasto_path,"model.dk")
+			do Download(@@(@http_context,"&session/idp/database"),@@(@http_context,"&request/get"))
+		}
+		
+		return
+	}
 	
 	@dbmvc_path="crudl/"
 	

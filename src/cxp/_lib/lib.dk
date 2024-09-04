@@ -3,6 +3,17 @@
 #!
 module "lib.dk"
 {
+    ref lib_regex = _import_library("System.Text.RegularExpressions.dll")
+    /**
+    * Indica si la expresión regular especificada busca una coincidencia en la cadena de entrada indicada.
+    *
+    * @param String input | Cadena en la que se va a buscar una coincidencia.
+    * @param String pattern | Patrón de expresión regular del que van a buscarse coincidencias.
+    *
+    * @link https://learn.microsoft.com/es-es/dotnet/api/system.text.regularexpressions.regex.ismatch?view=net-8.0#system-text-regularexpressions-regex-ismatch(system-string-system-string)
+    */
+    do _map_function(lib_regex,"System.Text.RegularExpressions.Regex","IsMatch","Regex.IsMatch","System.String, System.String","#")
+    
     function hoy(fmt)
     {
         return date_str(now(),str(fmt))

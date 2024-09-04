@@ -2,34 +2,48 @@
 #!
 module "model"
 {
-    @read_query="SELECT 
-            ut.sys_pk,
-            ut.sys_guid,
-            pdr.sys_pk pkproveedor,ut.total importe,
-            cat.descripcion AS categoria,
-            ut.referencia,
-            DATE_FORMAT(ut.fecha,'%Y-%m-%d') AS fecha,
-            DATE_FORMAT(ut.vencimiento,'%Y-%m-%d') AS vencimiento,
-            pdr.nombre AS proveedor,
-            ut.concepto,
-            IFNULL(ut.total,0) AS total,
-            dvs.codigo AS divisa,
-            ut.tipocambio AS tcambio,
-            edo.const AS edo_admin,
-            fpg.const AS formapago,mc.icuenta,mc.tipo,mc.beneficiario,
-            ut.iva,ut.retisr,ut.retiva,ut.subtotal,ut.formapago fmpago,dc.documento dcdoc
-        FROM ut_gasto AS ut
-            left JOIN proveedor AS pdr ON pdr.sys_pk = ut.iproveedor
-            left JOIN categoria AS cat ON cat.sys_pk = ut.icategoria
-            left JOIN divisa AS dvs ON dvs.sys_pk = ut.idivisa
-            left JOIN cformaspago AS fpg ON fpg.id = ut.formapago
-            left JOIN cstatusadministrativos AS edo ON edo.id = ut.statusadministrativo
-            left JOIN movcuenta mc on ut.imovchequera=mc.sys_pk
-            left join dcxp dc on ut.sys_pk=dc.uf_igasto
-        WHERE TRUE and ut.sys_pk=@_entity_id"
+    @read_query = "
+    SELECT 
+        ut.sys_pk,
+        ut.sys_guid,
+        ut.sys_recver,
+        pdr.sys_pk pkproveedor,
+        ROUND(IFNULL(ut.total,0),@decimals) AS importe,
+        cat.descripcion AS categoria,
+        ut.referencia,
+        DATE_FORMAT(ut.fecha,'%Y-%m-%d') AS fecha,
+        DATE_FORMAT(ut.vencimiento,'%Y-%m-%d') AS vencimiento,
+        pdr.nombre AS proveedor,
+        ut.concepto,
+        ROUND(IFNULL(ut.total,0),@decimals) total,
+        dvs.codigo AS divisa,
+        ROUND(ut.tipocambio,@decimals) tcambio,
+        edo.const AS edo_admin,
+        fpg.const AS formapago,
+        mc.icuenta,
+        mc.tipo,
+        mc.beneficiario,
+        ROUND(IFNULL(ut.iva,0),@decimals) iva,
+        ROUND(IFNULL(ut.retisr,0),@decimals) retisr,
+        ROUND(IFNULL(ut.retiva,0),@decimals) retiva,
+        ROUND(IFNULL(ut.subtotal,0),@decimals) subtotal,
+        ut.formapago fmpago,
+        dc.documento dcdoc
+    FROM ut_gasto AS ut
+        left JOIN proveedor AS pdr ON pdr.sys_pk = ut.iproveedor
+        left JOIN categoria AS cat ON cat.sys_pk = ut.icategoria
+        left JOIN divisa AS dvs ON dvs.sys_pk = ut.idivisa
+        left JOIN cformaspago AS fpg ON fpg.id = ut.formapago
+        left JOIN cstatusadministrativos AS edo ON edo.id = ut.statusadministrativo
+        left JOIN movcuenta mc on ut.imovchequera=mc.sys_pk
+        left join dcxp dc on ut.sys_pk=dc.uf_igasto
+    WHERE TRUE and ut.sys_pk=@_entity_id
+    "
 
     ut.prepareView::&db,&params,&data
     {
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
+
         switch @@(params,"$_view")
         {
             case ""
@@ -56,7 +70,6 @@ module "model"
                     sql = "SELECT sys_pk, CONCAT('[',codigo,']',' ',descripcion) AS divisa FROM divisa ORDER BY sys_pk;"
                     data<"divisas*"> : dbr.list(db,sql,@null)
                 }
-                
                 
                 break
             }
@@ -168,7 +181,7 @@ module "model"
             }
             do erp.cxp.movimientos.crearCxP(db,cxp)
         }
-        do SaveAdjuntos(gasto)
+        do SaveAdjuntos(db,params,gasto)
 
         do dbr.apps.action.pos(@null)
         do dbr.commit(db)
@@ -189,6 +202,7 @@ module "model"
     ut.list::&db,&params
     {
         //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_GASTOS)) { do rise_error(0,"No autorizado")}
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
         do dbr.apps.action.grant("GC30")
 
         params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
@@ -211,9 +225,9 @@ module "model"
             DATE_FORMAT(ut.vencimiento,'%Y-%m-%d') AS vencimiento,
             pdr.nombre AS proveedor,
             ut.concepto,
-            IFNULL(ut.total,0) AS total,
+            ROUND(IFNULL(ut.total,0),@decimals) AS total,
             dvs.codigo AS divisa,
-            ut.tipocambio AS tcambio,
+            ROUND(ut.tipocambio,@decimals) AS tcambio,
             edo.const AS edo_admin,
             fpg.const AS formapago
         FROM ut_gasto AS ut
@@ -270,28 +284,32 @@ module "model"
     ut.read::&db,&params
     {
         //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_UN_GASTO)) { do rise_error(0,"No autorizado")}
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
         do dbr.apps.action.grant("GC30")
             
         ref entity=entity.read(db,params)
+        params<"gasto"> : @@(entity,"$sys_guid")
 
         sql = "SELECT sys_pk,descripcion FROM categoria WHERE tipo = 2 AND NOT IFNULL(sys_deleted,0) ORDER BY sys_pk;"
         entity<"categorias*"> : dbr.list(db,sql,@null)
         sql = "SELECT sys_pk, CONCAT('[',codigo,']',' ',descripcion) AS divisa FROM divisa ORDER BY sys_pk;"
         entity<"divisas*"> : dbr.list(db,sql,@null)
 
-        sql = "SELECT 
-                        pdr.sys_pk,
-                        pdr.codigo,
-                        pdr.nombre,
-                        tpp.descripcion AS tipo,
-                        dvs.codigo AS divisa,
-                        dvs.tcambio
-                    FROM proveedor AS pdr 
-                        INNER JOIN tipoproveedor AS tpp ON tpp.sys_pk = pdr.tipo
-                        INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
-                    WHERE "
+        sql = "
+        SELECT 
+            pdr.sys_pk,
+            pdr.codigo,
+            pdr.nombre,
+            tpp.descripcion AS tipo,
+            dvs.codigo AS divisa,
+            dvs.tcambio
+        FROM proveedor AS pdr 
+            INNER JOIN tipoproveedor AS tpp ON tpp.sys_pk = pdr.tipo
+            INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
+        WHERE pdr.sys_pk = @pvdr;"
         new p{@"pvdr":@@(entity,"pkproveedor")}
-        entity<"info_proveedor*"> : dbr.rec(db, sql+" pdr.sys_pk = @pvdr;",p)
+        entity<"info_proveedor*"> : dbr.rec(db,sql,p)
+        entity<"adjuntos*"> : GetAdjuntos(db,params)
         do ut.prepareView(db,params,entity)
 
         do ut.data(db,entity)
@@ -311,9 +329,7 @@ module "model"
     {
         if parse.bool(@@(data,"onlyfile"))
         {
-            ref gasto=dbr.rec(db,"select * from ut_gasto where sys_pk=@_entity_id",params)
-            do SaveAdjuntos(gasto)
-            return gasto
+            return SaveAdjuntos(db,params,@null)
         }
         if field.exist(data,"proveedor")
         {
@@ -368,23 +384,114 @@ module "model"
         do list.ins(list, 0, record)
         return list
     }
-    
-    SaveAdjuntos::&entity
-    {
-        ref files=@@(@http_context,"&request/files")
-        if isnull(files) || @count(files)<1 || isnull(entity){return}
 
-        path=path.concat(@PATH_ADJUNTOS,@@(entity,"$sys_guid"))
-        do dir.ensure(path)
+    function replace_path_macros(path,&params)
+    {
+        if not(isset("@http_context")) && isset("@crud_context") { ref @http_context = ifnull(@@(@crud_context,"&http"),record.create()) }
+
+        _prt = ifstr(parse.bool(@@(@http_context,"$request/headers/HTTPS")),"https","http")
+        _hst = @@(@http_context, "$request/headers/HTTP_HOST")
+        _cnn = @@(@http_context,"$session/idp/qname")
+        _pkt = @@(params, "$_pack")
+        _prg = @@(params, "$_program")
+        _etp = @@(params, "$_entities_type")
+        _eid = @@(params, "$_entity_id")
+        _vst = @@(params, "$_view")
+
+        path = replace(path, "@protocol", _prt)
+        path = replace(path, "@host", _hst)
+        path = replace(path, "@qname", _cnn)
+        go foreach.fstr(key:key,value:val) with(params) {
+            path = replace(path,"@"+key,val)
+        }
+
+        return path
+    }
+    
+    SaveAdjuntos::&db,&params,&data
+    {
+        ref files = @@(@http_context,"&request/files")
+        if isnull(data) { ref data:record.create() }
+        if isnull(files) || @count(files) < 1 { return }
+
+        if @@(params,"$gasto")=="" { params<"gasto"> : @@(data,"$sys_guid") }
+        if @@(params,"$gasto")=="" { params<"gasto"> : dbr.str(db,"select sys_guid from ut_gasto where sys_pk = @_entity_id",params) }
+
+        attachment_path = dbr.vars.getd(db,"gasto_attachment_path",@default_gasto_attachment_path)
+        attachment_path = replace_path_macros(attachment_path,params)
+
+        if attachment_path == "" { do rise_error(500,"Ruta física de base no esta definida.") }
+
+        do dir.ensure(attachment_path)
+        ref uploaded = list.create()
         
         for i = 0; i < @count(files)
         {
-            ref file=@item(files,i)
-            filename=limpiarTexto(@@(file,"$filename"))
-            path_file=path.concat(path,filename)
-            do file.copy(@@(file,"$temp_file"),path_file)
+            ref file = @item(files,i)
+            filename = limpiarTexto(@@(file,"$filename"))
+            filepath = path.concat(attachment_path,filename)
+            do file.copy(@@(file,"$temp_file"),filepath)
+
+            new obj
+            {
+                @"url": filepath
+                @"mini": filepath
+                @"name": filename
+            }
+            do list.add(uploaded,obj)
         }
+
+        return uploaded
     }
-    point @read to ut.read
-    point @update to ut.update
+
+    GetAdjuntos::&db,&params
+    {
+        ref attachments = list.create()
+        
+        if @@(params,"$gasto")=="" { params<"gasto"> : dbr.str(db,"select sys_guid from ut_gasto where sys_pk = @_entity_id",params) }
+        attachment_path = dbr.vars.getd(db,"gasto_attachment_path",@default_gasto_attachment_path)
+        attachment_path = replace_path_macros(attachment_path,params)
+
+        if not(dir.exists(attachment_path)) { return attachments }
+        
+        ref files = list.files(attachment_path,"*")
+        for i = 0; i < @count(files)
+        {
+            file = list.str(files,i)
+            filename = file.name(file)
+            filepath = path.concat(attachment_path,filename)
+
+            new obj
+            {
+                @"url": filepath
+                @"mini": filepath
+                @"name": filename
+            }
+            do list.add(attachments,obj)
+        }
+
+        return attachments
+    }
+
+    Download::&db,&params
+    {
+        if @@(params,"$gasto")=="" { params<"gasto"> : dbr.str(db,"select sys_guid from ut_gasto where sys_pk = @_entity_id",params) }
+        attachment_path = dbr.vars.getd(db,"gasto_attachment_path",@default_gasto_attachment_path)
+        attachment_path = replace_path_macros(attachment_path,params)
+
+        if attachment_path == "" { do rise_error(500,"Ruta física de base no esta definida.") }
+
+        filename = @@(params,"$filename")
+        filepath = path.concat(attachment_path,filename)
+        
+        // Establecer encabezado de respuesta http
+        @http_context<"response/headers/content-type"> : "application/octet-stream;"
+        // Indicar que se trata de un archivo adjunto y su nombre
+        // Más información en: https://developer.mozilla.org/es/docs/Web/HTTP/Headers/Content-Disposition
+        @http_context<"response/headers/content-disposition"> : "attachment; filename="+filename
+        // Indicar tipo de respuesta
+        @http_context<"response/output"> : "binary"
+        // Asignar la respuesa de salida
+        @http_context<"response/binary*"> : file.rbytes(filepath) //Lee y devuelve el array de bytes del archivo
+    }
 }
