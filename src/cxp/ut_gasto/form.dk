@@ -87,7 +87,8 @@ module "form.dk"
 
             div
             {
-                p{$"#<@('$error/message')>"}
+                div(class="alert alert-danger overflow-auto mb-2 #<ifstr(@('$error/message')!='','','d-none')>" id="frm_alerts"){$"#<@('error/message')>"}
+
                 div(class="row mb-2")
                 {
                     div(class="col-lg-4 col-md-4 col-sm-12"){
@@ -272,7 +273,9 @@ module "form.dk"
                                     input(type="file" class="form-control rounded-0 w-auto" name="file" id="file" title="Adjuntar documentos")
                                     // label(class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" "for"="file"){"Adjuntar documentos"}
                                     #! if @count(adjuntos) > 0 {
-                                        #$ button(type="button" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print mb-1" onclick="gasto.form.preview();"){"Descargar"}
+                                        #$
+                                        button(type="button" class="btn btn-sm btn-outline-primary" onclick="gasto.form.preview();"){"Descargar"}
+                                        button(type="button" class="btn btn-sm btn-outline-danger" onclick="gasto.form.remover();"){"Remover"}
                                     } #$
                                 }
                                 #! if @count(adjuntos) > 0 {

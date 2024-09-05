@@ -49,8 +49,9 @@ module "Controller configs"
 	{
 		package_path = path.concat(@path_root,@base_path)
 		gasto_path = path.concat(package_path,"ut_gasto")
+		_act = @@(@http_context,"$request/get/_act")
 		
-		if @@(@http_context,"$request/get/_act") == "download" {
+		if _act == "download" {
 			include path.concat(gasto_path,"model.dk")
 			do Download(@@(@http_context,"&session/idp/database"),@@(@http_context,"&request/get"))
 		}

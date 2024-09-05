@@ -21,25 +21,24 @@ var gasto=
             if(this.file.value.trim()=="")return;
             if(this.file.files.length<1)return;
             
-            var data=new FormData();
+            var data = new FormData();
+            data.append("upl-file",true);
             for (let i = 0; i < this.file.files.length; i++) 
             {
                 var file = this.file.files[i];
                 data.append(file.name,file);    
             }
-            data.append("onlyfile",true);
 
             InduxsoftCrudlModel.InvokeService(".",data,
-            (result)=>
-            {
+            (result) => {
                 this.file.value="";
                 window.location.reload();
             },
-            (error)=>
-            {
+            (error) => {
                 this.file.value="";
-                alert(error.message??JSON.stringify(error));
-            },"PUT",false,true,"",true);
+                alert(error.message ?? JSON.stringify(error));
+            },
+            "PUT",false,true,"",true);
         },
         data_preview:null,
         SelectedElement(data)
@@ -54,21 +53,39 @@ var gasto=
                 alert("Debe seleccionar un elemento");
                 return;
             }
-
-            let pk_gasto = document.querySelector("input[name='sys_pk']").value;
-            let id_gasto = document.querySelector("input[name='sys_guid']").value;
             
-            let url = "/!/cxp/gasto-files/"+pk_gasto+"/files/?_act=download&gasto="+id_gasto+"&filename="+data.name;
-            window.location.href = url;
-            // fetch(url).then(response => response.json())
-            // .then(data => {
-            //     if (data.message) {
-            //         alert(data.message);
-            //         return
-            //     }
-            //     console.log(data)
-            // })
-            // .catch(error => { alert(error.message ?? JSON.stringify(error)) })
+            let url = InduxsoftCrudlModel.UrlAddParameter(data.url,"_act","download");
+            // window.location.href = url;
+            window.open(url,"_blank");
+        },
+        remover()
+        {
+            let item = this.data_preview;
+            if(!item)
+            {
+                alert("Debe seleccionar un elemento");
+                return;
+            }
+
+            var data = new FormData();
+            data.append("del-file",true);
+            data.append("gasto",document.querySelector("input[name='sys_guid']").value);
+            data.append("filename",item.name);
+
+            // let url = InduxsoftCrudlModel.UrlAddParameter(item.url,"_act","delete");
+            InduxsoftCrudlModel.InvokeService(".",data,
+            (result) => {
+                if (result.message) {
+                    alert(result.message);
+                    return
+                }
+                this.media_list.removeMediaByIndex(item.index);
+            },
+            (error) => {
+                this.file.value="";
+                alert(error.message ?? JSON.stringify(error));
+            },
+            "PUT",false,true,"",true);
         },
         getDataById(id)
         {

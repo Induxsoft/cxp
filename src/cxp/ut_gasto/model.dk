@@ -327,10 +327,14 @@ module "model"
 
     ut.update::&db,&params,&data
     {
-        if parse.bool(@@(data,"onlyfile"))
-        {
-            return SaveAdjuntos(db,params,@null)
+        if parse.bool(@@(data,"$upl-file")) { return SaveAdjuntos(db,params,@null) }
+        if parse.bool(@@(data,"$del-file")) {
+            params<"gasto"> : @@(data,"$gasto")
+            params<"filename"> : @@(data,"$filename")
+            do DeleteAdjunto(db,params)
+            return record.create()
         }
+
         if field.exist(data,"proveedor")
         {
             data<"iproveedor">:@@(data,"proveedor")
@@ -392,11 +396,6 @@ module "model"
         _prt = ifstr(parse.bool(@@(@http_context,"$request/headers/HTTPS")),"https","http")
         _hst = @@(@http_context, "$request/headers/HTTP_HOST")
         _cnn = @@(@http_context,"$session/idp/qname")
-        _pkt = @@(params, "$_pack")
-        _prg = @@(params, "$_program")
-        _etp = @@(params, "$_entities_type")
-        _eid = @@(params, "$_entity_id")
-        _vst = @@(params, "$_view")
 
         path = replace(path, "@protocol", _prt)
         path = replace(path, "@host", _hst)
@@ -410,6 +409,8 @@ module "model"
     
     SaveAdjuntos::&db,&params,&data
     {
+        do dbr.apps.action.grant("GC33")
+
         ref files = @@(@http_context,"&request/files")
         if isnull(data) { ref data:record.create() }
         if isnull(files) || @count(files) < 1 { return }
@@ -430,11 +431,12 @@ module "model"
             ref file = @item(files,i)
             filename = limpiarTexto(@@(file,"$filename"))
             filepath = path.concat(attachment_path,filename)
+            endpoint = "/!/cxp/gasto-files/?gasto="+@@(params,"$gasto")+"&filename="+filename
             do file.copy(@@(file,"$temp_file"),filepath)
 
             new obj
             {
-                @"url": filepath
+                @"url": endpoint
                 @"mini": filepath
                 @"name": filename
             }
@@ -442,6 +444,15 @@ module "model"
         }
 
         return uploaded
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 
     GetAdjuntos::&db,&params
@@ -460,10 +471,11 @@ module "model"
             file = list.str(files,i)
             filename = file.name(file)
             filepath = path.concat(attachment_path,filename)
+            endpoint = "/!/cxp/gasto-files/?gasto="+@@(params,"$gasto")+"&filename="+filename
 
             new obj
             {
-                @"url": filepath
+                @"url": endpoint
                 @"mini": filepath
                 @"name": filename
             }
@@ -475,14 +487,16 @@ module "model"
 
     Download::&db,&params
     {
+        do dbr.apps.action.grant("GC30")
+
         if @@(params,"$gasto")=="" { params<"gasto"> : dbr.str(db,"select sys_guid from ut_gasto where sys_pk = @_entity_id",params) }
         attachment_path = dbr.vars.getd(db,"gasto_attachment_path",@default_gasto_attachment_path)
         attachment_path = replace_path_macros(attachment_path,params)
 
         if attachment_path == "" { do rise_error(500,"Ruta física de base no esta definida.") }
-
         filename = @@(params,"$filename")
         filepath = path.concat(attachment_path,filename)
+        if not(file.exists(filepath)) { do rise_error(404,"No fue posible encontrar el archivo adjunto solicitado o no existe.") }
         
         // Establecer encabezado de respuesta http
         @http_context<"response/headers/content-type"> : "application/octet-stream;"
@@ -493,5 +507,37 @@ module "model"
         @http_context<"response/output"> : "binary"
         // Asignar la respuesa de salida
         @http_context<"response/binary*"> : file.rbytes(filepath) //Lee y devuelve el array de bytes del archivo
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
+    }
+
+    DeleteAdjunto::&db,&params
+    {
+        do dbr.apps.action.grant("GC33")
+
+        if @@(params,"$gasto")=="" { params<"gasto"> : dbr.str(db,"select sys_guid from ut_gasto where sys_pk = @_entity_id",params) }
+        attachment_path = dbr.vars.getd(db,"gasto_attachment_path",@default_gasto_attachment_path)
+        attachment_path = replace_path_macros(attachment_path,params)
+
+        if attachment_path == "" { do rise_error(500,"Ruta física de base no esta definida.") }
+        
+        filepath = path.concat(attachment_path,@@(params,"$filename"))
+        if file.exists(filepath) { do file.delete(filepath) }
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
     }
 }

@@ -39,7 +39,7 @@ module "Reportes de Cuentas por Pagar"
 
     antiguedadSaldos::&db,&params
     {
-        do dbr.apps.action.grant("GC33")
+        do dbr.apps.action.grant("GC41")
 
         sql_antiguedad_saldo = "
         SELECT
@@ -86,7 +86,7 @@ module "Reportes de Cuentas por Pagar"
 
     origenAplicacion::&db,&params
     {
-        do dbr.apps.action.grant("GC34")
+        do dbr.apps.action.grant("GC42")
 
         sql = "
         select

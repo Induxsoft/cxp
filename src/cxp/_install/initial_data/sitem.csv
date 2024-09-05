@@ -14,6 +14,7 @@ cxp.gastos,Gastos,cxp
 GC30,Gastos,cxp.gastos
 GC31,Agregar gasto,cxp.gastos
 GC32,Consultar gasto,cxp.gastos
+GC33,Administrar archivos adjuntos,cxp.gastos
 cxp.proveedores,Proveedores y cuentas por pagar,cxp
 GC20,Proveedores y CxP,cxp.proveedores
 GC21,Nuevo proveedor,cxp.proveedores
@@ -25,5 +26,5 @@ GC26,Pago a proveedor,cxp.proveedores
 GC27,Bonificación a proveedor,cxp.proveedores
 GC28,Importar proveedores,cxp.proveedores
 cxp.reports,Informes de Cuentas por Pagar,cxp
-GC33,Informe de antigüedad de saldos por pagar,cxp.reports
-GC34,Origen y aplicación,cxp.reports
+GC41,Informe de antigüedad de saldos por pagar,cxp.reports
+GC42,Origen y aplicación,cxp.reports
