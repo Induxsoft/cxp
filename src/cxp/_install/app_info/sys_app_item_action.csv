@@ -17,5 +17,5 @@ GC27,Bonificación a proveedor,Bonificar,,/!/cxp/proveedores/@_src_context_item_
 GC28,Importar proveedores,Importar,,/!/batch/taskman/GC/importar.proveedor/,0,cxp.proveedores,DET03F,0,action
 GC31,Agregar gasto,Agregar,,/!/cxp/gastos/_new/,0,cxp.gastos,DET024,0,action
 GC32,Consultar gasto,Consultar,,/!/cxp/gastos/@_src_context_item_id/,0,cxp.gastos,DET024,1,action
-GC33,Informe de antigüedad de saldos por pagar,Antigüedad de saldos,,/!/cxp/reports/antiguedad-saldos/,0,cxp.reports,DET03F,0,report
-GC34,Origen y aplicación,Origen y aplicación,,/!/cxp/reports/origen-aplicacion/,0,cxp.reports,DET01E,0,report
+GC41,Informe de antigüedad de saldos por pagar,Antigüedad de saldos,,/!/cxp/reports/antiguedad-saldos/,0,cxp.reports,DET03F,0,report
+GC42,Origen y aplicación,Origen y aplicación,,/!/cxp/reports/origen-aplicacion/,0,cxp.reports,DET01E,0,report
