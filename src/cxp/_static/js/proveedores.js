@@ -49,13 +49,11 @@ var proveedor =
         tData: {},
         txt_search_proveedor: null,
         btn_search_proveedor: null,
-        btn_new_proveedor: null,
 
         init()
         {
             this.txt_search_proveedor = document.getElementById("txt_search_proveedor");
             this.btn_search_proveedor = document.getElementById("btn_search_proveedor");
-            this.btn_new_proveedor = document.getElementById("btn_new_proveedor");
             this.tbl_proveedores = document.getElementById("tbl_proveedores");
 
             if (this.txt_search_proveedor) {

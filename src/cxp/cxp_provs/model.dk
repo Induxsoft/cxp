@@ -636,11 +636,9 @@ module "model"
     pdr.list::&db,&params
     {
         do dbr.apps.action.grant("GC20")
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
-        buscar = trim(@@(params,"$buscar"))
-        tipo = trim(@@(params,"$tipo"))
-
-        sql = "
+        sql_proveedores = "
         SELECT 
             pdr.sys_pk,
             pdr.codigo,
@@ -655,24 +653,29 @@ module "model"
             INNER JOIN tipoproveedor AS tpp ON tpp.sys_pk = pdr.tipo
             INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
             LEFT JOIN zona AS zna ON zna.sys_pk = pdr.izona
-        WHERE TRUE"
+        WHERE NOT IFNULL(pdr.sys_deleted,0)
+            #<conditions>
+        ORDER BY pdr.codigo
+        LIMIT #<@default_max_rows>;"
 
-        if buscar != "" {
-            sql = sql + " AND (
-                pdr.codigo LIKE CONCAT('%',@buscar,'%')
-                OR pdr.nombre LIKE CONCAT('%',@buscar,'%')
-                OR pdr.rfc LIKE CONCAT('%',@buscar,'%')
-            )"
-        }
-        if tipo != "" {
-            sql = sql + " AND (
-                tpp.sys_pk = @tipo
-                OR tpp.codigo = @tipo
-                OR tpp.descripcion LIKE CONCAT('%',@tipo,'%')
-            )"
+        conditions = ""
+        if @@(params,"#fil_tipo") > 0 { conditions = conditions + " AND tpp.sys_pk = @fil_tipo" }
+        if trim(@@(params,"$fil_text")) != "" {
+            conditions = conditions + " AND (
+                pdr.codigo = @fil_text
+                OR pdr.rfc = @fil_text
+                OR pdr.nombre LIKE CONCAT('%',@fil_text,'%')
+            )
+            "
         }
 
-        return dbr.list(db,sql,params)
+        new data
+        {
+            @"data*": dbr.list(db,ftext(sql_proveedores),params)
+            @"list_tipos*": dbr.list(db,"select sys_pk, descripcion from tipoproveedor where not ifnull(sys_deleted,0)",@null)
+        }
+    
+        return data
 
         exception
         {
