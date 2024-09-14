@@ -425,6 +425,7 @@ var proveedor =
         btnSave: null,
         dtProv: {},
         dvsPred: {},
+        decimals: 2,
 
         init()
         {
@@ -446,7 +447,7 @@ var proveedor =
 
                     this.pedirTCambio();
 
-                    this.elements["txt_tcambio_retiro"].value = cambio;
+                    this.elements["txt_tcambio_retiro"].value = Math.RoundTo(cambio, this.decimals);
                     proveedor.trigger(this.elements["txt_tcambio_retiro"],"change");
                 });
                 
@@ -458,7 +459,7 @@ var proveedor =
                     let importe_ret = Math.mul(importe_pdr,tcambio_pdr);
                     importe_ret = Math.div(importe_ret,tcambio_ret);
                     
-                    this.elements["txt_importe_retiro"].value = importe_ret;
+                    this.elements["txt_importe_retiro"].value = Math.RoundTo(importe_ret, this.decimals);
                 });
                 this.elements["txt_importe_retiro"].addEventListener("change", (event) => {
                     let tcambio_pdr = Number(this.elements["txt_tcambio"].value);
@@ -468,7 +469,7 @@ var proveedor =
                     let importe_pdr = Math.mul(importe_ret,tcambio_ret);
                     importe_pdr = Math.div(importe_pdr,tcambio_pdr);
 
-                    this.elements["txt_importe"].value = importe_pdr;
+                    this.elements["txt_importe"].value = Math.RoundTo(importe_pdr, this.decimals);
                 });
 
                 this.elements["txt_importe"].addEventListener("change", (event) => {
@@ -479,7 +480,7 @@ var proveedor =
                     let importe_ret = Math.mul(importe_pdr,tcambio_pdr);
                     importe_ret = Math.div(importe_ret,tcambio_ret);
 
-                    this.elements["txt_importe_retiro"].value = importe_ret;
+                    this.elements["txt_importe_retiro"].value = Math.RoundTo(importe_ret, this.decimals);
                 });
             }
         },

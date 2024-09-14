@@ -17,6 +17,10 @@ module "cxp.crear.dk"
 
     // do rise_error(0,to.json(@("&.")))
     @is_new = (@("$parameters/_entity_id") == "_new")
+    @DECIMAL_PRECISION = @("#parameters/decimals")
+
+    num_step = "0."+padright("",(@DECIMAL_PRECISION-1),"0")+"1"
+    num_max = "9999999999."+padright("",@DECIMAL_PRECISION,"9")
 
     new sel_documento
     {
@@ -49,7 +53,7 @@ module "cxp.crear.dk"
         // @"urlexit": "javascript:window.history.back();"
         member @"hidden" { @"print": @true }
     }
-    decs=@DECIMAL_PRECISION
+    
     #$
     div(class="container")
     {
@@ -58,7 +62,7 @@ module "cxp.crear.dk"
         #! do uie.printV12FormBar(nav_config)
         #$ div(class="alert alert-danger overflow-auto mb-2 #<ifstr(@('$error/message')!='','','d-none')>" id="frm_alerts"){$"#<@('error/message')>"}
 
-        form(action="." method="POST" enctype="multipart/form-data" id="form_cxp" class="#<ifstr(@is_new,'','disable-form')>" onsubmit="return proveedor.form.ValidateForm(event)")
+        form(action="." method="POST" enctype="multipart/form-data" id="form_cxp" class="#<ifstr(@is_new,'','disable-form')>") //onsubmit="return proveedor.form.ValidateForm(event)"
         {
             ##
             do uie.print_from_url_field()
@@ -89,14 +93,9 @@ module "cxp.crear.dk"
                     label(class="form-label" "for"="txt_tcambio"){$"Tipo de cambio:"}
                     input(
                         class="form-control rounded-0 induxsoft-num-field mw-100"
-                        type="number"
-                        name="tcambio"
-                        value="#<form('tcambio','nm',infoProv)>"
-                        id="txt_tcambio"
-                        min="1"
-                        step="0.000001"
-                        required="true"
-                        "num-decs"="6"
+                        type="number" name="tcambio" value="#<form('tcambio','nm',infoProv)>" id="txt_tcambio"
+                        step="#<num_step>" min="1" max="#<num_max>" required="true"
+                        "num-decs"="#<@DECIMAL_PRECISION>"
                     )
                 }
                 div(class="col-lg-4") {
@@ -151,17 +150,11 @@ module "cxp.crear.dk"
                     #$
                     input(
                         class="form-control rounded-0 induxsoft-num-field mw-100 validate-number"
-                        type="number"
-                        name="importe"
-                        value="#<importe>"
-                        min="1"
-                        step="0.000001"
-                        id="txt_importe"
-                        required="true"
+                        type="number" name="importe" value="#<importe>" id="txt_importe"
+                        step="#<num_step>" min="1" max="#<num_max>" required="true"
                         "num-style"="currency"
-                        "num-decs"="#<decs>"
-                        required="true"
-                        onkeypress="return InduxsoftNumberFields.filterFloat(event,this,#<decs>)"
+                        "num-decs"="#<@DECIMAL_PRECISION>"
+                        onkeypress="return InduxsoftNumberFields.filterFloat(event,this,#<@DECIMAL_PRECISION>)"
                     )
                 }
             }

@@ -8,6 +8,7 @@ module "cxp.poraplicar.dk"
     #include "dbr.apps.dkl"
     #include "uielements.v12.dkl"
     #include "../_lib/config.dk"
+    #include "../_lib/lib.dk"
     #include "../_lib/icons.dk"
     
     do @context.begin(@crud_context)
@@ -17,6 +18,8 @@ module "cxp.poraplicar.dk"
     get<"filter-mode">: ifstr(trim(@@(get,"filter-mode"))!="", @@(get,"filter-mode"), "month")
     get<"year">: ifstr(trim(@@(get,"year"))!="", @@(get,"year"), str(ndatetime.year(ndatetime.now())))
     get<"month">: ifstr(trim(@@(get,"month"))!="", @@(get,"month"), str(ndatetime.month(ndatetime.now())))
+
+    @DECIMAL_PRECISION = @("#parameters/decimals")
 
     new nav_config
     {
@@ -29,12 +32,14 @@ module "cxp.poraplicar.dk"
         @"jscurrentcontext": "getCurrentContext"
     }
 
-    #$ div(class="container-fluid")
+    #$ div(class="v12-list-view" id="view")
     {
-        #! do uie.printV12FormBar(nav_config)
-
-        #$ div(class="" id="work_area")
+        section(class="container-fluid bg-white" id="top_area")
         {
+            #!
+            do uie.printV12FormBar(nav_config)
+            #$
+
             form(action="./" method="GET" id="form_filter" class="no-print mb-1")
             {
                 div(class="d-flex align-items-center")
@@ -102,13 +107,16 @@ module "cxp.poraplicar.dk"
                 {
                     tr
                     {
-                        td(class="text-end"){$"#<format(@('#./saldos/saldo_total'),'$ #,0.00')>"}
-                        td(class="text-end"){$"#<format(@('#./saldos/saldo_docs'),'$ #,0.00')>"}
-                        td(class="text-end"){$"#<format(@('#./saldos/por_aplicar'),'$ #,0.00')>"}
+                        td(class="text-end"){$"$ #<number_format(@('#./saldos/saldo_total'))>"}
+                        td(class="text-end"){$"$ #<number_format(@('#./saldos/saldo_docs'))>"}
+                        td(class="text-end"){$"$ #<number_format(@('#./saldos/por_aplicar'))>"}
                     }
                 }
             }
-
+        }
+        
+        section(class="container-fluid" id="work_area")
+        {
             "edit-table"(class="w-100" id="table_poraplicar" data="#<to.json(@('&./docs'))>")
             {
                 "edit-thead"
@@ -118,15 +126,11 @@ module "cxp.poraplicar.dk"
                         "edit-th"(type="NoEditable" field="documento"){$"Documento"}
                         "edit-th"(type="NoEditable" field="referencia"){$"Referencia"}
                         "edit-th"(type="NoEditable" field="emision"){$"Fecha"}
-                        "edit-th"(type="NoEditable" field="debe" textalign="end" format="true" decs="2" prefix="$ " thousandssep="true"){$"Importe"}
+                        "edit-th"(type="NoEditable" field="debe" textalign="end" format="true" decs="#<@DECIMAL_PRECISION>" thousandssep="true"){$"Importe"}
                         "edit-th"(type="NoEditable" field="aplicado"){$"Aplicado"}
-                        "edit-th"(type="NoEditable" field="xaplicar" textalign="end" format="true" decs="2" prefix="$ " thousandssep="true"){$"Por aplicar"}
+                        "edit-th"(type="NoEditable" field="xaplicar" textalign="end" format="true" decs="#<@DECIMAL_PRECISION>" thousandssep="true"){$"Por aplicar"}
                     }
                 }
-                /* "edit-tbody"
-                {
-                    // contenido...
-                } */
             }
         }
 

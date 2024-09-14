@@ -5,13 +5,12 @@ module "cxp.pago.dk"
     #include "functions.dkh"
     #include "serialize.dkh"
     #include "uielements.v12.dkl"
-    #include "../_lib/icons.dk"
     #include "../_lib/config.dk"
     #include "../_lib/lib.dk"
+    #include "../_lib/icons.dk"
 
     do @context.begin(@crud_context)
-    ref @http_context = @('&http')
-    ref get = @@(@http_context,"&request/get")
+    
     ref info_dcxp = ifnull(@("&./info_dcxp"),record.create())
     ref dvsPred = ifnull(@("&./dvs_pred"),record.create())
 
@@ -22,6 +21,7 @@ module "cxp.pago.dk"
     tCAMBIO_PRED = field.dnum(dvsPred,"tcambio",1)
 
     num_step = "0."+padright("",(@DECIMAL_PRECISION-1),"0")+"1"
+    num_max = "9999999999."+padright("",@DECIMAL_PRECISION,"9")
 
     new sel_cuenta_retiro
     {
@@ -103,7 +103,7 @@ module "cxp.pago.dk"
     }
 
     #$
-    div(class="container")
+    div(class="container-md")
     {
         #! do uie.printV12FormBar(nav_config)
         #$ div(class="alert alert-danger overflow-auto mb-2 #<ifstr(@('$error/message')!='','','d-none')>" id="frm_alerts"){$"#<@('error/message')>"}

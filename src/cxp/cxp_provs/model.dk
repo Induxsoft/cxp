@@ -548,6 +548,7 @@ module "model"
         //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_DOCS_POR_PAGAR_PROVD)) { do rise_error(0,"No autorizado")}
         do dbr.apps.action.grant("GC24")
 
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
         params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
         params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
 
@@ -593,8 +594,8 @@ module "model"
 
     cxp.obtenerPagosPorAplicar::&db,&params
     {
-        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGOS_POR_APLICAR_PROVD)) { do rise_error(0,"No autorizado")}
         do dbr.apps.action.grant("GC25")
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
         sql = "
         SELECT
@@ -690,6 +691,7 @@ module "model"
     pdr.read::&db,&params
     {
         do dbr.apps.action.grant("GC20")
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
         new data {}
         do cxp.prepareView(db,params,data)
@@ -708,6 +710,7 @@ module "model"
     pdr.blank::&db,&params
     {
         do dbr.apps.action.grant("GC20")
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
         new data {}
         do cxp.prepareView(db,params,data)

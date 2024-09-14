@@ -12,12 +12,9 @@ module "cxp.balance.dk"
     #include "../_lib/icons.dk"
     
     do @context.begin(@crud_context)
-    ref @http_context = @('&http')
-    ref get = @@(@http_context,"&request/get")
-    ref @_GET=get
-    get<"filter-mode">: ifstr(trim(@@(get,"filter-mode"))!="", @@(get,"filter-mode"), "month")
-    get<"year">: ifstr(trim(@@(get,"year"))!="", @@(get,"year"), str(ndatetime.year(ndatetime.now())))
-    get<"month">: ifstr(trim(@@(get,"month"))!="", @@(get,"month"), str(ndatetime.month(ndatetime.now())))
+    
+    ref @_GET = @("&parameters")
+    @DECIMAL_PRECISION = @("#parameters/decimals")
 
     new nav_config
     {
@@ -66,12 +63,15 @@ module "cxp.balance.dk"
         @"text_field": "const"
         @"selected": @("#parameters/fil_fdr_field")
     }
-    #$ div(class="container-fluid")
-    {
-        #! do uie.printV12FormBar(nav_config)
 
-        #$ div(class="" id="work_area")
+    #$ div(class="v12-list-view" id="view")
+    {
+        section(class="container-fluid bg-white" id="top_area")
         {
+            #!
+            do uie.printV12FormBar(nav_config)
+            #$
+
             form(action="./" method="GET" id="form_filter" class="no-print mb-1")
             {
                 div(class="d-flex align-items-center")
@@ -108,37 +108,6 @@ module "cxp.balance.dk"
                             "label-to"="Hasta:"
                         ){$""}
                     }
-                    // div
-                    // {
-                    //     select(class="induxsoft-form-select" name="tdate" onchange="document.querySelector('#form_filter').submit();")
-                    //     {
-                    //         option(value="0" "#<ifstr(@@(get,'$tdate')=='0','selected','')>"="true"){$"Emisión"}
-                    //         option(value="1" "#<ifstr(@@(get,'$tdate')=='1','selected','')>"="true"){$"Aplicación"}
-                    //     }
-                    // }
-                    // div(class="flex-grow-1")
-                    // {
-                    //     "filter-date-range"(
-                    //         "mode-field"="filter-mode"
-                    //         "year-field"="year"
-                    //         "month-field"="month"
-                    //         "range-field"="range"
-                    //         "from-field"="datefrom"
-                    //         "to-field"="dateto"
-                    //         "selection"='#<to.json(get)>'
-                    //         "lastdays-options"="15,30,45,60,90"
-                    //         "years-options"="2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024"
-                    //         "custom-range"="true"
-                    //         "form"="#form_filter"
-                    //         "auto-submit"="true"
-                    //         "label-months"="Ver por cada mes"
-                    //         "label-days"="Últ. @lastdays días"
-                    //         "label-custom"="Personalizado"
-                    //         "label-from"="Desde:"
-                    //         "label-to"="Hasta:"
-                    //         "month-names"="Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"
-                    //     ){$""}
-                    // }
                 }
 
                 div(class="py-1 w-100 d-flex gap-2 flex-wrap align-items-center")
@@ -150,7 +119,7 @@ module "cxp.balance.dk"
                             "text-field"="s"
                             "placeholder"="Referencia por referencia"
                             "form"="#form_filter"
-                            "value"="#<@@(get,'$s')>"
+                            "value"="#<@('$parameters/s')>"
                             "auto-submit"="true"
                             "class"="w-100"
                         ){$""}
@@ -182,16 +151,19 @@ module "cxp.balance.dk"
                 {
                     tr
                     {
-                        td(class="text-end"){$"#<format(@('#./saldos/saldo_inicial'),'$ #,0.00')>"}
-                        td(class="text-end"){$"#<format(@('#./saldos/debe'),'$ #,0.00')>"}
-                        td(class="text-end"){$"#<format(@('#./saldos/haber'),'$ #,0.00')>"}
-                        td(class="text-end"){$"#<format(@('#./saldos/saldo_alfinal'),'$ #,0.00')>"}
-                        td(class="text-end"){$"#<format(@('#./saldos/saldo_docs'),'$ #,0.00')>"}
-                        td(class="text-end"){$"#<format(@('#./saldos/por_aplicar'),'$ #,0.00')>"}
+                        td(class="text-end"){$"$ #<number_format(@('#./saldos/saldo_inicial'))>"}
+                        td(class="text-end"){$"$ #<number_format(@('#./saldos/debe'))>"}
+                        td(class="text-end"){$"$ #<number_format(@('#./saldos/haber'))>"}
+                        td(class="text-end"){$"$ #<number_format(@('#./saldos/saldo_alfinal'))>"}
+                        td(class="text-end"){$"$ #<number_format(@('#./saldos/saldo_docs'))>"}
+                        td(class="text-end"){$"$ #<number_format(@('#./saldos/por_aplicar'))>"}
                     }
                 }
             }
-
+        }
+        
+        section(class="container-fluid" id="work_area")
+        {
             "edit-table"(class="w-100" id="lst_dcxp" data="#<to.json(@('&./docs'))>")
             {
                 "edit-thead"
@@ -202,15 +174,11 @@ module "cxp.balance.dk"
                         "edit-th"(type="NoEditable" field="referencia"){$"Referencia"}
                         "edit-th"(type="NoEditable" field="emision"){$"Emisión"}
                         "edit-th"(type="NoEditable" field="aplicacion"){$"Aplicación"}
-                        "edit-th"(type="NoEditable" field="debe" textalign="end" format="true" decs="2" prefix="$ " thousandssep="true"){$"Debe"}
-                        "edit-th"(type="NoEditable" field="haber" textalign="end" format="true" decs="2" prefix="$ " thousandssep="true"){$"Haber"}
+                        "edit-th"(type="NoEditable" field="debe" textalign="end" format="true" decs="#<@DECIMAL_PRECISION>" thousandssep="true"){$"Debe"}
+                        "edit-th"(type="NoEditable" field="haber" textalign="end" format="true" decs="#<@DECIMAL_PRECISION>" thousandssep="true"){$"Haber"}
                         "edit-th"(type="NoEditable" field="notas"){$"Concepto"}
                     }
                 }
-                /* "edit-tbody"
-                {
-                    // contenido...
-                } */
             }
         }
 

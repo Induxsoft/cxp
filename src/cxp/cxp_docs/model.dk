@@ -23,7 +23,7 @@ module "model"
         ROUND(IFNULL(cxp.pagos,0),@decimals) AS pagos,
         ROUND(IFNULL(cxp.bonificaciones,0),@decimals) AS bonificaciones,
         ROUND(IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0),@decimals) AS saldo,
-        cxp.tipocambio,
+        ROUND(cxp.tipocambio,@decimals) tipocambio,
         cxp.xaplicar,
         cxp.iproveedor,
         cxp.notas,
@@ -567,8 +567,8 @@ module "model"
 
     cxp.list::&db,&params
     {
-        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_DOCS_POR_PAGAR)) { do rise_error(0,"No autorizado")}
         do dbr.apps.action.grant("GC10")
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
         params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
         params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
@@ -666,10 +666,9 @@ module "model"
 
     cxp.read::&db,&params
     {
-        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_DOC)) { do rise_error(0,"No autorizado")}
         do dbr.apps.action.grant("GC10")
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
-        params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001"))
         ref data = entity.read(db,params)
         do cxp.prepareView(db,params,data)
 
@@ -699,9 +698,9 @@ module "model"
     {
         //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_AGREGAR_DCXP)) { do rise_error(0,"No autorizado")}
         do dbr.apps.action.grant("GC10")
-
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
+        
         do cxp.validateAplicable(db,params)
-
         new data
         do cxp.prepareView(db,params,data)
 

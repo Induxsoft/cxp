@@ -151,7 +151,7 @@ var documento =
 
                     this.pedirTCambio();
 
-                    this.elements["txt_tcambio_retiro"].value = cambio;
+                    this.elements["txt_tcambio_retiro"].value = Math.RoundTo(cambio, this.decimals);
                     documento.trigger(this.elements["txt_tcambio_retiro"],"change");
                 });
                 

@@ -18,6 +18,11 @@ module "cxp.pago.dk"
     cDIVISA_PRED = field.dstr(dvsPred,"codigo","MXN")
     tCAMBIO_PRED = field.dnum(dvsPred,"tcambio",1)
 
+    @DECIMAL_PRECISION = @("#parameters/decimals")
+
+    num_step = "0."+padright("",(@DECIMAL_PRECISION-1),"0")+"1"
+    num_max = "9999999999."+padright("",@DECIMAL_PRECISION,"9")
+
     new sel_documento
     {
         @"datatable*": ifnull(@("&./documentos"),list.create())
@@ -78,9 +83,9 @@ module "cxp.pago.dk"
         @"text_field": "const"
         @"selected": form("documento_retiro","nm",@null)
     }
-    decs=@DECIMAL_PRECISION
+    
     #$
-    div(class="container")
+    div(class="container-lg")
     {
         div(class="row container-section m-0 px-0 py-2 my-2 border-bottom sticky-top bg-white" id="main_action_bar")
         {
@@ -103,7 +108,7 @@ module "cxp.pago.dk"
                 {
                     div(class="row d-flex justify-content-end align-items-center")
                     {
-                        label(class="col-auto col-form-label"){$"Proveedor:"}
+                        label(class="col-auto col-form-label fw-bold"){$"Proveedor:"}
                         div(class="col-6") {
                             $"[#<@@(dtprov,'$codigo')>] #<@@(dtprov,'$nombre')>"
                         }
@@ -111,7 +116,7 @@ module "cxp.pago.dk"
 
                     div(class="row d-flex justify-content-end align-items-center")
                     {
-                        label(class="col-auto col-form-label"){$"Divisa:"}
+                        label(class="col-auto col-form-label fw-bold"){$"Divisa:"}
                         div(class="col-6") {
                             $"#<@@(dtprov,'$divisa')>"
                         }
@@ -166,14 +171,9 @@ module "cxp.pago.dk"
                             div(class="input-group input-group-sm") {
                                 input(
                                     class="form-control rounded-0 induxsoft-num-field mw-100"
-                                    type="number"
-                                    name="tcambio_retiro"
-                                    value="#<form('tcambio_retiro','nm',@null)>"
-                                    min="1"
-                                    step="0.000001"
-                                    id="txt_tcambio_retiro"
-                                    required="true"
-                                    "num-decs"="6"
+                                    type="number" name="tcambio_retiro" value="#<form('tcambio_retiro','nm',@null)>" id="txt_tcambio_retiro"
+                                    step="#<num_step>" min="1" max="#<num_max>" required="true"
+                                    "num-decs"="#<@DECIMAL_PRECISION>"
                                 )
                                 span(class="input-group-text rounded-0" id="spn_tcambio_retiro"){$"#<cDIVISA_PRED>"}
                             }
@@ -187,13 +187,9 @@ module "cxp.pago.dk"
                             div(class="input-group input-group-sm"){
                                 input(
                                     class="form-control rounded-0 induxsoft-num-field mw-100"
-                                    type="number"
-                                    name="importe_retiro"
-                                    value="#<form('importe_retiro','nm',@null)>"
-                                    step="0.000001"
-                                    min="1"
-                                    id="txt_importe_retiro"
-                                    "num-decs"="6"
+                                    type="number" name="importe_retiro" value="#<form('importe_retiro','nm',@null)>" id="txt_importe_retiro"
+                                    step="#<num_step>" min="1" max="#<num_max>"
+                                    "num-decs"="#<@DECIMAL_PRECISION>"
                                 )
                                 span(class="input-group-text rounded-0" id="spn_importe_retiro"){$""}
                             }
@@ -253,14 +249,9 @@ module "cxp.pago.dk"
                             div(class="input-group input-group-sm") {
                                 input(
                                     class="form-control rounded-0 induxsoft-num-field mw-100"
-                                    type="number"
-                                    name="tcambio"
-                                    value="#<form('tcambio','nm',dtprov)>"
-                                    min="1"
-                                    step="0.000001"
-                                    id="txt_tcambio"
-                                    required="true"
-                                    "num-decs"="6"
+                                    type="number" name="tcambio" value="#<form('tcambio','nm',dtprov)>" id="txt_tcambio"
+                                    step="#<num_step>" min="1" max="<num_max>" required="true"
+                                    "num-decs"="#<@DECIMAL_PRECISION>"
                                 )
                                 span(class="input-group-text rounded-0"){$"#<cDIVISA_PRED> = 1 #<@@(dtprov,'$divisa')>"}
                             }
@@ -274,15 +265,10 @@ module "cxp.pago.dk"
                             div(class="input-group input-group-sm"){
                                 input(
                                     class="form-control rounded-0 induxsoft-num-field mw-100 validate-number"
-                                    type="number"
-                                    name="importe"
-                                    value="#<form('importe','nm',@null)>"
-                                    min="1"
-                                    step="0.000001"
-                                    id="txt_importe"
-                                    "num-decs"="#<decs>"
-                                    required="true"
-                                    onkeypress="return InduxsoftNumberFields.filterFloat(event,this,#<decs>)"
+                                    type="number" name="importe" value="#<form('importe','nm',@null)>" id="txt_importe"
+                                    step="#<num_step>" min="1" max="#<num_max>" required="true"
+                                    "num-decs"="#<@DECIMAL_PRECISION>"
+                                    onkeypress="return InduxsoftNumberFields.filterFloat(event,this,#<@DECIMAL_PRECISION>)"
                                 )
                                 span(class="input-group-text rounded-0"){$"#<@@(dtprov,'$divisa')>"}
                             }
@@ -317,6 +303,7 @@ module "cxp.pago.dk"
                 document.addEventListener("DOMContentLoaded", () => {
                     proveedor.pago.dtProv = #<to.json(dtprov)>;
                     proveedor.pago.dvsPred = #<to.json(dvsPred)>;
+                    proveedor.pago.decimals = #<@DECIMAL_PRECISION>;
                     proveedor.pago.init();
                     proveedor.pago.pedirTCambio();
                     InduxsoftNumberFields.Init();

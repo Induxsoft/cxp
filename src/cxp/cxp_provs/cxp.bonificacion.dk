@@ -5,9 +5,9 @@ module "cxp.bonificacion.dk"
     #include "functions.dkh"
     #include "serialize.dkh"
     #include "uielements.dkl"
-    #include "../_lib/icons.dk"
     #include "../_lib/config.dk"
     #include "../_lib/lib.dk"
+    #include "../_lib/icons.dk"
     
     do @context.begin(@crud_context)
 
@@ -17,6 +17,11 @@ module "cxp.bonificacion.dk"
 
     cDIVISA_PRED = field.dstr(dvsPred,"codigo","MXN")
     tCAMBIO_PRED = field.dnum(dvsPred,"tcambio",1)
+
+    @DECIMAL_PRECISION = @("#parameters/decimals")
+
+    num_step = "0."+padright("",(@DECIMAL_PRECISION-1),"0")+"1"
+    num_max = "9999999999."+padright("",@DECIMAL_PRECISION,"9")
 
     new sel_documento
     {
@@ -31,9 +36,9 @@ module "cxp.bonificacion.dk"
         @"text_field": "const"
         @"selected": form("documento","nm",@null)
     }
-    decs=@DECIMAL_PRECISION
+    
     #$
-    div(class="container")
+    div(class="container-md")
     {
         div(class="row container-section m-0 px-0 py-2 my-2 border-bottom sticky-top bg-white" id="main_action_bar")
         {
@@ -56,7 +61,7 @@ module "cxp.bonificacion.dk"
                 {
                     div(class="row d-flex justify-content-end align-items-center")
                     {
-                        label(class="col-auto col-form-label"){$"Proveedor:"}
+                        label(class="col-auto col-form-label fw-bold"){$"Proveedor:"}
                         div(class="col-6") {
                             $"[#<@@(dtprov,'$codigo')>] #<@@(dtprov,'$nombre')>"
                         }
@@ -64,7 +69,7 @@ module "cxp.bonificacion.dk"
 
                     div(class="row d-flex justify-content-end align-items-center")
                     {
-                        label(class="col-auto col-form-label"){$"Divisa:"}
+                        label(class="col-auto col-form-label fw-bold"){$"Divisa:"}
                         div(class="col-6") {
                             $"#<@@(dtprov,'$divisa')>"
                         }
@@ -113,14 +118,9 @@ module "cxp.bonificacion.dk"
                             div(class="input-group") {
                                 input(
                                     class="form-control rounded-0 induxsoft-num-field mw-100"
-                                    type="number"
-                                    name="tcambio"
-                                    value="#<form('tcambio','nm',dtprov)>"
-                                    min="1"
-                                    step="0.000001"
-                                    id="txt_tcambio"
-                                    required="true"
-                                    "num-decs"="6"
+                                    type="number" name="tcambio" value="#<form('tcambio','nm',dtprov)>" id="txt_tcambio"
+                                    step="#<num_step>" min="1" max="num_max" required="true"
+                                    "num-decs"="#<@DECIMAL_PRECISION>"
                                 )
                                 span(class="input-group-text rounded-0"){$"#<cDIVISA_PRED> = 1 #<@@(dtprov,'$divisa')>"}
                             }
@@ -134,15 +134,9 @@ module "cxp.bonificacion.dk"
                             div(class="input-group") {
                                 input(
                                     class="form-control rounded-0 induxsoft-num-field mw-100 validate-number"
-                                    type="number"
-                                    name="importe"
-                                    value="#<form('importe','nm',@null)>"
-                                    min="1"
-                                    step="0.000001"
-                                    id="txt_importe"
-                                    required=""
-                                    "num-decs"="#<decs>"
-                                    required="true"
+                                    type="number" name="importe" value="#<form('importe','nm',@null)>" id="txt_importe"
+                                    step="#<num_step>" min="1" max="#<num_max>" required=""
+                                    "num-decs"="#<@DECIMAL_PRECISION>"
                                     onkeypress="return InduxsoftNumberFields.filterFloat(event,this,#<decs>)"
                                 )
                                 span(class="input-group-text rounded-0"){$"#<@@(dtprov,'$divisa')>"}

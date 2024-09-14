@@ -10,13 +10,17 @@ module "cxp.intereses.dk"
     #include "../_lib/lib.dk"
 
     do @context.begin(@crud_context)
-    ref @http_context = @('&http')
-    ref get = @@(@http_context,"&request/get")
+    
     ref info_dcxp = ifnull(@("&./info_dcxp"),record.create())
     ref dvsPred = ifnull(@("&./dvs_pred"),record.create())
 
     cDIVISA_PRED = field.dstr(dvsPred,"codigo","MXN")
     tCAMBIO_PRED = field.dnum(dvsPred,"tcambio",1)
+
+    @DECIMAL_PRECISION = @("#parameters/decimals")
+
+    num_step = "0."+padright("",(@DECIMAL_PRECISION-1),"0")+"1"
+    num_max = "9999999999."+padright("",@DECIMAL_PRECISION,"9")
 
     new sel_documento
     {
@@ -49,14 +53,14 @@ module "cxp.intereses.dk"
         // @"urlexit": "javascript:window.history.back();"
         member @"hidden" { @"print": @true }
     }
-    decs=@DECIMAL_PRECISION
+    
     #$
-    div(class="container")
+    div(class="container-md")
     {
         #! do uie.printV12FormBar(nav_config)
         #$ div(class="alert alert-danger overflow-auto mb-2 #<ifstr(@('$error/message')!='','','d-none')>" id="frm_alerts"){$"#<@('error/message')>"}
 
-        form(action="." method="POST" id="form_intmor" onsubmit="return proveedor.form.ValidateForm(event)")
+        form(action="." method="POST" id="form_intmor") //onsubmit="return proveedor.form.ValidateForm(event)"
         {
             input(type="hidden" name="pkparent" value="#<@@(info_dcxp,'#sys_pk')>")
             input(type="hidden" name="iproveedor" value="#<@@(info_dcxp,'#iproveedor')>")
@@ -109,47 +113,95 @@ module "cxp.intereses.dk"
                 {
                     div(class="row d-flex justify-content-end align-items-center")
                     {
-                        label(class="col-auto col-form-label fw-bolder"){$"Capital:"}
+                        label(class="col-auto col-form-label fw-bolder py-0"){$"Capital:"}
                         div(class="col-6 text-end") {
-                            $"#<format(@@(info_dcxp,'#haber'),@FMT_MONEY)>"
+                            input(
+                                class="form-control-plaintext induxsoft-num-field mw-100 py-0"
+                                type="number" name="" value="#<@@(info_dcxp,'#haber')>"
+                                disabled=""
+                                "num-style"="currency"
+                                "num-currency"="#<@@(info_dcxp,'$divisa')>"
+                                "num-currency-display"="symbol"
+                                "num-decs"="#<@DECIMAL_PRECISION>"
+                            )
                         }
                     }
 
                     div(class="row d-flex justify-content-end align-items-center")
                     {
-                        label(class="col-auto col-form-label fw-bolder"){$"Intereses Financieros:"}
+                        label(class="col-auto col-form-label fw-bolder py-0"){$"Intereses Financieros:"}
                         div(class="col-6 text-end") {
-                            $"#<format(@@(info_dcxp,'#intfinancieros'),@FMT_MONEY)>"
+                            input(
+                                class="form-control-plaintext induxsoft-num-field mw-100 py-0"
+                                type="number" name="" value="#<@@(info_dcxp,'#intfinancieros')>"
+                                disabled=""
+                                "num-style"="currency"
+                                "num-currency"="#<@@(info_dcxp,'$divisa')>"
+                                "num-currency-display"="symbol"
+                                "num-decs"="#<@DECIMAL_PRECISION>"
+                            )
                         }
                     }
 
                     div(class="row d-flex justify-content-end align-items-center")
                     {
-                        label(class="col-auto col-form-label fw-bolder"){$"Intereses Moratorios:"}
+                        label(class="col-auto col-form-label fw-bolder py-0"){$"Intereses Moratorios:"}
                         div(class="col-6 text-end") {
-                            $"#<format(@@(info_dcxp,'#intmoratorios'),@FMT_MONEY)>"
+                            input(
+                                class="form-control-plaintext induxsoft-num-field mw-100 py-0"
+                                type="number" name="" value="#<@@(info_dcxp,'#intmoratorios')>"
+                                disabled=""
+                                "num-style"="currency"
+                                "num-currency"="#<@@(info_dcxp,'$divisa')>"
+                                "num-currency-display"="symbol"
+                                "num-decs"="#<@DECIMAL_PRECISION>"
+                            )
                         }
                     }
 
                     div(class="row d-flex justify-content-end align-items-center")
                     {
-                        label(class="col-auto col-form-label fw-bolder"){$"Bonificaciones:"}
+                        label(class="col-auto col-form-label fw-bolder py-0"){$"Bonificaciones:"}
                         div(class="col-6 text-end") {
-                            $"#<format(@@(info_dcxp,'#bonificaciones'),@FMT_MONEY)>"
-                        }
-                    }
-                     div(class="row d-flex justify-content-end align-items-center")
-                    {
-                        label(class="col-auto col-form-label fw-bolder"){$"Pagos:"}
-                        div(class="col-6 text-end") {
-                            $"#<format(@@(info_dcxp,'#pagos'),@FMT_MONEY)>"
+                            input(
+                                class="form-control-plaintext induxsoft-num-field mw-100 py-0"
+                                type="number" name="" value="#<@@(info_dcxp,'#bonificaciones')>"
+                                disabled=""
+                                "num-style"="currency"
+                                "num-currency"="#<@@(info_dcxp,'$divisa')>"
+                                "num-currency-display"="symbol"
+                                "num-decs"="#<@DECIMAL_PRECISION>"
+                            )
                         }
                     }
                     div(class="row d-flex justify-content-end align-items-center")
                     {
-                        label(class="col-auto col-form-label fw-bolder"){$"Saldo:"}
+                        label(class="col-auto col-form-label fw-bolder py-0"){$"Pagos:"}
                         div(class="col-6 text-end") {
-                            $"#<format(@@(info_dcxp,'#saldo'),@FMT_MONEY)>"
+                            input(
+                                class="form-control-plaintext induxsoft-num-field mw-100 py-0"
+                                type="number" name="" value="#<@@(info_dcxp,'#pagos')>"
+                                disabled=""
+                                "num-style"="currency"
+                                "num-currency"="#<@@(info_dcxp,'$divisa')>"
+                                "num-currency-display"="symbol"
+                                "num-decs"="#<@DECIMAL_PRECISION>"
+                            )
+                        }
+                    }
+                    div(class="row d-flex justify-content-end align-items-center")
+                    {
+                        label(class="col-auto col-form-label fw-bolder py-0"){$"Saldo:"}
+                        div(class="col-6 text-end") {
+                            input(
+                                class="form-control-plaintext induxsoft-num-field mw-100 py-0"
+                                type="number" name="" value="#<@@(info_dcxp,'#saldo')>"
+                                disabled=""
+                                "num-style"="currency"
+                                "num-currency"="#<@@(info_dcxp,'$divisa')>"
+                                "num-currency-display"="symbol"
+                                "num-decs"="#<@DECIMAL_PRECISION>"
+                            )
                         }
                     }
                     
@@ -202,14 +254,9 @@ module "cxp.intereses.dk"
                             div(class="input-group input-group-sm") {
                                 input(
                                     class="form-control form-control-sm rounded-0 induxsoft-num-field mw-100"
-                                    type="number"
-                                    name="tipocambio"
-                                    value="#<form('tipocambio','nm',info_dcxp)>"
-                                    min="1"
-                                    step="0.000001"
-                                    id="txt_tcambio"
-                                    required="true"
-                                    "num-decs"="6"
+                                    type="number" name="tipocambio" value="#<form('tipocambio','nm',info_dcxp)>" id="txt_tcambio"
+                                    step="#<num_step>" min="1" required="true"
+                                    "num-decs"="#<@DECIMAL_PRECISION>"
                                 )
                                 span(class="input-group-text rounded-0"){$"#<cDIVISA_PRED> = 1 #<@@(info_dcxp,'$divisa')>"}
                             }
@@ -223,15 +270,10 @@ module "cxp.intereses.dk"
                             div(class="input-group input-group-sm") {
                                 input(
                                     class="form-control form-control-sm rounded-0 induxsoft-num-field mw-100 validate-number"
-                                    type="number"
-                                    name="importe"
-                                    value="#<form('importe','nm',@null)>"
-                                    min="1"
-                                    step="0.000001"
-                                    id="txt_importe"
-                                    "num-decs"="#<decs>"
-                                    required="true"
-                                    onkeypress="return InduxsoftNumberFields.filterFloat(event,this,#<decs>)"
+                                    type="number" name="importe" value="#<form('importe','nm',@null)>" id="txt_importe"
+                                    step="#<num_step>" min="1" required="true"
+                                    "num-decs"="#<@DECIMAL_PRECISION>"
+                                    onkeypress="return InduxsoftNumberFields.filterFloat(event,this,#<@DECIMAL_PRECISION>)"
                                 )
                                 span(class="input-group-text rounded-0"){$"#<@@(info_dcxp,'$divisa')>"}
                             }
@@ -273,9 +315,7 @@ module "cxp.intereses.dk"
                             #$
                             input(
                                 class="form-control form-control-sm rounded-0 text-end"
-                                type="number"
-                                name="nuevo_saldo"
-                                value="#<nuevo_saldo>"
+                                type="number" name="nuevo_saldo" value="#<nuevo_saldo>"
                                 id="txt_nuevo_saldo"
                                 disabled="disabled"
                                 readonly="readonly"
@@ -297,6 +337,7 @@ module "cxp.intereses.dk"
                 document.addEventListener("DOMContentLoaded", () => {
                     documento.intmor.dtCXP = #<to.json(info_dcxp)>;
                     documento.intmor.dvsPred = #<to.json(dvsPred)>;
+                    documento.intmor.decimals = #<@DECIMAL_PRECISION>;
                     documento.intmor.init();
                     InduxsoftNumberFields.Init();
                 });
