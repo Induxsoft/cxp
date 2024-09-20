@@ -458,8 +458,6 @@ module "cxp.pago.dk"
             }
         }
 
-        p{$"#<@('$error/message')>"}
-
         div
         {
             script(src="#<@JS_DOCUMENTOS>"){$""}

@@ -51,7 +51,7 @@ module "cxp.bonificacion.dk"
             }
         }
 
-        form(action="." method="POST" id="form_bonificacion_prov" onsubmit="return proveedor.form.ValidateForm(event)")
+        form(action="." method="POST" id="form_bonificacion_prov") //onsubmit="return proveedor.form.ValidateForm(event)"
         {
             input(type="hidden" name="iproveedor" value="#<@@(dtprov,'#sys_pk')>")
 

@@ -1,0 +1,295 @@
+#include "dkli.dkh"
+#!
+module "Historial de Pagos por Proveedor"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "uielements.v12.dkl"
+    #include "../_lib/config.dk"
+    #include "../_lib/lib.dk"
+
+    do @context.begin(@crud_context)
+
+    ref data = ifnull(@("&./data"),list.create())
+    ref titles = ifnull(@("&./titles"),record.create())
+
+    @DECIMAL_PRECISION = @("#parameters/decimals")
+
+    new fil_tipo
+    {
+        @"datatable*": ifnull(@("&./list_tipos"),list.create())
+        @"id": "sel_tipo"
+        member "attributes"
+        {
+            @"name": "pktipo"
+            @"class": "form-select form-select-sm rounded-0"
+            @"title": "Filtrar por tipo de cliente"
+        }
+        @"value_field": "sys_pk"
+        @"text_field": "descripcion"
+        @"first_value": "-1"
+        @"first_text": "(Todos los tipos)"
+        @"selected": @("#parameters/pktipo")
+    }
+
+    new fil_docs
+    {
+        @"datatable*": ifnull(@("&./list_docs"),list.create())
+        @"id": "sel_doctype"
+        member "attributes"
+        {
+            @"name": "doctype"
+            @"class": "form-select form-select-sm rounded-0"
+            @"title": "Filtrar por tipo de documento"
+        }
+        @"value_field": "id"
+        @"text_field": "const"
+        @"first_value": "-1"
+        @"first_text": "(Todos los documentos)"
+        @"selected": @("#parameters/doctype")
+    }
+
+    new nav_config
+    {
+        @"title": "Historial de Pagos por Proveedor"
+        @"urlexit": "javascript:window.history.back()"
+    }
+
+    #$
+    div(class="container v12-list-view" id="view")
+    {
+        section(class="bg-white" id="top_area")
+        {
+            #!
+            do uie.printV12FormBar(nav_config)
+            #$
+            style
+            {$'
+                tr th { font-size:.9rem; outline:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; -o-text-overflow:ellipsis; }
+                tr td { font-size:.8rem; }
+            '}
+
+            form(class="" action="./" method="GET" id="form-filter")
+            {
+                div(class="align-items-center gap-1 mb-1")
+                {
+                    div(class="gap-1")
+                    {
+
+
+                        div(class="row")
+                        {
+                            div(class="col-2"){
+                                span(class="text-dark"){"Fecha Inicial"}
+                                 input(class="form-control form-control-sm rounded-0" type="date" name="finicio" value="#<@('$parameters/finicio')>" title="Fecha inicial")
+                             }
+                            div(class="col-2"){
+                                span(class="text-dark"){"Fecha Final"}
+                                 input(class="form-control form-control-sm rounded-0" type="date" name="ffinal" value="#<@('$parameters/ffinal')>" title="Fecha final")
+                            }
+                            div(class="col-2 mt-4"){
+                                label(class="form-label my-0" "for"="sel_tipo")
+                                {
+                                    ##
+                                    do uie.dbSelect(fil_tipo)
+                                    ##
+                                }
+                            }
+                            div(class="col-2 mt-4"){
+                                label(class="form-label my-0" "for"="sel_doctype")
+                                {
+                                    ##
+                                    do uie.dbSelect(fil_docs)
+                                    ##
+                                }
+                            }
+                            div(class="col-4 mt-4"){
+                                div(class="d-flex flex-grow-1 justify-content-end"){ button(class="btn btn-sm btn-primary rounded-0" type="submit" id="btn_filter"){$"Aplicar"} }
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+
+        div(class="bg-light w-100 p-2" style="max-height:80vh; overflow-y:auto;") {
+        div(class="" style="box-shadow: inset 0 -3em 3em rgba(0, 0, 0, 0.1), 0.3em 0.3em 1em rgba(0, 0, 0, 0.3);")
+        {
+            section(class="bg-white p-1" id="work_area")
+            {
+                p(class="text-center mb-0"){$"#<@@(titles,'$title')>"}
+                p(class="text-center mb-0"){$"#<@@(titles,'$subtitle')>"}
+                p(class="text-center mb-0"){$"#<@@(titles,'$subtitle_2')>"}
+
+                div(class="row")
+                {
+                    div(class="col-3")
+                    {
+                        small(class="d-block"){ $"#<cut(@('$http/session/user/name'),25)>" }
+                        small(class="d-block"){ b{$"Impresión: "} $"#<date_str(now(),'dd/MMM/yyyy')>" }
+                    }
+                    div(class="col-6")
+                    {
+                        h5(class="text-center"){$"Historial de Pagos por Proveedor"}
+                    }
+                    div(class="col-3 text-end")
+                    {
+                        $""
+                    }
+                }
+                
+                table(class="table table-sm table-bordered my-2")
+                {
+                    #!
+                    total_gral = 0
+                    gral_recibos = 0
+                    gral_notacredito = 0
+                    #$
+                    
+                    thead
+                    {
+                        tr(class="bg-light-gray")
+                        {
+                            th(class="text-center"){$"Fecha"}
+                            th(class="text-center"){$"Referencia"}
+                            th(class="text-center"){$"Documento"}
+                            th(class="text-center"){$"Descripción"}
+                            th(class="text-center"){$"Importe"}
+                        }
+                    }
+                    tbody
+                    {
+                        #!
+                        cproveedor = ""
+
+                        total_pdr = 0
+                        ttl_recibos = 0
+                        ttl_notacredito = 0
+                        
+                        ref list = ifnull(@("&./data"),list.create())
+                        for i = 0; i < list.count(list); i+1
+                        {
+                            ref obj = list.obj(list,i)
+
+                            if cproveedor != @@(obj,"$cproveedor")
+                            {
+                                if cproveedor!=""
+                                {
+                                    total_gral = total_gral + total_pdr
+                                    gral_recibos = gral_recibos + ttl_recibos
+                                    gral_notacredito = gral_notacredito + ttl_notacredito
+
+                                    #$
+                                    tr
+                                    {
+                                        td(class="text-end" colspan="4"){$"Total Recibos:"}
+                                        td(class="text-end fw-bolder"){$"$ #<number_format(ttl_recibos)>"}
+                                    }
+                                    tr
+                                    {
+                                        td(class="text-end" colspan="4"){$"Total Notas de crédito:"}
+                                        td(class="text-end fw-bolder"){$"$ #<number_format(ttl_notacredito)>"}
+                                    }
+                                    tr
+                                    {
+                                        td(class="text-end" colspan="4"){$"Total Proveedor:"}
+                                        td(class="text-end fw-bolder"){$"$ #<number_format(total_pdr)>"}
+                                    }
+                                    #!
+
+                                    total_pdr = 0
+                                    ttl_recibos = 0
+                                    ttl_notacredito = 0
+                                }
+
+                                #$
+                                tr{ td(class="fw-bolder" colspan="9"){$"[#<@@(obj,'$cproveedor')>] #<@@(obj,'$proveedor')>"} }
+                                #!
+
+                                cproveedor = @@(obj,"$cproveedor")
+                            }
+
+                            importe = @@(obj,'#importe')
+                            recibo = 0
+                            ncredito = 0
+
+                            if @@(obj,"#idocumento") == 5 { recibo = importe }
+                            if @@(obj,"#idocumento") == 19 { ncredito = importe }
+
+                            total_pdr = total_pdr + importe
+                            ttl_recibos = ttl_recibos + recibo
+                            ttl_notacredito = ttl_notacredito + ncredito
+
+                            #$
+                            tr
+                            {
+                                td(class=""){$"#<@@(obj,'$fecha')>"}
+                                td(class=""){$"#<@@(obj,'$referencia')>"}
+                                td(class=""){$"#<@@(obj,'$cdocumento')>"}
+                                td(class=""){$"#<@@(obj,'$descripcion')>"}
+                                td(class="text-end"){$"$ #<number_format(importe)>"}
+                            }
+                            #!
+                        }
+
+                        if list.count(list) > 0
+                        {
+                            total_gral = total_gral + total_pdr
+                            gral_recibos = gral_recibos + ttl_recibos
+                            gral_notacredito = gral_notacredito + ttl_notacredito
+
+                            #$
+                            tr
+                            {
+                                td(class="text-end" colspan="4"){$"Total Recibos:"}
+                                td(class="text-end fw-bolder"){$"$ #<number_format(ttl_recibos)>"}
+                            }
+                            tr
+                            {
+                                td(class="text-end" colspan="4"){$"Total Notas de crédito:"}
+                                td(class="text-end fw-bolder"){$"$ #<number_format(ttl_notacredito)>"}
+                            }
+                            tr
+                            {
+                                td(class="text-end" colspan="4"){$"Total Proveedor:"}
+                                td(class="text-end fw-bolder"){$"$ #<number_format(total_pdr)>"}
+                            }
+                            #!
+
+                            total_pdr = 0
+                            ttl_recibos = 0
+                            ttl_notacredito = 0
+                        }
+                        #$
+                    }
+                    tfoot
+                    {
+                        tr
+                        {
+                            td(class="text-end fw-bolder" colspan="4"){$"Total General Recibo:"}
+                            td(class="text-end fw-bolder"){$"$ #<number_format(gral_recibos)>"}
+                        }
+                        tr
+                        {
+                            td(class="text-end fw-bolder" colspan="4"){$"Total General Nota de Crédito:"}
+                            td(class="text-end fw-bolder"){$"$ #<number_format(gral_notacredito)>"}
+                        }
+                        tr
+                        {
+                            td(class="text-end fw-bolder" colspan="4"){$"Totales Generales:"}
+                            td(class="text-end fw-bolder"){$"$ #<number_format(total_gral)>"}
+                        }
+                    }
+                }
+
+                p(class="text-center mb-0"){$"#<@@(titles,'$footer')>"}
+            }
+        }}
+
+        // script(type="text/javascript"){$''}
+    }
+    #!
+
+    do @context.end()
+}

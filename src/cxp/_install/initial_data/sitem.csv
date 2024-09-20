@@ -28,3 +28,4 @@ GC28,Importar proveedores,cxp.proveedores
 cxp.reports,Informes de Cuentas por Pagar,cxp
 GC41,Informe de antigüedad de saldos por pagar,cxp.reports
 GC42,Origen y aplicación,cxp.reports
+GC43,Historial de pagos por proveedor,cxp.reports

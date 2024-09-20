@@ -19,3 +19,4 @@ GC31,Agregar gasto,Agregar,,/!/cxp/gastos/_new/,0,cxp.gastos,DET024,0,action
 GC32,Consultar gasto,Consultar,,/!/cxp/gastos/@_src_context_item_id/,0,cxp.gastos,DET024,1,action
 GC41,Informe de antigüedad de saldos por pagar,Antigüedad de saldos,,/!/cxp/reports/antiguedad-saldos/,0,cxp.reports,DET03F,0,report
 GC42,Origen y aplicación,Origen y aplicación,,/!/cxp/reports/origen-aplicacion/,0,cxp.reports,DET01E,0,report
+GC43,Historial de pagos por proveedor,H. Pagos X Proveedor,,/!/cxp/reports/historial-pagos-proveedor/,0,cxp.reports,DET03F,0,report

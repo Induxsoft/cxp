@@ -15,6 +15,12 @@ module ""
             @form_view = "origen.aplicacion.dk"
             point @read to origenAplicacion
         }
+        case "historial-pagos-proveedor"
+        {
+            @form_view = "historial.pagos.xproveedor.dk"
+            point @read to historialPagosXProveedor
+            break
+        }
         default
         {
             point @read to NotImplemented

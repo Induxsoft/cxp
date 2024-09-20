@@ -21,8 +21,6 @@ module "Origen y Aplicación"
         @"urlexit": "javascript:window.history.back()"
     }
 
-   
-
     #$
     div(class="container v12-list-view" id="view")
     {

@@ -18,6 +18,15 @@ module "Reportes de Cuentas por Pagar"
                 }
                 break
             }
+            case "historial-pagos-proveedor"
+            {
+                using data
+                {
+                    @"list_tipos*": dbr.list(db,sql_tiposproveedor,@null)
+                    @"list_docs*": dbr.list(db,"SELECT * FROM cdocumentos WHERE id IN (5,19);",@null)
+                }
+                break
+            }
         }
 
         do prepareDefaultReportData(db,data)
@@ -119,6 +128,45 @@ module "Reportes de Cuentas por Pagar"
         }
         do prepareView(db,params,data)
 
+        return data
+
+        exception{ do catch() }
+    }
+
+    historialPagosXProveedor::&db,&params
+    {
+        // do dbr.apps.action.grant("GC43")
+
+        sql = "
+        SELECT
+            DATE_FORMAT(cxp.fecha,'%Y-%m-%d') AS fecha,
+            doc.id AS idocumento,
+            doc.const AS cdocumento,
+            cxp.referencia,
+            cxp.notas AS descripcion,
+            cxp.debe AS importe,
+            cxp.iproveedor,
+            pdr.codigo AS cproveedor,
+            pdr.nombre AS `proveedor`
+        FROM proveedor AS pdr
+            INNER JOIN dcxp AS cxp ON cxp.iproveedor = pdr.sys_pk
+            INNER JOIN cdocumentos AS doc ON cxp.documento = doc.id
+        WHERE
+            cxp.debe > 0
+            AND cxp.fecha BETWEEN @finicio AND @ffinal
+            AND IF(CONVERT(@pktipo,DECIMAL)>0, pdr.tipo = @pktipo, TRUE)
+            AND IF(CONVERT(@doctype,DECIMAL)>0, cxp.documento = @doctype, (cxp.documento=5 OR cxp.documento=19))
+        ORDER BY
+            cxp.iproveedor,
+            cxp.fecha,
+            cxp.debe;
+        "
+
+        new data
+        {
+            @"data*": dbr.list(db,sql,params)
+        }
+        do prepareView(db,params,data)
         return data
 
         exception{ do catch() }

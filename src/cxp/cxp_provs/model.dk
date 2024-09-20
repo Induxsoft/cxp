@@ -425,6 +425,7 @@ module "model"
         //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ESTADO_CUENTA_PROVD)) { do rise_error(0,"No autorizado")}
         do dbr.apps.action.grant("GC23")
 
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
         params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
         params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
 
