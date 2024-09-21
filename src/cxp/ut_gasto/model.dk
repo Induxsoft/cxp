@@ -352,12 +352,12 @@ module "model"
 
     ut.data::&db,&data
     {
-         sql = "SELECT c.sys_pk,CONCAT(c.nombre,'(',d.codigo,')') nombre FROM chequera c INNER JOIN divisa d ON d.sys_pk = c.idivisa WHERE NOT IFNULL(c.sys_deleted,0) ORDER BY c.sys_pk;"
-                data<"cuentas*"> : dbr.list(db,sql,@null)
-                sql = "SELECT sys_pk,descripcion FROM categoria WHERE tipo = 2 AND NOT IFNULL(sys_deleted,0) ORDER BY sys_pk;"
-                data<"categorias*"> : dbr.list(db,sql,@null)
-                sql = "SELECT doc.id,doc.const FROM cdocumentos doc INNER JOIN cfg_chq_docs cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.retiros,0) ORDER BY doc.id;"
-                data<"documentos*"> : dbr.list(db,sql,@null)
+        sql = "SELECT c.sys_pk, CONCAT(c.nombre,' (',d.codigo,')') nombre, c.idivisa, d.codigo AS cdivisa, d.tcambio FROM chequera c INNER JOIN divisa d ON d.sys_pk = c.idivisa WHERE NOT IFNULL(c.sys_deleted,0) ORDER BY c.sys_pk;"
+        data<"cuentas*"> : dbr.list(db,sql,@null)
+        sql = "SELECT sys_pk,descripcion FROM categoria WHERE tipo = 2 AND NOT IFNULL(sys_deleted,0) ORDER BY sys_pk;"
+        data<"categorias*"> : dbr.list(db,sql,@null)
+        sql = "SELECT doc.id,doc.const FROM cdocumentos doc INNER JOIN cfg_chq_docs cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.retiros,0) ORDER BY doc.id;"
+        data<"documentos*"> : dbr.list(db,sql,@null)
     }
     ut.blank::&db,&params
     {
@@ -429,18 +429,21 @@ module "model"
         for i = 0; i < @count(files)
         {
             ref file = @item(files,i)
-            filename = limpiarTexto(@@(file,"$filename"))
-            filepath = path.concat(attachment_path,filename)
-            endpoint = "/!/cxp/gasto-files/?gasto="+@@(params,"$gasto")+"&filename="+filename
-            do file.copy(@@(file,"$temp_file"),filepath)
-
-            new obj
+            if file.exists(@@(file,"$temp_file")) && @@(file,"$filename")!="" && @@(file,"#size")>0
             {
-                @"url": endpoint
-                @"mini": filepath
-                @"name": filename
+                filename = limpiarTexto(@@(file,"$filename"))
+                filepath = path.concat(attachment_path,filename)
+                endpoint = "/!/cxp/gasto-files/?gasto="+@@(params,"$gasto")+"&filename="+filename
+                do file.copy(@@(file,"$temp_file"),filepath)
+
+                new obj
+                {
+                    @"url": endpoint
+                    @"mini": filepath
+                    @"name": filename
+                }
+                do list.add(uploaded,obj)
             }
-            do list.add(uploaded,obj)
         }
 
         return uploaded

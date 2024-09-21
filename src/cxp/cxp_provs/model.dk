@@ -52,6 +52,7 @@ module "model"
             IFNULL(pdr.rfc,'') AS rfc,
             IFNULL(pdr.saldo,0) AS saldo,
             tpp.descripcion AS tipo,
+            dvs.sys_pk AS idivisa,
             dvs.codigo AS divisa,
             dvs.tcambio,
             IFNULL(zna.nombre,'') AS zona

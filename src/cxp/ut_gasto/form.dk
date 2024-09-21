@@ -25,7 +25,7 @@ module "form.dk"
 
     header_act::
     { 
-        if @("$./sys_pk")==""{ #$ button(type="submit" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" title="Guardar"){$"#<@ICON_SAVE>"} }
+        if @("$parameters/_entity_id")=="_new"{ #$ button(type="submit" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" title="Guardar"){$"#<@ICON_SAVE>"} }
     }
     #! point general_act to header_act
 
@@ -53,6 +53,12 @@ module "form.dk"
             @"name": "cuenta"
             @"required": ""
         }
+        new member "attr_options"
+        {
+            @"data-idivisa": "#<@@(row,'#idivisa')>"
+            @"data-cdivisa": "#<@@(row,'$cdivisa')>"
+            @"data-tcambio": "#<@@(row,'#tcambio')>"
+        }
         @"value_field": "sys_pk"
         @"text_field": "nombre"
         @"selected": @("./icuenta")
@@ -76,6 +82,7 @@ module "form.dk"
     #$
     div(class="container")
     {
+        link(href="#<@CSS_MAIN>" rel="stylesheet")
         form(action="." method="post" enctype="multipart/form-data")
         {
             #! do uie.printMainBar(general_act, "Gasto", @false, @UT_GASTO)
@@ -309,13 +316,47 @@ module "form.dk"
                 var proveedor=document.getElementById("sel_proveedor");
                 var beneficiario=document.getElementById("txt_beneficiario");
 
+                var sel_divisa=document.getElementById("sel_divisa");
                 var sel_tipo=document.getElementById("sel_tipo");
                 var sel_documento=document.getElementById("sel_documento");
                 var sel_cuenta=document.getElementById("sel_cuenta");
 
-                if (proveedor) proveedor.addEventListener("change",() => {
-                    if (beneficiario) beneficiario.value = proveedor.getValue()?.nombre ?? "";
+                function trigger(element,event) {
+                    if (element) {
+                        if (event=="submit") {
+                            element.requestSubmit();
+                            return
+                        }
+                        let e = new Event(event);
+                        element.dispatchEvent(e);
+                    }
+                }
+
+                sel_divisa.addEventListener("change", () => {
+                    if (sel_cuenta) {
+                        let o = null;
+                        let i = -1;
+                        Array.from(sel_cuenta.options).forEach((option, index) => {
+                            let hide = (option.getAttribute("data-idivisa") != sel_divisa.value);
+                            if (o===null && !hide) { o=option; i=index; }
+                            option.classList.toggle("d-none", hide);
+                        });
+
+                        sel_cuenta.selectedIndex = i;
+                        sel_cuenta.value = o?.value ?? "";
+                    }
                 });
+
+                proveedor.addEventListener("change",() => {
+                    let dtpdr = proveedor.getValue();
+                    if (beneficiario) beneficiario.value = dtpdr?.nombre ?? "";
+                    if (sel_divisa) {
+                        sel_divisa.value = dtpdr?.idivisa ?? 1;
+                        sel_divisa.classList.toggle("disable-ctrl",(dtpdr != null));
+                        trigger(sel_divisa,"change");
+                    }
+                });
+                proveedor.setValue(proveedor.getValue());
 
                 if(#<@("#./sys_pk")>>0)
                 {
