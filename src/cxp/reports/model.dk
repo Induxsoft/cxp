@@ -135,7 +135,7 @@ module "Reportes de Cuentas por Pagar"
 
     historialPagosXProveedor::&db,&params
     {
-        // do dbr.apps.action.grant("GC43")
+      do dbr.apps.action.grant("GC43")
 
         sql = "
         SELECT
@@ -153,7 +153,7 @@ module "Reportes de Cuentas por Pagar"
             INNER JOIN cdocumentos AS doc ON cxp.documento = doc.id
         WHERE
             cxp.debe > 0
-            AND cxp.fecha BETWEEN @finicio AND @ffinal
+            AND cxp.fecha BETWEEN IFNULL(@finicio,date(now())) AND IFNULL(@ffinal, date(now()))
             AND IF(CONVERT(@pktipo,DECIMAL)>0, pdr.tipo = @pktipo, TRUE)
             AND IF(CONVERT(@doctype,DECIMAL)>0, cxp.documento = @doctype, (cxp.documento=5 OR cxp.documento=19))
         ORDER BY
