@@ -150,8 +150,8 @@ module ":erp.cxp.movimientos"
             }
         }
 
-        dcxp<"aplicable"> : (field.num(dcxp,"haber") > 0)
         if field.exist(data,"aplicable") { dcxp<"aplicable"> : parse.bool(@@(data,"$aplicable")) }
+        else { dcxp<"aplicable"> : (field.num(dcxp,"haber") > 0) }
 
         if not(dbr.in_transaction(db)) {
             do dbr.begin(db)
@@ -233,7 +233,6 @@ module ":erp.cxp.movimientos"
 
         new dcxp
         {
-            @"aplicable": @@(data,"$aplicable")
             @"aplicacion": @@(data,"$flimite")
             @"basecm": 0
             @"documento": @@(data,"#documento")
@@ -245,6 +244,7 @@ module ":erp.cxp.movimientos"
             @"iproveedor": @@(data,"#iproveedor")
         }
         
+        if field.exist(data,"aplicable") { dcxp<"aplicable"> : parse.bool(@@(data,"$aplicable")) }
         if @@(data,"#icompra") > 0 { dcxp<"icompra"> : @@(data,"#icompra") }
         if @@(data,"#igasto") > 0 { dcxp<"uf_igasto"> : @@(data,"#igasto") }
 
