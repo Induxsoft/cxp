@@ -105,9 +105,11 @@ module "cxp.pago.dk"
     #$
     div(class="container-md")
     {
-        #! do uie.printV12FormBar(nav_config)
-        #$ div(class="alert alert-danger overflow-auto mb-2 #<ifstr(@('$error/message')!='','','d-none')>" id="frm_alerts"){$"#<@('error/message')>"}
-
+        #!
+        do uie.printV12FormBar(nav_config)
+        #$
+        
+        div(class="alert alert-danger overflow-auto mb-2 #<ifstr(@('$error/message')!='','','d-none')>" id="frm_alerts"){$"#<@('error/message')>"}
         form(action="." method="POST" id="form_pagocxp") //onsubmit="return proveedor.form.ValidateForm(event)"
         {
             input(type="hidden" name="pkparent" value="#<@@(info_dcxp,'#sys_pk')>")
