@@ -9,7 +9,7 @@ var proveedor =
 
     trigger(element,event) {
         if (element) {
-            if (event=='submit') {
+            if (element.nodeName==="FORM" && event=='submit') {
                 element.requestSubmit();
                 return
             }
@@ -282,6 +282,8 @@ var proveedor =
 
                 if (this._GET["_entity_id"] != "new")
                 {
+                    proveedor.trigger(this.elements["chq_domicilio1"],"change");
+
                     let contacto1 = Number(this.dtProv.contacto1);
                     let contacto2 = Number(this.dtProv.contacto2);
                     let contacto3 = Number(this.dtProv.contacto3);
@@ -298,6 +300,9 @@ var proveedor =
                         let ikContacto3 = document.getElementById("ik_contacto3");
                         this.setContacto(ikContacto3,contacto3);
                     }
+
+                    proveedor.trigger(this.elements["chq_domicilio2"],"change");
+                    proveedor.trigger(this.elements["chq_domicilio3"],"change");
                 }
             }
         },
