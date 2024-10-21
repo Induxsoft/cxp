@@ -40,7 +40,7 @@ module ""
 
     new nav_config
     {
-        @"title": "Antigüedad de saldos de clientes"
+        @"title": "Antigüedad de saldos de proveedores"
         @"buttons*": @null
         @"urlexit": "javascript:window.history.back()"
     }

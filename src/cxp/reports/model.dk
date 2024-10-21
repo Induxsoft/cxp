@@ -62,7 +62,7 @@ module "Reportes de Cuentas por Pagar"
             z.telefonos,
             cdocumentos.const AS documento,
             DATEDIFF(@fil_fcorte, dcxp.aplicacion) AS dias,
-            (dcxp.debe + dcxp.intmoratorios - dcxp.bonificaciones - dcxp.pagos) AS saldo
+            (dcxp.haber + dcxp.intmoratorios - dcxp.bonificaciones - dcxp.pagos) AS saldo
         FROM
             (
                 proveedor z
