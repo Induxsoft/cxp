@@ -311,7 +311,7 @@ module "form.dk"
 
                                     div(class="d-flex align-items-center gap-2 my-2")
                                     {
-                                        input(type="file" class="form-control rounded-0 w-auto" name="file" id="file" title="Adjuntar documentos")
+                                        input(type="file" class="form-control rounded-0 w-auto" name="file" id="file" multiple="true" title="Adjuntar documentos")
                                         // label(class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" "for"="file"){"Adjuntar documentos"}
                                         #! if @count(adjuntos) > 0 {
                                             #$
@@ -319,19 +319,22 @@ module "form.dk"
                                             button(type="button" class="btn btn-sm btn-outline-danger" onclick="gasto.form.remover();"){"Remover"}
                                         } #$
                                     }
+                                    label(class="" id="lbl_attachment_name"){$"> ..."}
                                     #! if @count(adjuntos) > 0 {
                                         #$ "media-list"(
                                             id="media-list"
                                             data='#<to.json(adjuntos)>'
-                                            "can-arrange"="true"
-                                            "can-drag"="true"
-                                            "can-drop"="true"
-                                            "can-delete"="false"
-                                            "highlight-first"="true"
-                                            "media-prop"="url"
-                                            "miniature-prop"="mini"
                                             "outline-selected"="true"
+                                            "highlight-first"="false"
+                                            "back-color-media"="#F8F8F8"
+                                            "max-size-media"="7.5rem"
+                                            "can-arrange"="false"
+                                            "can-drag"="false"
+                                            "can-drop"="false"
+                                            "can-delete"="false"
+                                            "media-prop"="url"
                                             "label-prop"="name"
+                                            "miniature-prop"="mini"
                                         ){""}
                                     } #$
                                 }

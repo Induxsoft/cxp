@@ -2,6 +2,9 @@
 #!
 module "model"
 {
+    @sys_fields = "sys_pk,sys_guid,sys_dtcreated,sys_timestamp,sys_info,sys_user,sys_lastuser,sys_exported,sys_dtexported,sys_recver,sys_deleted,sys_lock"
+    @update_fields = @sys_fields + ",concepto,retisr,retiva,iva,subtotal,icategoria"
+
     @read_query = "
     SELECT 
         ut.sys_pk,
@@ -40,8 +43,6 @@ module "model"
         left join dcxp dc on ut.sys_pk=dc.uf_igasto
     WHERE TRUE and ut.sys_pk=@_entity_id
     "
-
-    @update_fields = @sys_fields + ",concepto,retisr,retiva,iva,subtotal,icategoria"
 
     ut.prepareView::&db,&params,&data
     {
@@ -162,7 +163,7 @@ module "model"
         
         if @@(data,"#formapago")==@fp_credito
         {
-            igasto=dbr.num(db,"select sys_pk from ut_gasto where sys_guid=@sys_guid",gasto)
+            igasto=@@(entity,"#sys_pk") //dbr.num(db,"select sys_pk from ut_gasto where sys_guid=@sys_guid",gasto)
             new cxp
             {
                 @"iproveedor":@@(gasto,"#iproveedor")
@@ -431,7 +432,7 @@ module "model"
             do dbr.delete(db, "dcxp", "sys_pk = @pk_dcxp", dcxp)
             
             // Ajustar saldo del proveedor
-            do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) + @haber - @debe) WHERE sys_pk = @iproveedor;",dcxp)
+            do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) - @haber + @debe) WHERE sys_pk = @iproveedor;",dcxp)
 
             // Eliminar gasto
             ref result = entity.delete(db,params)
@@ -500,6 +501,31 @@ module "model"
 
         return path
     }
+
+    function adj.prop(&adj,filepath)
+    {
+        if isnull(adj) { ref adj:record.create() }
+        name = file.justname(filepath)
+        ext = file.extension(filepath)
+        mini = "file.png"
+
+        if ext == ".pdf" { mini = "pdf.png" }
+        else if ext == ".xml" { mini = "xml.png" }
+        else if ext == ".csv" { mini = "csv.png" }
+        else if containsword(ext,"zip,rar") { mini = "zip.png" }
+        else if containsword(ext,"jpg,jpeg,png") { mini = "img.png" }
+        else if containsword(ext,"docx,docm,dotx,dotm,doc,dot,wbk,wll,wwl") { mini = "word.png" }
+        else if containsword(ext,"xlsx,xlsm,xltx,xltm,xls,xlt,xlm,xlsb,xla,xlam,xll,xlw,xll_,xla_,xla5,xla8") { mini = "excel.png" }
+
+        using adj
+        {
+            @"path": filepath
+            @"name": name
+            @"ext": ext
+            @"mini": path.concat(@IMG_MINIS,mini)
+        }
+        return adj
+    }
     
     SaveAdjuntos::&db,&params,&data
     {
@@ -533,9 +559,8 @@ module "model"
                 new obj
                 {
                     @"url": endpoint
-                    @"mini": filepath
-                    @"name": filename
                 }
+                do adj.prop(obj,filepath)
                 do list.add(uploaded,obj)
             }
         }
@@ -573,9 +598,8 @@ module "model"
             new obj
             {
                 @"url": endpoint
-                @"mini": filepath
-                @"name": filename
             }
+            do adj.prop(obj,filepath)
             do list.add(attachments,obj)
         }
 

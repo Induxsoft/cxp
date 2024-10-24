@@ -9,7 +9,7 @@ var gasto=
         btn_eliminar:null,
 
         init()
-        {   
+        {
             this.formulario = document.getElementById(this.formId);
             this.ff = this.formulario.elements;
             this.btn_corregir = document.getElementById("btn-fix");
@@ -18,12 +18,12 @@ var gasto=
             this.txt_fecha=document.getElementById("txt_fecha");
             this.txt_referencia=document.getElementById("txt_referencia");
             this.file=document.getElementById("file");
+            this.lbl_attachment_name = document.getElementById("lbl_attachment_name");
 
             if(this.file)this.file.addEventListener("change",()=>{gasto.form.uploadFile();});
 
             this.media_list=document.getElementById("media-list");
-            if(this.media_list)this.media_list.onClicking=data=>
-            {
+            if(this.media_list)this.media_list.onClicking = (data) => {
                 this.SelectedElement(data);
             }
 
@@ -58,7 +58,8 @@ var gasto=
         data_preview:null,
         SelectedElement(data)
         {
-            this.data_preview=this.getDataById(data.__internal_id__);
+            if (this.lbl_attachment_name) this.lbl_attachment_name.textContent = "> " + data.name + data.ext;
+            this.data_preview = this.getDataById(data.__internal_id__);
         },
         preview()
         {
