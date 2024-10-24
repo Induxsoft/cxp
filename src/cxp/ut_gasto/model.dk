@@ -124,7 +124,6 @@ module "model"
 
     ut.agregarGasto::&db,&params,&data
     {
-        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
         @use_transaction = @false
 
         do dbr.apps.action.pre("GC31")
@@ -140,11 +139,6 @@ module "model"
 
         new gasto
         {
-            @"sys_pk": 0
-            @"sys_guid": uuid()
-            @"sys_recver": 0
-            @"sys_dtcreated*": dbr.sql("now()")
-            @"sys_timestamp*": dbr.sql("now()")
             @"referencia": @@(data,"$referencia")
             @"fecha*": str2dt(@@(data,"$fecha"))
             @"vencimiento*": str2dt(@@(data,"$vencimiento"))
@@ -158,17 +152,15 @@ module "model"
             @"retiva": @@(data,"#retiva")
             @"retisr": @@(data,"#retisr")
             @"total": @@(data,"#importe")
-            @"formapago":@@(data,"#formapago") //@FORMA_PAGO
+            @"formapago":@@(data,"#formapago")
             @"statusadministrativo": @STATUS_ADMINISTRATIVO
         }
 
-        //do dbr.begin(db)
-
-        if @@(data,"#formapago")==@FORMA_PAGO{ gasto<"imovchequera">:@@(mov.retiro(db,params,data),"#sys_pk")}
-            
-        do dbr.insert(db,"ut_gasto",gasto)
+        if @@(data,"#formapago")==@fp_contado{ gasto<"imovchequera">:@@(mov.retiro(db,params,data),"#sys_pk")}
         
-        if @@(data,"#formapago")==@FORMA_PAGO_CREDITO
+        ref entity = entity.create(db,params,gasto)
+        
+        if @@(data,"#formapago")==@fp_credito
         {
             igasto=dbr.num(db,"select sys_pk from ut_gasto where sys_guid=@sys_guid",gasto)
             new cxp
@@ -191,6 +183,8 @@ module "model"
         do dbr.apps.action.pos(@null)
         do dbr.commit(db)
         do dbr.apps.action.ext(@null)
+
+        return entity
 
         exception
         {
@@ -351,6 +345,7 @@ module "model"
             do field.remove(data,"proveedor")
         }
 
+        @use_transaction = @false
         do dbr.apps.action.pre("GC34")
         do dbr.begin(db)
         
