@@ -7,4 +7,5 @@ module "controller"
     point @blank to ut.blank
     point @create to ut.agregarGasto
     point @update to ut.update
+    point @delete to ut.delete
 }

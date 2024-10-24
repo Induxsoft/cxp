@@ -15,6 +15,8 @@ GC30,Gastos,cxp.gastos
 GC31,Agregar gasto,cxp.gastos
 GC32,Consultar gasto,cxp.gastos
 GC33,Administrar archivos adjuntos,cxp.gastos
+GC34,Corregir gasto,cxp.gastos
+GC35,Eliminar gasto,cxp.gastos
 cxp.proveedores,Proveedores y cuentas por pagar,cxp
 GC20,Proveedores y CxP,cxp.proveedores
 GC21,Nuevo proveedor,cxp.proveedores

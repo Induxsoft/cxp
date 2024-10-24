@@ -18,16 +18,15 @@ module "form.dk"
     ref adjuntos = ifnull(@("&./adjuntos"),list.create())
     // ref adjuntos = getFiles(path.concat(@PATH_ADJUNTOS,@("$./sys_guid")),replace(@URL_ADJUNTOS,"@id",@("$./sys_guid")))
 
-    @DECIMAL_PRECISION = @("#parameters/decimals")
+    @_entities_type = @("$parameters/_entities_type")
+	@_entity_id = @("$parameters/_entity_id")
 
+    @DECIMAL_PRECISION = @("#parameters/decimals")
+    @is_new = (@_entity_id == "_new")
+    
+    form_id = "frm_"+@_entities_type
     num_step = "0."+padright("",(@DECIMAL_PRECISION-1),"0")+"1"
     num_max = "9999999999."+padright("",@DECIMAL_PRECISION,"9")
-
-    header_act::
-    { 
-        if @("$parameters/_entity_id")=="_new"{ #$ button(type="submit" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" title="Guardar"){$"#<@ICON_SAVE>"} }
-    }
-    #! point general_act to header_act
 
     new tipo
     {
@@ -79,227 +78,263 @@ module "form.dk"
         @"selected": @("#./dcdoc")
     }
 
+    function print_buttons()
+    {
+        btn_cls = "btn btn-sm border-secondary induxsoft-corners btn-main-action"
+
+        #$
+        button(class="#<btn_cls>" type="button" id="btn-submit" "#<ifstr(@is_new,'','disabled')>"=""){$"#<@ICON_SAVE> Guardar"}
+        #!
+        if not(@is_new)
+        {
+            #$
+            button(class="#<btn_cls>" type="button" id="btn-fix"){$"#<@ICON_EDIT> Corregir"}
+            button(class="#<btn_cls>" type="button" id="btn-cancel" hidden=""){$"#<@ICON_X_LG> Cancelar"}
+            button(class="#<btn_cls>" type="button" id="btn-delete"){$"#<@ICON_TRASH> Eliminar"}
+            #!
+        }
+        #!
+    }
+    point @buttons to print_buttons
+    new nav_config
+    {
+        @"title": ifstr(@is_new, "Nuevo Gasto", toupper(@("$./referencia")))
+        @"urlexit": @UT_GASTO
+        @"buttons*": @buttons
+        member "hidden" { @"print":@true }
+    }
+
     #$
-    div(class="container")
+    div(class="container-lg" id="view")
     {
         link(href="#<@CSS_MAIN>" rel="stylesheet")
-        form(action="." method="post" enctype="multipart/form-data")
+
+        section(id="top_area")
         {
-            #! do uie.printMainBar(general_act, "Gasto", @false, @UT_GASTO)
-
+            #!
+            do uie.printV12FormBar(nav_config)
             #$
-            input(type="hidden" name="sys_pk" value="#<@('#./sys_pk')>")
-            input(type="hidden" name="sys_guid" value="#<@('$./sys_guid')>")
-            input(type="hidden" name="sys_recver" value="#<@('#./sys_recver')>")
+        }
 
-            div
+        section(id="work_area" style="overflow-y:auto; overflow-x:hidden;")
+        {
+            form(action="." method="POST" enctype="multipart/form-data" id="#<form_id>")
             {
-                div(class="alert alert-danger overflow-auto mb-2 #<ifstr(@('$error/message')!='','','d-none')>" id="frm_alerts"){$"#<@('error/message')>"}
+                input(type="hidden" name="sys_pk" value="#<@('#./sys_pk')>")
+                input(type="hidden" name="sys_guid" value="#<@('$./sys_guid')>")
+                input(type="hidden" name="sys_recver" value="#<@('#./sys_recver')>")
 
-                div(class="row mb-2")
+                div
                 {
-                    div(class="col-lg-4 col-md-4 col-sm-12"){
-                        small(class="fw-bold" "for"="txt-fecha"){$"Fecha:"}
-                        input(type="date" class="induxsoft-form-control" name="fecha" id="txt_fecha" value="#<@('$input/fecha')>" required="")
-                    }
-                    div(class="col-lg-4 col-md-4 col-sm-12"){
-                        small(class="fw-bold" "for"="txt_vencimiento"){$"Fecha de vencimiento:"}
-                        input(type="date" class="induxsoft-form-control" name="vencimiento" id="vencimiento" value="#<@('$input/vencimiento')>" required="")
-                    }
-                    div(class="col-lg-4 col-md-4 col-sm-12"){
-                        small(class="fw-bold" "for"="txt_referencia"){$"Referencia:"}
-                        input(type="text" class="induxsoft-form-control" name="referencia" id="txt_referencia" value="#<@('$input/referencia')>" required="")
-                    }
-                }
+                    // div(class="alert alert-danger overflow-auto mb-2 #<ifstr(@('$error/message')!='','','d-none')>" id="frm_alerts"){$"#<@('error/message')>"}
 
-                div(class="mb-2")
-                {
-                    small(class="fw-bold" "for"="sel_proveedor"){$"Proveedor:"}
-                    "input-key"(
-                        id="sel_proveedor"
-                        name="proveedor"
-                        "data-key"="sys_pk"
-                        "data-search"="codigo"
-                        "data-text"="nombre"
-                        "data-value"="#<to.json(infoProv)>"
-                        "data-source"="#<@URL_BUSCAR_PROVEEDOR>"
-                        columns="codigo,nombre,tipo"
-                        colcaptions="Código,Nombre,Tipo"
-                        "box-title-text"="Seleccione un proveedor"
-                        required="true"
-                    ){$""}
-                }
-
-                div(class="row mb-2")
-                {
-                    div(class="col-12 col-sm-6")
+                    div(class="row mb-2")
                     {
-                        small(class="fw-bold" "for"="sel_categoria"){$"Categoría:"}
-                        #! new params
+                        div(class="col-lg-4 col-md-4 col-sm-12"){
+                            small(class="fw-bold" "for"="txt-fecha"){$"Fecha:"}
+                            input(type="date" class="induxsoft-form-control" name="fecha" id="txt_fecha" value="#<@('$input/fecha')>" required="")
+                        }
+                        div(class="col-lg-4 col-md-4 col-sm-12"){
+                            small(class="fw-bold" "for"="txt_vencimiento"){$"Fecha de vencimiento:"}
+                            input(type="date" class="induxsoft-form-control" name="vencimiento" id="vencimiento" value="#<@('$input/vencimiento')>" required="")
+                        }
+                        div(class="col-lg-4 col-md-4 col-sm-12"){
+                            small(class="fw-bold" "for"="txt_referencia"){$"Referencia:"}
+                            input(type="text" class="induxsoft-form-control" name="referencia" id="txt_referencia" value="#<@('$input/referencia')>" required="")
+                        }
+                    }
+
+                    div(class="mb-2")
+                    {
+                        small(class="fw-bold" "for"="sel_proveedor"){$"Proveedor:"}
+                        "input-key"(
+                            id="sel_proveedor"
+                            name="proveedor"
+                            "data-key"="sys_pk"
+                            "data-search"="codigo"
+                            "data-text"="nombre"
+                            "data-value"="#<to.json(infoProv)>"
+                            "data-source"="#<@URL_BUSCAR_PROVEEDOR>"
+                            columns="codigo,nombre,tipo"
+                            colcaptions="Código,Nombre,Tipo"
+                            "box-title-text"="Seleccione un proveedor"
+                            required="true"
+                        ){$""}
+                    }
+
+                    div(class="row mb-2")
+                    {
+                        div(class="col-12 col-sm-6")
                         {
-                            @"datatable*": ifnull(@("&./categorias"),list.create())
-                            @"id": "sel_categoria"
-                            new member "attributes"
+                            small(class="fw-bold" "for"="sel_categoria"){$"Categoría:"}
+                            #! new params
                             {
-                                @"class": "induxsoft-form-select"
-                                @"name": "categoria"
-                                @"required": ""
-                            }
-                            @"value_field": "sys_pk"
-                            @"text_field": "descripcion"
-                            @"selected": @("$input/categoria")
-                        }
-                        do uie.dbSelect(params)
-                    }
-                    #$ div(class="col-12 col-sm-6")
-                    {
-                        small(class="fw-bold" "for"="sel_divisa"){$"Divisa:"}
-                        #! new params
-                        {
-                            @"datatable*": ifnull(@("&./divisas"),list.create())
-                            @"id": "sel_divisa"
-                            new member "attributes"
-                            {
-                                @"class": "induxsoft-form-select"
-                                @"name": "divisa"
-                                @"required": ""
-                            }
-                            @"value_field": "sys_pk"
-                            @"text_field": "divisa"
-                            @"selected": @("$input/divisa")
-                        }
-                        do uie.dbSelect(params)
-                    }
-                }
-
-                #$ small(class="fw-bold" "for"="txt_concepto"){$"Concepto:"}
-                textarea(class="form-control rounded-0" name="concepto" id="txt_concepto" required=""){$"#<@('$input/concepto')>"}
-
-                div(class="row")
-                {
-                    div(class="col-md-2")
-                    {
-                        small(class="form-label" "for"="txt_importe"){$"Importe:"}
-                        input(
-                            class="form-control rounded-0 induxsoft-num-field1 "
-                            type="number" name="importe" value="#<@('#input/importe')>"
-                            id="txt_importe" min="1" max="#<num_max>" step="#<num_step>" required="true"
-                            "num-style"="currency"
-                            "num-decs"="#<@DECIMAL_PRECISION>"
-                            onchange="CalImporte()"
-                        )
-                    }
-                    
-                    div(class="col-md-2")
-                    {
-                        small(class="form-label" "for"="txt_retencion"){$"Más ISR  retenido:"}
-                        input(type="number" min="0" max="#<num_max>" step="#<num_step>" onchange="CalImporte()" class="induxsoft-form-control" "#<ifstr(@('#./retisr')!=0,'readonly','')>"="true" name="retisr"  id="txt_retencion" value="#<@('#./retisr')>" )
-                   
-                    }
-                    div(class="col-md-2")
-                    {
-                        small(class="form-label" "for"="txt_retencion"){$"Más IVA retenido:"}
-                        input(type="number" min="0" max="#<num_max>" step="#<num_step>" onchange="CalImporte()" class="induxsoft-form-control" "#<ifstr(@('#./retiva')!=0,'readonly','')>"="true" name="retiva"  id="txt_retencion_iva" value="#<@('#./retiva')>" )
-                   
-                    }
-                    div(class="col-md-2")
-                    {
-                        small(class="form-label" "for"="txt_traslado"){$"Menos IVA trasladado:"}
-                        input(type="number" min="0" max="#<num_max>" step="#<num_step>" onchange="CalImporte()" class="induxsoft-form-control" "#<ifstr(@('#./iva')!=0,'readonly','')>"="true" name="iva" id="txt_traslado" value="#<@('#./iva')>" )
-                    }
-                    div(class="col-md-2")
-                    {
-                        h6{"Subtotal:"}
-                        input(type="number" readonly="true" id="subtotal" name="subtotal" class="induxsoft-form-control  induxsoft-num-field1" value="#<@('#./subtotal')>"){""}
-                    }
-                }
-                
-               
-                #$
-                div(class="d-flex mt-2")
-                {
-                    label{input(type="radio" id="forma_pago_contado" class="" name="formapago" "#<ifstr(@('#./fmpago')==@FORMA_PAGO || @('$./fmpago')=='','checked','')>"="true" value="#<@FORMA_PAGO>") " Contado" }
-                    label{input(type="radio" id="forma_pago_credito" class="ms-4" name="formapago" "#<ifstr(@('#./fmpago')==@FORMA_PAGO_CREDITO,'checked','')>"="true"  value="#<@FORMA_PAGO_CREDITO>") " Crédito" }
-                }
-                div(class="col-lg-12" id="div_contado") 
-                {
-                    div(class="row")
-                    {
-                        div(class="col-md-4")
-                        {
-                            small(class="form-label" "for"="txt_beneficiario"){$"Beneficiario:"}
-                            input(type="text" class="induxsoft-form-control" name="beneficiario" id="txt_beneficiario" value="#<@('$./beneficiario')>")
-                        }
-                        div(class="col-md-4")
-                        {
-                            small{$"Documento:"}
-                            #! 
-                            do uie.dbSelect(tipo)
-                            #$
-                        }
-                        div(class="col-md-4")
-                        {
-                            #$ small{$"Cuenta:"}
-                            #! do uie.dbSelect(cuentas)
-                        }
-                        #$ 
-                    }
-                    
-                }
-                div(class="col-lg-12" id="div_credito") 
-                {
-                    div(class="row")
-                    {
-                        div(class="col-md-4")
-                        {
-                            label(class="form-label" "for"="sel_documento"){$"Tipo de documento:"}
-                            ##
-                            do uie.dbSelect(sel_documento)
-                            ##
-                        }
-                        div(class="col-md-4 mt-4")
-                        {
-                            input(class="form-check-input" type="checkbox" name="aplicable" id="ch_aplicable" "checked"="" readonly="true" disabled="true")
-                            label(class="form-check-label" "for"="ch_aplicable"){$"Marcar como aplicable"}
-                        }
-                    }
-                }
-
-                div(class="row mt-2")
-                {
-                    div(class="col-md-12")
-                    {
-                        div(class="card")
-                        {
-                            div(class="card-body")
-                            {
-                                h5{"Adjuntos"}
-
-                                div(class="d-flex align-items-center gap-2 my-2")
+                                @"datatable*": ifnull(@("&./categorias"),list.create())
+                                @"id": "sel_categoria"
+                                new member "attributes"
                                 {
-                                    input(type="file" class="form-control rounded-0 w-auto" name="file" id="file" title="Adjuntar documentos")
-                                    // label(class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" "for"="file"){"Adjuntar documentos"}
+                                    @"class": "induxsoft-form-select"
+                                    @"name": "icategoria"
+                                    @"required": ""
+                                }
+                                @"value_field": "sys_pk"
+                                @"text_field": "descripcion"
+                                @"selected": @("#input/icategoria")
+                            }
+                            do uie.dbSelect(params)
+                        }
+                        #$ div(class="col-12 col-sm-6")
+                        {
+                            small(class="fw-bold" "for"="sel_divisa"){$"Divisa:"}
+                            #! new params
+                            {
+                                @"datatable*": ifnull(@("&./divisas"),list.create())
+                                @"id": "sel_divisa"
+                                new member "attributes"
+                                {
+                                    @"class": "induxsoft-form-select"
+                                    @"name": "divisa"
+                                    @"required": ""
+                                }
+                                @"value_field": "sys_pk"
+                                @"text_field": "divisa"
+                                @"selected": @("$input/divisa")
+                            }
+                            do uie.dbSelect(params)
+                        }
+                    }
+
+                    #$ small(class="fw-bold" "for"="txt_concepto"){$"Concepto:"}
+                    textarea(class="form-control rounded-0" name="concepto" id="txt_concepto" required=""){$"#<@('$input/concepto')>"}
+
+                    div(class="row")
+                    {
+                        div(class="col-md-2")
+                        {
+                            small(class="form-label" "for"="txt_importe"){$"Importe:"}
+                            input(
+                                class="form-control rounded-0 induxsoft-num-field1 "
+                                type="number" name="importe" value="#<@('#input/importe')>"
+                                id="txt_importe" min="1" max="#<num_max>" step="#<num_step>" required="true"
+                                "num-style"="currency"
+                                "num-decs"="#<@DECIMAL_PRECISION>"
+                                onchange="CalImporte()"
+                            )
+                        }
+                        
+                        div(class="col-md-2")
+                        {
+                            small(class="form-label" "for"="txt_retencion"){$"Más ISR  retenido:"}
+                            // "#<ifstr(@('#./retisr')!=0,'readonly','')>"="true"
+                            input(type="number" min="0" max="#<num_max>" step="#<num_step>" onchange="CalImporte()" class="induxsoft-form-control" name="retisr"  id="txt_retencion" value="#<@('#./retisr')>" )
+                    
+                        }
+                        div(class="col-md-2")
+                        {
+                            small(class="form-label" "for"="txt_retencion"){$"Más IVA retenido:"}
+                            // "#<ifstr(@('#./retiva')!=0,'readonly','')>"="true"
+                            input(type="number" min="0" max="#<num_max>" step="#<num_step>" onchange="CalImporte()" class="induxsoft-form-control" name="retiva"  id="txt_retencion_iva" value="#<@('#./retiva')>" )
+                    
+                        }
+                        div(class="col-md-2")
+                        {
+                            small(class="form-label" "for"="txt_traslado"){$"Menos IVA trasladado:"}
+                            // "#<ifstr(@('#./iva')!=0,'readonly','')>"="true"
+                            input(type="number" min="0" max="#<num_max>" step="#<num_step>" onchange="CalImporte()" class="induxsoft-form-control" name="iva" id="txt_traslado" value="#<@('#./iva')>" )
+                        }
+                        div(class="col-md-2")
+                        {
+                            h6{"Subtotal:"}
+                            input(type="number" readonly="true" id="subtotal" name="subtotal" class="induxsoft-form-control  induxsoft-num-field1" value="#<@('#./subtotal')>"){""}
+                        }
+                    }
+                
+                    #$
+                    div(class="d-flex mt-2")
+                    {
+                        label{input(type="radio" id="forma_pago_contado" class="" name="formapago" "#<ifstr(@('#./fmpago')==@FORMA_PAGO || @('$./fmpago')=='','checked','')>"="true" value="#<@FORMA_PAGO>") " Contado" }
+                        label{input(type="radio" id="forma_pago_credito" class="ms-4" name="formapago" "#<ifstr(@('#./fmpago')==@FORMA_PAGO_CREDITO,'checked','')>"="true"  value="#<@FORMA_PAGO_CREDITO>") " Crédito" }
+                    }
+                    div(class="col-lg-12" id="div_contado") 
+                    {
+                        div(class="row")
+                        {
+                            div(class="col-md-4")
+                            {
+                                small(class="form-label" "for"="txt_beneficiario"){$"Beneficiario:"}
+                                input(type="text" class="induxsoft-form-control" name="beneficiario" id="txt_beneficiario" value="#<@('$./beneficiario')>")
+                            }
+                            div(class="col-md-4")
+                            {
+                                small{$"Documento:"}
+                                #! 
+                                do uie.dbSelect(tipo)
+                                #$
+                            }
+                            div(class="col-md-4")
+                            {
+                                #$ small{$"Cuenta:"}
+                                #! do uie.dbSelect(cuentas)
+                            }
+                            #$ 
+                        }
+                        
+                    }
+                    div(class="col-lg-12" id="div_credito") 
+                    {
+                        div(class="row")
+                        {
+                            div(class="col-md-4")
+                            {
+                                label(class="form-label" "for"="sel_documento"){$"Tipo de documento:"}
+                                ##
+                                do uie.dbSelect(sel_documento)
+                                ##
+                            }
+                            div(class="col-md-4 mt-4")
+                            {
+                                input(class="form-check-input" type="checkbox" name="aplicable" id="ch_aplicable" "checked"="" readonly="true" disabled="true")
+                                label(class="form-check-label" "for"="ch_aplicable"){$"Marcar como aplicable"}
+                            }
+                        }
+                    }
+
+                    div(class="row mt-2")
+                    {
+                        div(class="col-md-12")
+                        {
+                            div(class="card")
+                            {
+                                div(class="card-body")
+                                {
+                                    h5{"Adjuntos"}
+
+                                    div(class="d-flex align-items-center gap-2 my-2")
+                                    {
+                                        input(type="file" class="form-control rounded-0 w-auto" name="file" id="file" title="Adjuntar documentos")
+                                        // label(class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" "for"="file"){"Adjuntar documentos"}
+                                        #! if @count(adjuntos) > 0 {
+                                            #$
+                                            button(type="button" class="btn btn-sm btn-outline-primary" onclick="gasto.form.preview();"){"Descargar"}
+                                            button(type="button" class="btn btn-sm btn-outline-danger" onclick="gasto.form.remover();"){"Remover"}
+                                        } #$
+                                    }
                                     #! if @count(adjuntos) > 0 {
-                                        #$
-                                        button(type="button" class="btn btn-sm btn-outline-primary" onclick="gasto.form.preview();"){"Descargar"}
-                                        button(type="button" class="btn btn-sm btn-outline-danger" onclick="gasto.form.remover();"){"Remover"}
+                                        #$ "media-list"(
+                                            id="media-list"
+                                            data='#<to.json(adjuntos)>'
+                                            "can-arrange"="true"
+                                            "can-drag"="true"
+                                            "can-drop"="true"
+                                            "can-delete"="false"
+                                            "highlight-first"="true"
+                                            "media-prop"="url"
+                                            "miniature-prop"="mini"
+                                            "outline-selected"="true"
+                                            "label-prop"="name"
+                                        ){""}
                                     } #$
                                 }
-                                #! if @count(adjuntos) > 0 {
-                                    #$ "media-list"(
-                                        id="media-list"
-                                        data='#<to.json(adjuntos)>'
-                                        "can-arrange"="true"
-                                        "can-drag"="true"
-                                        "can-drop"="true"
-                                        "can-delete"="false"
-                                        "highlight-first"="true"
-                                        "media-prop"="url"
-                                        "miniature-prop"="mini"
-                                        "outline-selected"="true"
-                                        "label-prop"="name"
-                                    ){""}
-                                } #$
                             }
                         }
                     }
@@ -307,139 +342,143 @@ module "form.dk"
             }
         }
 
-        #$
-        script(src="#<@JS_GASTO>"){""}
-        script(type="text/javascript")
-        {$'
-            document.addEventListener("DOMContentLoaded", () =>
-            {
-                var proveedor=document.getElementById("sel_proveedor");
-                var beneficiario=document.getElementById("txt_beneficiario");
+        section(id="bottom_area"){$""}
 
-                var sel_divisa=document.getElementById("sel_divisa");
-                var sel_tipo=document.getElementById("sel_tipo");
-                var sel_documento=document.getElementById("sel_documento");
-                var sel_cuenta=document.getElementById("sel_cuenta");
-
-                function trigger(element,event) {
-                    if (element) {
-                        if (event=="submit") {
-                            element.requestSubmit();
-                            return
-                        }
-                        let e = new Event(event);
-                        element.dispatchEvent(e);
-                    }
-                }
-
-                sel_divisa.addEventListener("change", () => {
-                    if (sel_cuenta) {
-                        let o = null;
-                        let i = -1;
-                        Array.from(sel_cuenta.options).forEach((option, index) => {
-                            let hide = (option.getAttribute("data-idivisa") != sel_divisa.value);
-                            if (o===null && !hide) { o=option; i=index; }
-                            option.classList.toggle("d-none", hide);
-                        });
-
-                        sel_cuenta.selectedIndex = i;
-                        sel_cuenta.value = o?.value ?? "";
-                    }
-                });
-
-                proveedor.addEventListener("change",() => {
-                    let dtpdr = proveedor.getValue();
-                    if (beneficiario) beneficiario.value = dtpdr?.nombre ?? "";
-                    if (sel_divisa) {
-                        sel_divisa.value = dtpdr?.idivisa ?? 1;
-                        sel_divisa.classList.toggle("disable-ctrl",(dtpdr != null));
-                        trigger(sel_divisa,"change");
-                    }
-                });
-                proveedor.setValue(proveedor.getValue());
-
-                if(#<@("#./sys_pk")>>0)
+        //////////////////////////////////////////////////////////////////
+        div(id="_custom_area")
+        {
+            script(src="#<@JS_GASTO>"){$""}
+            script(type="text/javascript")
+            {$'
+                function CalImporte()
                 {
-                    gasto.form.init();
+                    var txt_importe=document.getElementById("txt_importe");
+                    var txt_retencion=document.getElementById("txt_retencion");
+                    var txt_retencion_iva=document.getElementById("txt_retencion_iva");
+                    var txt_traslado=document.getElementById("txt_traslado");
 
-                    var fields=document.querySelectorAll("input,select,input-key,textarea");
-                    for(var i=0;i<fields.length;i++)
-                    {
-                        var itm=fields[i];
-                        if(itm && itm.name!="file")itm.setAttribute("disabled",true);
-                    }
-                }
-                var radios=document.querySelectorAll("input[name=formapago]");
-                for(var i=0;i<radios.length;i++)
-                {
-                    var rd=radios[i];
-                    if(rd)rd.addEventListener("change",(e)=>
-                    {
-                        var target=e.target;
-                        var div_credito=document.getElementById("div_credito");
-                        var div_contado=document.getElementById("div_contado");
-                        if(target && Number(target.value)==#<@FORMA_PAGO_CREDITO>)
-                        {
-                            if(div_credito)
-                            {
-                                div_credito.classList.remove("d-none");    
-                            }
-                            if(div_contado)div_contado.classList.add("d-none");
-
-                            requiredFileds({sel_tipo,sel_cuenta},false);
-                            requiredFileds({sel_documento});
-                        }
-                        else
-                        {
-                            if(div_credito)div_credito.classList.add("d-none");
-                            if(div_contado)div_contado.classList.remove("d-none");
-
-                            requiredFileds({sel_tipo,sel_cuenta});
-                            requiredFileds({sel_documento},false);
-                        }
-                        
-                    });
-                }
-
-                var forma_pago_contado=document.getElementById("forma_pago_contado");
-                var forma_pago_credito=document.getElementById("forma_pago_credito");
-                function trigger (element,event)
-                {
-                    var e=new Event(event);
-                    if(element)element.dispatchEvent(e);
-                }
-                if(#<@("#./fmpago")>==#<@FORMA_PAGO> || #<@("#./fmpago")>==0)trigger(forma_pago_contado,"change");
-                if(#<@("#./fmpago")>==#<@FORMA_PAGO_CREDITO>)trigger(forma_pago_credito,"change");
+                    var importe = Math.sub(Math.add(Math.add(Number(txt_importe.value), Number(txt_retencion.value)), Number(txt_retencion_iva.value)), Number(txt_traslado.value));
                 
-                InduxsoftNumberFields.Init();
-            });
-            function CalImporte()
-            {
-                var txt_importe=document.getElementById("txt_importe");
-                var txt_retencion=document.getElementById("txt_retencion");
-                var txt_retencion_iva=document.getElementById("txt_retencion_iva");
-                var txt_traslado=document.getElementById("txt_traslado");
-
-                var importe = Math.sub(Math.add(Math.add(Number(txt_importe.value), Number(txt_retencion.value)), Number(txt_retencion_iva.value)), Number(txt_traslado.value));
-            
-                var lbl_total=document.getElementById("subtotal");
-            
-                if(lbl_total) lbl_total.value = Math.RoundTo(importe, #<@DECIMAL_PRECISION>);
-            }
-            function requiredFileds(fields,required=true)
-            {
-                if(!fields)return;
-
-                for(var ff in fields)
+                    var lbl_total=document.getElementById("subtotal");
+                
+                    if(lbl_total) lbl_total.value = Math.RoundTo(importe, #<@DECIMAL_PRECISION>);
+                }
+                
+                function requiredFileds(fields,required=true)
                 {
-                    var field=fields[ff];
-                    if(field)
+                    if(!fields)return;
+
+                    for(var ff in fields)
                     {
-                        if(!required)field.removeAttribute("required");
-                        else field.setAttribute("required",true);
+                        var field=fields[ff];
+                        if(field)
+                        {
+                            if(!required)field.removeAttribute("required");
+                            else field.setAttribute("required",true);
+                        }
                     }
                 }
-            }
-        '}
+
+                document.addEventListener("DOMContentLoaded", () => {
+                    const btn_submit = document.getElementById("btn-submit");
+                    btn_submit.addEventListener("click", () => InduxsoftCrudlModel.Submit("#<form_id>"));
+
+                    var proveedor=document.getElementById("sel_proveedor");
+                    var beneficiario=document.getElementById("txt_beneficiario");
+
+                    var sel_divisa=document.getElementById("sel_divisa");
+                    var sel_tipo=document.getElementById("sel_tipo");
+                    var sel_documento=document.getElementById("sel_documento");
+                    var sel_cuenta=document.getElementById("sel_cuenta");
+
+                    function trigger(element,event) {
+                        if (element) {
+                            if (event=="submit") {
+                                element.requestSubmit();
+                                return
+                            }
+                            let e = new Event(event);
+                            element.dispatchEvent(e);
+                        }
+                    }
+
+                    sel_divisa.addEventListener("change", () => {
+                        if (sel_cuenta) {
+                            let o = null;
+                            let i = -1;
+                            Array.from(sel_cuenta.options).forEach((option, index) => {
+                                let hide = (option.getAttribute("data-idivisa") != sel_divisa.value);
+                                if (o===null && !hide) { o=option; i=index; }
+                                option.classList.toggle("d-none", hide);
+                            });
+
+                            sel_cuenta.selectedIndex = i;
+                            sel_cuenta.value = o?.value ?? "";
+                        }
+                    });
+
+                    proveedor.addEventListener("change",() => {
+                        let dtpdr = proveedor.getValue();
+                        if (beneficiario) beneficiario.value = dtpdr?.nombre ?? "";
+                        if (sel_divisa) {
+                            sel_divisa.value = dtpdr?.idivisa ?? 1;
+                            sel_divisa.classList.toggle("disable-ctrl",(dtpdr != null));
+                            trigger(sel_divisa,"change");
+                        }
+                    });
+
+                    proveedor.setValue(proveedor.getValue());
+
+                    if(#<@("#./sys_pk")> > 0)
+                    {
+                        gasto.form.formId = "#<form_id>";
+                        gasto.form.desactivar(true);
+                        gasto.form.init();
+                    }
+                    var radios=document.querySelectorAll("input[name=formapago]");
+                    for(var i=0;i<radios.length;i++)
+                    {
+                        var rd=radios[i];
+                        if(rd)rd.addEventListener("change",(e)=>
+                        {
+                            var target=e.target;
+                            var div_credito=document.getElementById("div_credito");
+                            var div_contado=document.getElementById("div_contado");
+                            if(target && Number(target.value)==#<@FORMA_PAGO_CREDITO>)
+                            {
+                                if(div_credito)
+                                {
+                                    div_credito.classList.remove("d-none");    
+                                }
+                                if(div_contado)div_contado.classList.add("d-none");
+
+                                requiredFileds({sel_tipo,sel_cuenta},false);
+                                requiredFileds({sel_documento});
+                            }
+                            else
+                            {
+                                if(div_credito)div_credito.classList.add("d-none");
+                                if(div_contado)div_contado.classList.remove("d-none");
+
+                                requiredFileds({sel_tipo,sel_cuenta});
+                                requiredFileds({sel_documento},false);
+                            }
+                            
+                        });
+                    }
+
+                    var forma_pago_contado=document.getElementById("forma_pago_contado");
+                    var forma_pago_credito=document.getElementById("forma_pago_credito");
+                    
+                    if(#<@("#./fmpago")>==#<@FORMA_PAGO> || #<@("#./fmpago")>==0)trigger(forma_pago_contado,"change");
+                    if(#<@("#./fmpago")>==#<@FORMA_PAGO_CREDITO>)trigger(forma_pago_credito,"change");
+                    
+                    // InduxsoftNumberFields.Init();
+                    
+                    // Script injection
+                    #<@@(@crud_context,"script")>
+                });
+            '}
+        }
     }
 }

@@ -9,6 +9,7 @@ module "model"
         ut.sys_recver,
         pdr.sys_pk pkproveedor,
         ROUND(IFNULL(ut.total,0),@decimals) AS importe,
+        ut.icategoria,
         cat.descripcion AS categoria,
         ut.referencia,
         DATE_FORMAT(ut.fecha,'%Y-%m-%d') AS fecha,
@@ -39,6 +40,8 @@ module "model"
         left join dcxp dc on ut.sys_pk=dc.uf_igasto
     WHERE TRUE and ut.sys_pk=@_entity_id
     "
+
+    @update_fields = @sys_fields + ",concepto,retisr,retiva,iva,subtotal,icategoria"
 
     ut.prepareView::&db,&params,&data
     {
@@ -106,7 +109,7 @@ module "model"
             @"notas": @@(data,"$concepto")
             @"referencia": @@(data,"$referencia")
             @"tipo": @@(data,"#documento")
-            @"icategoria": @@(data,"#categoria")
+            @"icategoria": @@(data,"#icategoria")
             @"icuenta": @@(data,"#cuenta")
         }
         do dbr.insert(db,"movcuenta",retiro)
@@ -118,6 +121,7 @@ module "model"
             do rise_error(last_error_code(),last_error())
         }
     }
+
     ut.agregarGasto::&db,&params,&data
     {
         //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
@@ -138,14 +142,15 @@ module "model"
         {
             @"sys_pk": 0
             @"sys_guid": uuid()
-            @"sys_dtcreated*": now()
-            @"sys_timestamp*": now()
+            @"sys_recver": 0
+            @"sys_dtcreated*": dbr.sql("now()")
+            @"sys_timestamp*": dbr.sql("now()")
             @"referencia": @@(data,"$referencia")
             @"fecha*": str2dt(@@(data,"$fecha"))
             @"vencimiento*": str2dt(@@(data,"$vencimiento"))
             @"concepto": @@(data,"$concepto")
             @"iproveedor": @@(data,"#proveedor")
-            @"icategoria": @@(data,"#categoria")
+            @"icategoria": @@(data,"#icategoria")
             @"idivisa": @@(data,"#divisa")
             @"tipocambio": dbr.num(db,"select tcambio from divisa where sys_pk = @divisa;",data)
             @"subtotal": @@(data,"#subtotal")
@@ -345,9 +350,33 @@ module "model"
             data<"iproveedor">:@@(data,"proveedor")
             do field.remove(data,"proveedor")
         }
-        ref entity= entity.update(db,params,data)
+
+        do dbr.apps.action.pre("GC34")
+        do dbr.begin(db)
+        
+        do dbr.execute(db,"update ut_gasto set sys_recver = ifnull(sys_recver,0) where sys_pk = @sys_pk",data)
+        ref entity = entity.update(db,params,data)
+
+        do dbr.apps.action.pos(entity)
+        do dbr.commit(db)
+        do dbr.apps.action.ext(entity)
 
         return entity
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+
+            if dbr.in_transaction(db){ do dbr.rollback(db) }
+            if isset("@@_action_context"){ do dbr.apps.action.log() }
+            
+            do ut.prepareView(db,params,data)
+            do ut.data(db,data)
+            do clear_exceptions()
+            do rise_error(code,error)
+        }
     }
 
     ut.data::&db,&data
@@ -359,6 +388,7 @@ module "model"
         sql = "SELECT doc.id,doc.const FROM cdocumentos doc INNER JOIN cfg_chq_docs cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.retiros,0) ORDER BY doc.id;"
         data<"documentos*"> : dbr.list(db,sql,@null)
     }
+
     ut.blank::&db,&params
     {
         //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
@@ -378,6 +408,75 @@ module "model"
             do rise_error(code,error)
         }
     }
+
+    ut.delete::&db,&params
+    {
+        @use_transaction = @false
+        
+        do dbr.apps.action.pre("GC35")
+        do dbr.begin(db)
+
+        ref gasto = dbr.rec(db,"SELECT sys_pk AS pk_gasto, sys_guid, formapago, iproveedor, imovchequera FROM ut_gasto WHERE sys_pk = @_entity_id",params)
+        if isnull(gasto){ do rise_error(511,"No se encontro el registro para el `id` proporcionado.") }
+        
+        formapago = @@(gasto,"#formapago")
+        if formapago == @fp_contado
+        {
+            // Eliminar gasto
+            ref result = entity.delete(db,params)
+            // Eliminar movcuenta
+            do dbr.delete(db, "movcuenta", "sys_pk = @imovchequera", gasto)
+        }
+        else if formapago == @fp_credito
+        {
+            // Eliminar CxP
+            ref dcxp = dbr.rec(db,"SELECT sys_pk AS pk_dcxp, iproveedor, IFNULL(haber,0) haber, IFNULL(debe,0) debe FROM dcxp WHERE uf_igasto = @pk_gasto",gasto)
+            ref aplcxp = dbr.list(db,"SELECT sys_pk AS pk_aplicado FROM aplcxp WHERE aplicadoa = @pk_dcxp AND (destino=3 OR destino=4)",dcxp)
+            if list.count(aplcxp) > 0 { do rise_error(512,"No es posible eliminar el gasto debido a se han aplicado pagos o bonificaciones.") }
+            do dbr.delete(db, "dcxp", "sys_pk = @pk_dcxp", dcxp)
+            
+            // Ajustar saldo del proveedor
+            do dbr.execute(db,"UPDATE proveedor SET saldo = (IFNULL(saldo,0) + @haber - @debe) WHERE sys_pk = @iproveedor;",dcxp)
+
+            // Eliminar gasto
+            ref result = entity.delete(db,params)
+        }
+        else
+        {
+            // Eliminar gasto
+            ref result = entity.delete(db,params)
+        }
+
+        codeblock "Eliminar archivos adjuntos"
+        {
+            params<"gasto"> : @@(gasto,"$sys_guid")
+            attachment_path = dbr.vars.getd(db,"gasto_attachment_path",@default_gasto_attachment_path)
+            attachment_path = replace_path_macros(attachment_path,params)
+
+            if dir.exists(attachment_path) { do dir.delete(attachment_path) }
+
+            exception{ do pop_exception() }
+        }
+
+        do dbr.apps.action.pos(result)
+        do dbr.commit(db)
+        do dbr.apps.action.ext(result)
+        
+        return result
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+
+            if dbr.in_transaction(db){ do dbr.rollback(db) }
+            if isset("@@_action_context"){ do dbr.apps.action.log() }
+            do clear_exceptions()
+            do rise_error(code,error)
+        }
+    }
+
     prepare_filter::list
     {
         new record

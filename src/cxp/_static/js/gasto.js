@@ -2,8 +2,19 @@ var gasto=
 {
     form:
     {
+        formId:"", formulario:null, ff:null,
+        btn_submit:document.getElementById("btn-submit"),
+        btn_corregir:null,
+        btn_cancelar:null,
+        btn_eliminar:null,
+
         init()
-        {
+        {   
+            this.formulario = document.getElementById(this.formId);
+            this.ff = this.formulario.elements;
+            this.btn_corregir = document.getElementById("btn-fix");
+            this.btn_cancelar = document.getElementById("btn-cancel");
+            this.btn_eliminar = document.getElementById("btn-delete");
             this.txt_fecha=document.getElementById("txt_fecha");
             this.txt_referencia=document.getElementById("txt_referencia");
             this.file=document.getElementById("file");
@@ -15,6 +26,10 @@ var gasto=
             {
                 this.SelectedElement(data);
             }
+
+            if (this.btn_corregir) this.btn_corregir.addEventListener("click", () => this.corregir());
+            if (this.btn_cancelar) this.btn_cancelar.addEventListener("click", () => this.cancelar());
+            if (this.btn_eliminar) this.btn_eliminar.addEventListener("click", () => this.eliminar_gasto());
         },
         uploadFile()
         {
@@ -93,5 +108,55 @@ var gasto=
             data["index"]= this.media_list.getData(false).findIndex(e=>e.__internal_id__==id);
             return data;
         },
+        desactivar(value)
+        {
+            var fields = document.querySelectorAll("input,select,input-key,textarea");
+            for(var i=0; i<fields.length; i++)
+            {
+                var itm=fields[i];
+                if (!itm || ["sys_pk","sys_guid","sys_recver","file","subtotal"].includes(itm.name)) continue;
+
+                if ("disabled" in itm) itm.disabled = value;
+                else itm.setAttribute("disabled",(value?"true":"false"));
+            }
+        },
+        corregir()
+        {
+            this.btn_submit.disabled = false;
+            this.btn_corregir.hidden = true;
+            this.btn_cancelar.hidden = false;
+            this.ff["icategoria"].disabled = false;
+            this.ff["concepto"].disabled = false;
+            this.ff["retisr"].disabled = false;
+            this.ff["retiva"].disabled = false;
+            this.ff["iva"].disabled = false;
+        },
+        cancelar()
+        {
+            this.btn_submit.disabled = true;
+            this.btn_corregir.hidden = false;
+            this.btn_cancelar.hidden = true;
+            this.ff["icategoria"].disabled = true;
+            this.ff["concepto"].disabled = true;
+            this.ff["retisr"].disabled = true;
+            this.ff["retiva"].disabled = true;
+            this.ff["iva"].disabled = true;
+            this.formulario.reset();
+        },
+        eliminar_gasto()
+        {
+            if (!confirm("¿Esta seguro que desea eliminar: "+this.ff["referencia"].value+"?")) return;
+
+            let endpoint = "/!/cxp/gastos/"+Number(this.ff["sys_pk"].value)+"/";
+            InduxsoftCrudlModel.InvokeService(endpoint, null,
+                function (data) {
+                    window.location.href = "/!/cxp/gastos/";
+                },
+                function (error) {
+                    if (error.message) alert(error.message);
+                    else console.error(error);
+                }, "DELETE", false, false
+            );
+        }
     }
 }

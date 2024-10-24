@@ -13,6 +13,12 @@ module
     @STATUS_ADMINISTRATIVO = 3 // cProcesado
     @FORMA_PAGO = 1 // cContado
     @FORMA_PAGO_CREDITO = 2 // credito
+	// cformaspago
+    @fp_na = 0
+    @fp_contado = 1
+    @fp_credito = 2
+    @fp_financiado = 3
+    @fp_consignado = 4
 
 	//
 	@curr_ndt = ndatetime.now()
