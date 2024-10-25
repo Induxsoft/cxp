@@ -123,7 +123,7 @@ var gasto=
         },
         corregir()
         {
-            this.btn_submit.disabled = false;
+            this.btn_submit.hidden = false;
             this.btn_corregir.hidden = true;
             this.btn_cancelar.hidden = false;
             this.ff["icategoria"].disabled = false;
@@ -134,7 +134,7 @@ var gasto=
         },
         cancelar()
         {
-            this.btn_submit.disabled = true;
+            this.btn_submit.hidden = true;
             this.btn_corregir.hidden = false;
             this.btn_cancelar.hidden = true;
             this.ff["icategoria"].disabled = true;

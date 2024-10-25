@@ -2,13 +2,18 @@
 #!
 module
 {
-	if not(isset("@http_context")) && isset("@crud_context") { ref @http_context = @@(@crud_context,"&http") }
+	if not(isset("@http_context")) && isset("@crud_context") { ref @http_context = ifnull(@@(@crud_context,"&http"),record.create()) }
 	//* ======================================== [ CONSTANTS ]
 
 	@CXP_DESTINO_APLICACION_INT_FINANCIEROS = 1
     @CXP_DESTINO_APLICACION_INT_MORATORIOS = 2
     @CXP_DESTINO_APLICACION_BONIFICACIONES = 3
     @CXP_DESTINO_APLICACION_PAGOS = 4
+
+	@curr_ndt = ndatetime.now()
+    @curr_year = ndatetime.year(@curr_ndt)
+    @curr_month = ndatetime.month(@curr_ndt)
+    @curr_day = ndatetime.day(@curr_ndt)
 
     @STATUS_ADMINISTRATIVO = 3 // cProcesado
     @FORMA_PAGO = 1 // cContado
@@ -20,11 +25,6 @@ module
     @fp_financiado = 3
     @fp_consignado = 4
 
-	//
-	@curr_ndt = ndatetime.now()
-    @curr_year = ndatetime.year(@curr_ndt)
-    @curr_month = ndatetime.month(@curr_ndt)
-    @curr_day = ndatetime.day(@curr_ndt)
     //#region TiposCategorias
     @cIngreso = 1
     @cEgreso = 2
@@ -53,6 +53,9 @@ module
 	// Formato de moneda (dkl)
 	@FMT_MONEY = "$ "+"#"+@THOUSANDS_SEPARATOR+"0"+@DECIMAL_SEPARATOR+padright("",@DECIMAL_PRECISION,"0")
 
+	// Número máximo de filas a mostrar en lista
+	@default_max_rows = 250
+	// Ruta predeterminada de los archivos adjuntos de gastos
 	@default_gasto_attachment_path = "data/@qname/cxp/gastos/@gasto/"
 
 	//* ======================================== [ _STATIC RESOURCES ]
@@ -158,7 +161,4 @@ module
 	@CXP_SEC_PRIVID_CONSULTAR_GASTOS="FX1-20-20-700"
 	@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO="FX1-20-20-702"
 	@CXP_SEC_PRIVID_CONSULTAR_UN_GASTO="FX1-20-20-701"
-
-	// Número máximo de filas a mostrar en lista
-	@default_max_rows=250
 }

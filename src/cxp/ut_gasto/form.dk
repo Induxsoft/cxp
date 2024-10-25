@@ -83,7 +83,7 @@ module "form.dk"
         btn_cls = "btn btn-sm border-secondary induxsoft-corners btn-main-action"
 
         #$
-        button(class="#<btn_cls>" type="button" id="btn-submit" "#<ifstr(@is_new,'','disabled')>"=""){$"#<@ICON_SAVE> Guardar"}
+        button(class="#<btn_cls>" type="button" id="btn-submit" "#<ifstr(@is_new,'','hidden')>"=""){$"#<@ICON_SAVE> Guardar"}
         #!
         if not(@is_new)
         {

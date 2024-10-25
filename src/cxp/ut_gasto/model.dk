@@ -5,6 +5,32 @@ module "model"
     @sys_fields = "sys_pk,sys_guid,sys_dtcreated,sys_timestamp,sys_info,sys_user,sys_lastuser,sys_exported,sys_dtexported,sys_recver,sys_deleted,sys_lock"
     @update_fields = @sys_fields + ",concepto,retisr,retiva,iva,subtotal,icategoria"
 
+    @list_query = "
+    SELECT
+        ut.sys_pk,
+        cat.descripcion AS categoria,
+        ut.referencia,
+        DATE_FORMAT(ut.fecha,'%Y-%m-%d') AS fecha,
+        DATE_FORMAT(ut.vencimiento,'%Y-%m-%d') AS vencimiento,
+        pdr.nombre AS proveedor,
+        ut.concepto,
+        ROUND(IFNULL(ut.total,0),@decimals) AS total,
+        dvs.codigo AS divisa,
+        ROUND(ut.tipocambio,@decimals) AS tcambio,
+        edo.const AS edo_admin,
+        fpg.const AS formapago
+    FROM ut_gasto AS ut
+        INNER JOIN proveedor AS pdr ON pdr.sys_pk = ut.iproveedor
+        INNER JOIN categoria AS cat ON cat.sys_pk = ut.icategoria
+        INNER JOIN divisa AS dvs ON dvs.sys_pk = ut.idivisa
+        INNER JOIN cformaspago AS fpg ON fpg.id = ut.formapago
+        INNER JOIN cstatusadministrativos AS edo ON edo.id = ut.statusadministrativo
+    WHERE NOT IFNULL(ut.sys_deleted,0)
+        #<conditions>
+    ORDER BY ut.fecha, ut.referencia
+    LIMIT #<@default_max_rows>
+    "
+
     @read_query = "
     SELECT 
         ut.sys_pk,
@@ -44,8 +70,21 @@ module "model"
     WHERE TRUE and ut.sys_pk=@_entity_id
     "
 
+    ut.getPrintTitles::&db
+    {
+        new data
+        {
+            @"title": dbr.vars.getd(db,"FXCA108","")
+            @"subtitle": dbr.vars.getd(db,"FXCA109","")
+            @"subtitle_2": dbr.vars.getd(db,"FXCA110","")
+            @"footer": dbr.vars.getd(db,"FXCA111","")
+        }
+        return data
+    }
+
     ut.prepareView::&db,&params,&data
     {
+        //#region prepareView()
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
         switch @@(params,"$_view")
@@ -82,6 +121,109 @@ module "model"
         sql_documentos = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.pagable,0);"
         data<"tipo_documentos*">:dbr.list(db,sql_documentos,params)
     }
+
+    ut.prepareList::&db,&params,&data
+    {
+        //#region prepareList()
+        ref edoadmin = dbr.list(db,"SELECT id, const FROM cstatusadministrativos ORDER BY id;",@null)
+
+        using data
+        {
+            @"edoadmin*": prepare_filter(edoadmin)
+            @"itemactions*": dbr.apps.itemactions(db,"DET024","action","",0)
+            @"itemreports*": dbr.apps.itemactions(db,"DET024","report","",0)
+            @"titles*" : ut.getPrintTitles(db)
+        }
+    }
+
+    ut.evaluateListFilters::&params
+    {
+        //#region set-default-filters
+        if not(field.exist(params,"fil_stt_adm")) { params<"fil_stt_adm"> : -1 }
+        if not(field.exist(params,"fil_fdr_field")) { params<"fil_fdr_field"> : 1 }
+        // fdr_init
+        if not(field.exist(params,"fdr_mode")) { params<"fdr_mode"> : "month" }
+        // [month]
+        if not(field.exist(params,"fdr_year")) { params<"fdr_year"> : @curr_year }
+        if not(field.exist(params,"fdr_month")) { params<"fdr_month"> : @curr_month }
+        // [lastdays]
+        if not(field.exist(params,"fdr_range")) { params<"fdr_range"> : 30 }
+        // [range]
+        if not(field.exist(params,"fdr_from")) { params<"fdr_from"> : "" }
+        if not(field.exist(params,"fdr_to")) { params<"fdr_to"> : "" }
+        //#endregion
+
+        conditions = ""
+
+        //#region filter-date-range
+        new vnt_date_fields
+        {
+            @"1": "ut.fecha" // Emisión
+            @"2": "ut.vencimiento" // Vencimiento
+        }
+        fdr_field = @@(vnt_date_fields,str(@@(params,"#fil_fdr_field")))
+
+        switch @@(params,"$fdr_mode")
+        {
+            case "month"
+            {
+                curr_ndt = ndatetime.now()
+                curr_year = ndatetime.year(curr_ndt)
+                curr_month = ndatetime.month(curr_ndt)
+                curr_day = ndatetime.day(curr_ndt)
+
+                if not(field.exist(params,"fdr_year")) { params<"fdr_year"> : curr_year }
+                if not(field.exist(params,"fdr_month")) { params<"fdr_month"> : curr_month }
+
+                conditions = conditions + " AND YEAR(#<fdr_field>) = @fdr_year AND MONTH(#<fdr_field>) = @fdr_month"
+                break
+            }
+            case "lastdays"
+            {
+                if not(field.exist(params,"fdr_range")) { params<"fdr_range"> : 30 } // Últimos 30 días
+
+                conditions = conditions + " AND DATE(#<fdr_field>) BETWEEN ADDDATE(DATE(NOW()), INTERVAL -@fdr_range DAY) AND DATE(NOW())"
+                break
+            }
+            case "range"
+            {
+                if not(field.exist(params,"fdr_from"))
+                {
+                    curr_ndt = ndatetime.now()
+                    subt_ndt = ndatetime.add(curr_ndt, -30, "d")
+                    ult_30_days = ndatetime.tostr(subt_ndt, "yyyy-MM-dd")
+
+                    params<"fdr_from"> : ult_30_days
+                }
+                if not(field.exist(params,"fdr_to")) { params<"fdr_to"> : date_str(now(),"yyyy-MM-dd") }
+
+                if trim(@@(params,"$fdr_from")) != "" && trim(@@(params,"$fdr_to")) != ""
+                {
+                    conditions = conditions + " AND DATE(#<fdr_field>) BETWEEN @fdr_from AND @fdr_to"
+                }
+                else if trim(@@(params,"$fdr_from")) != "" && trim(@@(params,"$fdr_to")) == ""
+                {
+                    conditions = conditions + " AND DATE(#<fdr_field>) >= @fdr_from"
+                }
+                else if trim(@@(params,"$fdr_from")) == "" && trim(@@(params,"$fdr_to")) != ""
+                {
+                    conditions = conditions + " AND DATE(#<fdr_field>) <= @fdr_to"
+                }
+
+                break
+            }
+        }
+        //#endregion
+        
+        if @@(params,"#fil_stt_adm") >= 0 { conditions = conditions + " AND ut.statusadministrativo = @fil_stt_adm" }
+        if trim(@@(params,"$fil_text")) != "" {
+            conditions = conditions + " AND (ut.referencia LIKE CONCAT('%',@fil_text,'%') OR pdr.nombre LIKE CONCAT('%',@fil_text,'%'))"
+        }
+
+        conditions = ftext(conditions)
+        @list_query = ftext(@list_query)
+    }
+
     mov.retiro::&db,&params,&data
     {
         new p{@"referencia":@@(data,"$referencia")}
@@ -125,6 +267,7 @@ module "model"
 
     ut.agregarGasto::&db,&params,&data
     {
+        //#region agregarGasto()
         @use_transaction = @false
 
         do dbr.apps.action.pre("GC31")
@@ -201,75 +344,18 @@ module "model"
 
     ut.list::&db,&params
     {
-        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_GASTOS)) { do rise_error(0,"No autorizado")}
-        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
+        //#region list()
         do dbr.apps.action.grant("GC30")
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
-        params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
-        params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
-
-        new filters {}
-
-        fecha_inicial = date_format(@@(params,"$fi"),"yyyy-MM-dd")
-        fecha_final = date_format(@@(params,"$ff"),"yyyy-MM-dd")
-
-        if fecha_inicial != "" { filters<"fi"> : fecha_inicial }
-        if fecha_final != "" { filters<"ff"> : fecha_final }
-
-        sql = "
-        SELECT
-            ut.sys_pk,
-            cat.descripcion AS categoria,
-            ut.referencia,
-            DATE_FORMAT(ut.fecha,'%Y-%m-%d') AS fecha,
-            DATE_FORMAT(ut.vencimiento,'%Y-%m-%d') AS vencimiento,
-            pdr.nombre AS proveedor,
-            ut.concepto,
-            ROUND(IFNULL(ut.total,0),@decimals) AS total,
-            dvs.codigo AS divisa,
-            ROUND(ut.tipocambio,@decimals) AS tcambio,
-            edo.const AS edo_admin,
-            fpg.const AS formapago
-        FROM ut_gasto AS ut
-            INNER JOIN proveedor AS pdr ON pdr.sys_pk = ut.iproveedor
-            INNER JOIN categoria AS cat ON cat.sys_pk = ut.icategoria
-            INNER JOIN divisa AS dvs ON dvs.sys_pk = ut.idivisa
-            INNER JOIN cformaspago AS fpg ON fpg.id = ut.formapago
-            INNER JOIN cstatusadministrativos AS edo ON edo.id = ut.statusadministrativo
-        WHERE TRUE
-        "
-
-        if fecha_inicial != "" && fecha_final != "" {
-            sql = sql + " AND DATE(ut.fecha) BETWEEN @fi AND @ff"
-        }
-        if fecha_inicial != "" && fecha_final == "" {
-            sql = sql = " AND DATE(ut.fecha) >= DATE(@fi)"
-        }
-        if fecha_inicial == "" && fecha_final != "" {
-            sql = sql = " AND DATE(ut.fecha) <= DATE(@ff)"
-        }
-
-        sql = sql + ftext("
-                AND IF(IFNULL(@s,'')='', true, (ut.referencia LIKE CONCAT('%',@s,'%') OR pdr.nombre LIKE CONCAT('%',@s,'%') OR pdr.codigo LIKE CONCAT('%',@s,'%') OR pdr.rfc LIKE CONCAT('%',@s,'%')))
-                AND IF(IFNULL(@year,'')='', true, YEAR(IF(IFNULL(@tdate,'0')='0', ut.fecha, ut.vencimiento))=@year)
-                AND IF(IFNULL(@month,'')='', true, (YEAR(IF(IFNULL(@tdate,'0')='0', ut.fecha, ut.vencimiento))=IFNULL(@year,YEAR(NOW())) AND MONTH(IF(IFNULL(@tdate,'0')='0', ut.fecha, ut.vencimiento))=@month))
-                AND IF(IFNULL(@range,'-99')='-99', true, (DATE(IF(IFNULL(@tdate,'0')='0', ut.fecha, ut.vencimiento)) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
-                AND IF(IFNULL(@datefrom,'')='' AND IFNULL(@dateto,'')='', true, (DATE(IF(IFNULL(@tdate,'0')='0', ut.fecha, ut.vencimiento)) BETWEEN DATE(@datefrom) AND DATE(@dateto)))
-                AND IF(IFNULL(@edoadmin,'-1')='-1', true, edo.id = @edoadmin)
-            ORDER BY ut.fecha desc
-            LIMIT #<@default_max_rows>;
-        ")
-
-        sql_edoadmin = "SELECT id, const FROM cstatusadministrativos ORDER BY id;"
-        ref edoadmin = dbr.list(db, sql_edoadmin, @null)
-
-        new response
+        do ut.evaluateListFilters(params)
+        new data
         {
-            @"gastos*": dbr.list(db, ftext(sql),params)
-            @"edoadmin*": prepare_filter(edoadmin)
+            @"data*": entity.list(db,params)
         }
+        do ut.prepareList(db,params,data)
 
-        return response
+        return data
 
         exception
         {
@@ -283,9 +369,9 @@ module "model"
 
     ut.read::&db,&params
     {
-        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_CONSULTAR_UN_GASTO)) { do rise_error(0,"No autorizado")}
-        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
+        //#region read()
         do dbr.apps.action.grant("GC30")
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
             
         ref entity=entity.read(db,params)
         params<"gasto"> : @@(entity,"$sys_guid")
@@ -325,8 +411,30 @@ module "model"
         }
     }
 
+    ut.blank::&db,&params
+    {
+        //#region blank()
+        do dbr.apps.action.grant("GC30")
+
+        new data{}
+        do ut.prepareView(db,params,data)
+        do ut.data(db,data)
+        return data
+
+        exception
+        {
+            do errordet(@false)
+            code = last_error_code()
+            error = last_error()
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
+    }
+
     ut.update::&db,&params,&data
     {
+        //#region update()
+
         if parse.bool(@@(data,"$upl-file")) { return SaveAdjuntos(db,params,@null) }
         if parse.bool(@@(data,"$del-file")) {
             params<"gasto"> : @@(data,"$gasto")
@@ -375,38 +483,9 @@ module "model"
         }
     }
 
-    ut.data::&db,&data
-    {
-        sql = "SELECT c.sys_pk, CONCAT(c.nombre,' (',d.codigo,')') nombre, c.idivisa, d.codigo AS cdivisa, d.tcambio FROM chequera c INNER JOIN divisa d ON d.sys_pk = c.idivisa WHERE NOT IFNULL(c.sys_deleted,0) ORDER BY c.sys_pk;"
-        data<"cuentas*"> : dbr.list(db,sql,@null)
-        sql = "SELECT sys_pk,descripcion FROM categoria WHERE tipo = 2 AND NOT IFNULL(sys_deleted,0) ORDER BY sys_pk;"
-        data<"categorias*"> : dbr.list(db,sql,@null)
-        sql = "SELECT doc.id,doc.const FROM cdocumentos doc INNER JOIN cfg_chq_docs cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.retiros,0) ORDER BY doc.id;"
-        data<"documentos*"> : dbr.list(db,sql,@null)
-    }
-
-    ut.blank::&db,&params
-    {
-        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ADD_GASTO_PAGADO_CONTADO)) { do rise_error(0,"No autorizado")}
-        do dbr.apps.action.grant("GC30")
-
-        new data{}
-        do ut.prepareView(db,params,data)
-        do ut.data(db,data)
-        return data
-
-        exception
-        {
-            do errordet(@false)
-            code = last_error_code()
-            error = last_error()
-            do dbr.apps.action.log()
-            do rise_error(code,error)
-        }
-    }
-
     ut.delete::&db,&params
     {
+        //#region delete()
         @use_transaction = @false
         
         do dbr.apps.action.pre("GC35")
@@ -484,6 +563,16 @@ module "model"
         return list
     }
 
+    ut.data::&db,&data
+    {
+        sql = "SELECT c.sys_pk, CONCAT(c.nombre,' (',d.codigo,')') nombre, c.idivisa, d.codigo AS cdivisa, d.tcambio FROM chequera c INNER JOIN divisa d ON d.sys_pk = c.idivisa WHERE NOT IFNULL(c.sys_deleted,0) ORDER BY c.sys_pk;"
+        data<"cuentas*"> : dbr.list(db,sql,@null)
+        sql = "SELECT sys_pk,descripcion FROM categoria WHERE tipo = 2 AND NOT IFNULL(sys_deleted,0) ORDER BY sys_pk;"
+        data<"categorias*"> : dbr.list(db,sql,@null)
+        sql = "SELECT doc.id,doc.const FROM cdocumentos doc INNER JOIN cfg_chq_docs cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.retiros,0) ORDER BY doc.id;"
+        data<"documentos*"> : dbr.list(db,sql,@null)
+    }
+
     function replace_path_macros(path,&params)
     {
         if not(isset("@http_context")) && isset("@crud_context") { ref @http_context = ifnull(@@(@crud_context,"&http"),record.create()) }
@@ -529,6 +618,7 @@ module "model"
     
     SaveAdjuntos::&db,&params,&data
     {
+        //#region SaveAdjuntos()
         do dbr.apps.action.grant("GC33")
 
         ref files = @@(@http_context,"&request/files")
@@ -579,6 +669,7 @@ module "model"
 
     GetAdjuntos::&db,&params
     {
+        //#region GetAdjuntos()
         ref attachments = list.create()
         
         if @@(params,"$gasto")=="" { params<"gasto"> : dbr.str(db,"select sys_guid from ut_gasto where sys_pk = @_entity_id",params) }
@@ -608,6 +699,7 @@ module "model"
 
     Download::&db,&params
     {
+        //#region DownAdjuntos()
         do dbr.apps.action.grant("GC30")
 
         if @@(params,"$gasto")=="" { params<"gasto"> : dbr.str(db,"select sys_guid from ut_gasto where sys_pk = @_entity_id",params) }
@@ -641,6 +733,7 @@ module "model"
 
     DeleteAdjunto::&db,&params
     {
+        //#region DeleteAdjuntos()
         do dbr.apps.action.grant("GC33")
 
         if @@(params,"$gasto")=="" { params<"gasto"> : dbr.str(db,"select sys_guid from ut_gasto where sys_pk = @_entity_id",params) }
