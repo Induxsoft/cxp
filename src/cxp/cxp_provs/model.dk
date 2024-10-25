@@ -906,7 +906,16 @@ module "model"
             do rise_error(code,error)
         }
     }
+    pdr.DomicilioSysrecver::&db,sys_pk,sys_recver
+    {
+        if sys_pk < 1 || sys_recver > 0{return}
 
+        new params
+        {
+            @"pk":sys_pk
+        }
+         do dbr.execute(db,"update domicilio set sys_recver=0 where sys_pk=@pk",params)
+    }
     pdr.update::&db,&params,&data
     {
         @use_transaction = @false
@@ -961,7 +970,7 @@ module "model"
                 @"numint": trim(@@(data,"$numint"))
                 @"numext": trim(@@(data,"$numext"))
             }
-            
+            do pdr.DomicilioSysrecver(db,@@(data,"#dm_sys_pk"),@@(data,"#dm_sys_recver"))
             proveedor<"domicilio1"> : @@(dbr.save(db,"domicilio",domicilio1),"#sys_pk")
         }
         if chq_domicilio2
@@ -980,7 +989,7 @@ module "model"
                 @"numint": trim(@@(data,"$numint2"))
                 @"numext": trim(@@(data,"$numext2"))
             }
-
+            do pdr.DomicilioSysrecver(db,@@(data,"#dm_sys_pk2"),@@(data,"#dm_sys_recver2"))
             proveedor<"domicilio2"> : @@(dbr.save(db,"domicilio",domicilio2),"#sys_pk")
         }
         if chq_domicilio3
@@ -999,7 +1008,7 @@ module "model"
                 @"numint": trim(@@(data,"$numint3"))
                 @"numext": trim(@@(data,"$numext3"))
             }
-
+            do pdr.DomicilioSysrecver(db,@@(data,"#dm_sys_pk3"),@@(data,"#dm_sys_recver3"))
             proveedor<"domicilio3"> : @@(dbr.save(db,"domicilio",domicilio3),"#sys_pk")
         }
         
