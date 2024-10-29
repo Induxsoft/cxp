@@ -37,7 +37,16 @@ module "controller"
             point @read to cxp.read
             point @blank to cxp.blank
 
-            point @create to cxp.crearDocumentoPorPagar
+
+            if @@(input_data,"$auth")!=""
+            {
+                point @create to cxp.autorizar
+            }
+            else 
+            {
+                point @create to cxp.crearDocumentoPorPagar
+            }
+            
             point @update to cxp.update
             point @delete to cxp.delete
             

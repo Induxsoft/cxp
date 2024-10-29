@@ -7,6 +7,10 @@ program "instalador"
     #include "dbr.dkh"
     #include "dbr.apps.dkl"
 
+    src = _get(@_run_settings,"$SourceCodeFile")
+
+    path_install = dir.name(src)
+    path_app_info = path.concat(path_install,"app_info")
     // Archivos de datos iniciales (Orden de importación)
     // deben estar en la carpeta _install/initial_data
     ref @files_to_import = from.json('[
@@ -28,7 +32,7 @@ program "instalador"
         "tipooperacion.csv",
         "sys_app_item_type_finder.csv"
     ]')
-
+    vars_file = path.concat(path_app_info,"vars.json")
     // Lista de privilegios iniciales (arreglo de id de privilegios)
     ref @permissions_to_import = from.json('[]')
 
@@ -48,6 +52,25 @@ program "instalador"
 
     if not(dbr.is_open(database)){ref database=dbr.open(qname)}
     do reconnect(database,qname)
+
+    if file.exists(vars_file)
+    {
+        do print("\nIMPORTANDO VARIABLES DE CONFIGURACIÓN")
+
+        ref categories = from.json(file.rtext(vars_file))
+        for i = 0; i < list.count(categories)
+        {
+            do print("Categoria:")
+            ref cat = list.obj(categories,i)
+            do dbr.vars.categories.set(database,@@(cat,"$id"),@@(cat,"$caption"),@@(cat,"$help"),@@(cat,"$parent"))
+            
+            do print("Variables:")
+            ref vars = ifnull(@@(cat,"&vars"), list.create())
+            for j = 0; j < list.count(vars) {
+                do dbr.vars.define(database, list.obj(vars,j), @@(cat,"$id"))
+            }
+        }
+    }
 
     new src_gasto
     {

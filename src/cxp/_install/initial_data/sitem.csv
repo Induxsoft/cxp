@@ -31,3 +31,6 @@ cxp.reports,Informes de Cuentas por Pagar,cxp
 GC41,Informe de antigüedad de saldos por pagar,cxp.reports
 GC42,Origen y aplicación,cxp.reports
 GC43,Historial de pagos por proveedor,cxp.reports
+GC50,Ver calendario de pagos autorizados,
+GC51,Autorizar pago de documento,cxp.documentos
+GC52,Otorgar segunda autorización a pago de documento,cxp.documentos

@@ -432,6 +432,13 @@ model "erp.cxp"
 
         // Saldo por pagar del documento por pagar
         // Saldo = (Haber + intmoratorios - bonificaciones - pagos)
+
+        @"f_autorizacion" date //Fecha en la que se autorizó el pago
+        @"f_autorizacion2" date //Fecha en la que se realizó la segunda autorización
+        @"f_prevpago" date //Fecha hasta la que está previsto realizar el pago
+        @"u_autorizo" string(45) // Id del usuario que autorizó el pago
+        @"u_autorizo2" string(45) // Id del usuario que hizo la segunda autorización
+        @"autorizado" bool // Flag de autorizado o no
     }
     /* Gasto, un pago realizado a un proveedor sin pasar por CxP */
     entity "ut_gasto" : "TableModel"

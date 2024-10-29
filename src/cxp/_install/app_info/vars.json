@@ -1,0 +1,25 @@
+[
+    {
+        "id": "cxp",
+        "caption": "Cuentas por pagar",
+        "help": "Valores de configuración global",
+        "vars":[
+            {
+                "varname": "cxp_m_aut",
+                "vardefault": "",
+                "varvalue": "",
+                "varcaption": "Requerir autorización para pagos mayores a",
+                "vartype": "decimal",
+                "varinput": { "control": "decimal" }
+            },
+            {
+                "varname": "cxp_m_aut2",
+                "vardefault": "",
+                "varvalue": "",
+                "varcaption": "Exigir segunda autorización para pagos mayores a",
+                "vartype": "decimal",
+                "varinput": { "control": "decimal" } 
+            }
+        ]
+    }
+]

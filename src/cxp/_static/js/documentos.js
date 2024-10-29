@@ -6,6 +6,7 @@ var documento =
     {
         if (this.tableId.trim() != "") { this.table = document.getElementById(this.tableId); }
         this.setTableEvents();
+        
     },
 
     trigger(element,event) {
@@ -48,7 +49,18 @@ var documento =
         const id = (this.table?.DataArray[this.table.CurrentRowIndex()]?.sys_pk ?? "");
         return { item_id:id, context: {} }
     },
-
+    AutorizarPago()
+    {
+        var detail=
+        {
+            auth:{authorizer:true}
+        }
+        InduxsoftCrudlModel.Submit("form_cxp",detail,
+        (data)=>
+        {
+            console.log("");
+        })
+    },
     setTableEvents()
     {
         if (!this.table) return;
@@ -96,6 +108,9 @@ var documento =
             this.formcxp = document.getElementById("form_cxp");
             this.btnSave = document.getElementById("btn_save");
             this.setEvents();
+
+            this.btn_auth=document.getElementById("btn_auth");
+            if(this.btn_auth)this.btn_auth.addEventListener("click",()=>{documento.AutorizarPago();});
         },
 
         setEvents()

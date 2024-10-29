@@ -735,4 +735,16 @@ module "model"
         do list.ins(list, 0, record)
         return list
     }
+    cxp.autorizar::&db,&params,&data
+    {
+        cxp_m_aut=dbr.vars.get(db,"cxp_m_aut")
+        if trim(cxp_m_aut)==""{do rise_error(511,"Se requiere autorización para pagar este documento")}
+
+        if parse.num(cxp_m_aut)> @@(data,"#importe")
+        {
+            cxp_m_aut2=dbr.vars.get(db,"cxp_m_aut2")
+            if trim(cxp_m_aut2)==""{do rise_error(512,"Se requiere una segunda autorización para pagar este documento")}
+        }
+        //verificar documento
+    }
 }

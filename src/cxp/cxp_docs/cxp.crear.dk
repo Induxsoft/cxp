@@ -41,7 +41,13 @@ module "cxp.crear.dk"
     {
         act_btn_cls = "btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"
         
+        if not(@is_new)
+        {
+            #$
+            button(class="#<act_btn_cls> " type="button" id="btn_auth"){$"Autorizar"}
+        }
         #$
+        
         button(class="#<act_btn_cls> #<ifstr(@is_new,'','disable-ctrl')>" type="button" id="btn_save"){$"#<@ICON_SAVE> Guardar"}
         #!
     }
