@@ -20,3 +20,4 @@ GC32,Consultar gasto,Consultar,,/!/cxp/gastos/@_src_context_item_id/,0,cxp.gasto
 GC41,Informe de antigüedad de saldos por pagar,Antigüedad de saldos,,/!/cxp/reports/antiguedad-saldos/,0,cxp.reports,DET03F,0,report
 GC42,Origen y aplicación,Origen y aplicación,,/!/cxp/reports/origen-aplicacion/,0,cxp.reports,DET01E,0,report
 GC43,Historial de pagos por proveedor,HPagos XProveedor,,/!/cxp/reports/historial-pagos-proveedor/,0,cxp.reports,DET03F,0,report
+GC50,Ver calendario de pagos autorizados,Calendario de pagos,,/!/cxp/documentos/calendar_pagos/,0,cxp.documentos,DET01E,0,action

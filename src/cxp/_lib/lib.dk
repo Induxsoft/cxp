@@ -197,6 +197,20 @@ module "lib.dk"
         }
         return l
     }
+    GetCodeStatusPago::&info_dcxp
+    {
+        if @@(info_dcxp,"#autorizado") || (@@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")!=""){return 1} //autorizado
+        else if @@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")==""{return 2} //pre-autorizado
+        else if @@(info_dcxp,"#saldo") == 0{return 3} //pagado
+        else{return 99} //pendiente
+    }
+    GetStatusPago::&info_dcxp
+    {
+        if @@(info_dcxp,"#autorizado") || (@@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")!=""){return "Autorizado"}
+        else if @@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")==""{return "Pre-autorizado"}
+        else if @@(info_dcxp,"#saldo") == 0{return "Pagado"}
+        else{return "Pendiente"}
+    }
     limpiarTexto::texto
 	{
         return tolower(trim(replace(ranychars(texto,'\\/:*?"<>|(-)[+]#$%&=,'," ")," ","_")))

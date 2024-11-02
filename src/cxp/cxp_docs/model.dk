@@ -30,10 +30,21 @@ module "model"
         pdr.codigo AS cproveedor,
         pdr.nombre AS proveedor,
         pdr.saldo AS saldoprov,
-        dvs.codigo AS divisa
+        dvs.codigo AS divisa,
+        date_format(cxp.f_autorizacion,'%Y-%m-%d')f_autorizacion,
+        date_format(cxp.f_autorizacion2,'%Y-%m-%d')f_autorizacion2,
+        date_format(cxp.f_prevpago,'%Y-%m-%d')f_prevpago,
+        cxp.u_autorizo,
+        cxp.u_autorizo2,
+        t1.username user_auth,        
+        t2.username user_auth2,
+        cxp.autorizado,
+        if(NOW() > cxp.fultmoratorios,NOW(),cxp.fultmoratorios) fecha_prevpago
     FROM dcxp AS cxp
         INNER JOIN proveedor AS pdr ON pdr.sys_pk = cxp.iproveedor
         INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
+        LEFT JOIN tuser t1 on cxp.u_autorizo=t1.userid        
+        LEFT JOIN tuser t2 on cxp.u_autorizo2=t2.userid
     WHERE cxp.#<@keyfield> = @_entity_id
     "
 
@@ -668,7 +679,7 @@ module "model"
     {
         do dbr.apps.action.grant("GC10")
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
-
+        
         ref data = entity.read(db,params)
         do cxp.prepareView(db,params,data)
 
@@ -740,7 +751,8 @@ module "model"
         cxp_m_aut=dbr.vars.get(db,"cxp_m_aut")
         if trim(cxp_m_aut)==""{do rise_error(511,"Se requiere autorización para pagar este documento")}
         
-        if parse.num(cxp_m_aut) > @@(data,"#importe")
+        auth=@false
+        if @@(data,"#importe") > parse.num(cxp_m_aut)
         {
             do dbr.apps.action.pre("GC52")
             cxp_m_aut2=dbr.vars.get(db,"cxp_m_aut2")
@@ -751,6 +763,7 @@ module "model"
         else 
         {
             do dbr.apps.action.pre("GC51")
+            auth=@true
         }
             
         do dbr.begin(db)
@@ -779,6 +792,8 @@ module "model"
                     @"f_autorizacion*":now()
                     @"u_autorizo":@@(@http_context,"$session/user/uid")
                 }
+
+                if auth {dcxp<"autorizado">: 1 }
             }
             else 
             {
@@ -807,5 +822,108 @@ module "model"
             do rise_error(last_error_code(),last_error())
         }
         
+    }
+    cxp.CelendarioPagos::&db,&params
+    {
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
+        sql="SELECT
+            cxp.sys_pk,
+            cxp.sys_guid,
+            DATE_FORMAT(cxp.sys_dtcreated,'%Y-%m-%d %H:%i:%s') AS sys_dtcreated,
+            DATE_FORMAT(cxp.sys_timestamp,'%Y-%m-%d %H:%i:%s') AS sys_timestamp,
+            IFNULL(cxp.sys_recver,0) AS sys_recver,
+            cxp.aplicable,
+            cxp.referencia,
+            cxp.documento,
+            DATE_FORMAT(cxp.fecha,'%Y-%m-%d') AS emision,
+            DATE_FORMAT(cxp.fultmoratorios,'%Y-%m-%d') AS fultmoratorios,
+            DATE_FORMAT(cxp.aplicacion,'%Y-%m-%d') AS aplicacion,
+            ROUND(IFNULL(cxp.debe,0),@decimals) AS debe,
+            ROUND(IFNULL(cxp.haber,0),@decimals) AS haber,
+            ROUND(IFNULL(cxp.intmoratorios,0),@decimals) AS intmoratorios,
+            ROUND(IFNULL(cxp.intfinancieros,0),@decimals) AS intfinancieros,
+            ROUND(IFNULL(cxp.pagos,0),@decimals) AS pagos,
+            ROUND(IFNULL(cxp.bonificaciones,0),@decimals) AS bonificaciones,
+            ROUND(IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0),@decimals) AS saldo,
+            ROUND(cxp.tipocambio,@decimals) tipocambio,
+            cxp.xaplicar,
+            cxp.iproveedor,
+            cxp.notas,
+            concat_ws(' ',pdr.codigo,pdr.nombre) AS proveedor,
+            pdr.saldo AS saldoprov,
+            dvs.codigo AS divisa,
+            date_format(cxp.f_autorizacion,'%Y-%m-%d')f_autorizacion,
+            date_format(cxp.f_autorizacion2,'%Y-%m-%d')f_autorizacion2,
+            date_format(cxp.f_prevpago,'%Y-%m-%d')f_prevpago,
+            cxp.u_autorizo,
+            cxp.u_autorizo2,
+            t1.username user_auth,        
+            t2.username user_auth2,
+            cxp.autorizado,
+            if(NOW() > cxp.fultmoratorios,NOW(),cxp.fultmoratorios) fecha_prevpago,
+            if(NOW() > cxp.fultmoratorios,true,false)vencido
+        FROM dcxp AS cxp
+            INNER JOIN proveedor AS pdr ON pdr.sys_pk = cxp.iproveedor
+            INNER JOIN divisa AS dvs ON dvs.sys_pk = pdr.idivisa
+            LEFT JOIN tuser t1 on cxp.u_autorizo=t1.userid        
+            LEFT JOIN tuser t2 on cxp.u_autorizo2=t2.userid
+        WHERE 
+           (trim(cxp.u_autorizo)!=''
+        OR trim(cxp.u_autorizo2)!='')
+        AND 
+            if(ifnull(@del,'')='',true,date(cxp.sys_dtcreated)>=date(@del))
+        AND  
+            if(ifnull(@al,'')='',true,date(cxp.sys_dtcreated)<=date(@al))
+            "
+        ref data=dbr.list(db,ftext(sql),params)
+
+        ref totales=record.create()
+        for i = 0; i < @count(data)
+        {
+            ref item=@item(data,i)
+            cod_status=GetCodeStatusPago(item)
+
+            switch cod_status
+            {
+                case 1
+                {
+                    totales<"autorizado">:@@(totales,"#autorizado") + @@(item,"#saldo")
+                }
+                case 3
+                {
+                    totales<"pagado">:@@(totales,"#pagado") + @@(item,"#saldo")
+                }
+                default
+                {
+                    totales<"pendiente">:@@(totales,"#pendiente") + @@(item,"#saldo")
+                    break
+                }
+            }
+            totales<"total">: @@(totales,"#autorizado") + @@(totales,"#pagado") + @@(totales,"#pendiente")
+
+            item<"status">:GetStatusPago(item)
+            item<"cod_status">:cod_status
+        }
+        new result
+        {
+            @"totales*":totales
+            @"data*":data
+        }
+        return result
+    }
+    #!
+    cxp.desautorizarPago::&db,&params,&data
+    {
+        sql="update dcxp set 
+        f_autorizacion=null,
+        f_autorizacion2=null,
+        f_prevpago=null,
+        u_autorizo=null,
+        u_autorizo2=null,
+        autorizado=null
+        where sys_pk=@_entity_id"
+
+        res=dbr.execute(db,sql,params)
+        if not(res){do rise_error(500,"No se logró el proceso de desautorizar, verifque los datos del pago")}
     }
 }

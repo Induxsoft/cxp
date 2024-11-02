@@ -2,7 +2,7 @@
 #!
 module "controller"
 {
-    switch @@(@http_context,"$request/get/_view")
+    switch @@(params,"$_view")
     {
         case "pago"
         {
@@ -31,26 +31,41 @@ module "controller"
             @form_view = "cxp.aplicar.dk"
             break
         }
+        case "calendar_pagos"
+        {
+            point @update to cxp.desautorizarPago
+            break
+        }
         case ""
         {
-            point @list to cxp.list
-            point @read to cxp.read
-            point @blank to cxp.blank
-
-
-            if @@(input_data,"$auth")!=""
+            if @@(params,"$_entity_id")=="calendar_pagos"
             {
-                point @create to cxp.autorizar
+                point @create to cxp.aplicarPagos
+                point @read to cxp.CelendarioPagos
+                @form_view = "cxp.calendar_pago.dk"
             }
             else 
             {
-                point @create to cxp.crearDocumentoPorPagar
+                point @list to cxp.list
+                point @read to cxp.read
+                point @blank to cxp.blank
+
+
+                if @@(input_data,"$auth")!=""
+                {
+                    point @create to cxp.autorizar
+                }
+                else 
+                {
+                    point @create to cxp.crearDocumentoPorPagar
+                }
+                
+                point @update to cxp.update
+                point @delete to cxp.delete
+                
+                @form_view = "cxp.crear.dk"
             }
             
-            point @update to cxp.update
-            point @delete to cxp.delete
-            
-            @form_view = "cxp.crear.dk"
         }
     }
 }

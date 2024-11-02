@@ -49,6 +49,17 @@ var documento =
         const id = (this.table?.DataArray[this.table.CurrentRowIndex()]?.sys_pk ?? "");
         return { item_id:id, context: {} }
     },
+    DesautorizarPago(sys_pk)
+    {
+        let onSuccess=(data)=>
+        {
+            window.location.reload();
+        }
+        let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
+        let url=documento.url_calendar_pagos.replace("@doc",sys_pk);
+
+        InduxsoftCrudlModel.InvokeService(url,null,onSuccess,onFailure,"PATCH",false,false);
+    },
     AutorizarPago()
     {
         var detail=
@@ -58,8 +69,8 @@ var documento =
         InduxsoftCrudlModel.Submit("form_cxp",detail,
         (data)=>
         {
-            console.log("");
-        })
+            window.location.reload();
+        });
     },
     setTableEvents()
     {

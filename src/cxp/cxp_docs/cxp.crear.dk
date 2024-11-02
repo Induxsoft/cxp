@@ -22,6 +22,7 @@ module "cxp.crear.dk"
     num_step = "0."+padright("",(@DECIMAL_PRECISION-1),"0")+"1"
     num_max = "9999999999."+padright("",@DECIMAL_PRECISION,"9")
 
+    @autorizado=@@(info_dcxp,"#autorizado")
     new sel_documento
     {
         @"datatable*": listDocumentos
@@ -41,7 +42,7 @@ module "cxp.crear.dk"
     {
         act_btn_cls = "btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"
         
-        if not(@is_new)
+        if not(@is_new) && not(@autorizado)
         {
             #$
             button(class="#<act_btn_cls> " type="button" id="btn_auth"){$"Autorizar"}
@@ -59,7 +60,7 @@ module "cxp.crear.dk"
         // @"urlexit": "javascript:window.history.back();"
         member @"hidden" { @"print": @true }
     }
-    
+    // do rise_error(0,to.json(info_dcxp))
     #$
     div(class="container")
     {
@@ -170,9 +171,50 @@ module "cxp.crear.dk"
         if @("#parameters/_entity_id")>0
         {
             #$
-             div(class="row")
+            div(class="row")
             {
-                div(class="col-lg-12")
+                div(class="col-lg-6")
+                {$""
+                    #! if @@(info_dcxp,"$u_autorizo")!=""
+                    {
+                        #$
+                        table(class="table")
+                        {
+                            tr
+                            {
+                                td(class="fw-bold"){"Estado:"}
+                                td{"#<GetStatusPago(info_dcxp)>"}
+                            }
+                            tr
+                            {
+                                td(class="fw-bold"){"Fecha autorizado:"}                                
+                                td{"#<@@(info_dcxp,'$f_autorizacion')>"}
+                            }
+                            tr
+                            {
+                                td(class="fw-bold"){"Usuario autorizó:"}                                
+                                td{"#<@@(info_dcxp,'$user_auth')>"}
+                            }
+                            #! if @@(info_dcxp,"$u_autorizo2")!=""
+                            {
+                                #$
+                                tr
+                                {
+                                    td(class="fw-bold"){"Fecha segunda autorización:"}                                
+                                    td{"#<@@(info_dcxp,'$f_autorizacion2')>"}
+                                }
+                                tr
+                                {
+                                    td(class="fw-bold"){"Usuario autorizó:"}                                
+                                    td{"#<@@(info_dcxp,'$user_auth2')>"}
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                
+                div(class="col-lg-6")
                 {
                     // div(class="row d-flex justify-content-end align-items-center")
                     // {

@@ -110,7 +110,7 @@ module "list.dk"
         @"title": "Documentos por pagar"
         @"buttons*": @null
         @"urlexit": "/"
-        @"main": "GC11,GC12,GC13,GC16"
+        @"main": "GC50,GC11,GC12,GC13,GC16"
         @"actions*": dbr.apps.itemactions(@('&database'),"DET01E","action","",0)
         @"reports*": dbr.apps.itemactions(@('&database'),"DET01E","report","",0)
         @"jscurrentcontext": "documento.getCurrentContext"

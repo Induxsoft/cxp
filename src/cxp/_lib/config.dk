@@ -93,6 +93,7 @@ module
 	@DOC_PAGOS = "/!/cxp/documentos/@doc/pago/"
 	@DOC_INTMORATORIOS = "/!/cxp/documentos/@doc/intmoratorios/"
 	@DOC_APLICAR = "/!/cxp/documentos/@doc/aplicar/"
+	@CALENDAR_PAGOS = "/!/cxp/documentos/@doc/calendar_pagos/"
 	//#endregion
 
 	//#region ut_gasto
