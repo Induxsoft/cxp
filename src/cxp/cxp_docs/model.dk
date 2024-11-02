@@ -739,12 +739,73 @@ module "model"
     {
         cxp_m_aut=dbr.vars.get(db,"cxp_m_aut")
         if trim(cxp_m_aut)==""{do rise_error(511,"Se requiere autorización para pagar este documento")}
-
-        if parse.num(cxp_m_aut)> @@(data,"#importe")
+        
+        if parse.num(cxp_m_aut) > @@(data,"#importe")
         {
+            do dbr.apps.action.pre("GC52")
             cxp_m_aut2=dbr.vars.get(db,"cxp_m_aut2")
             if trim(cxp_m_aut2)==""{do rise_error(512,"Se requiere una segunda autorización para pagar este documento")}
+
+            if @@(data,"#importe") > parse.num(cxp_m_aut2){do rise_error(500,"El monto de la seguna autorización es menor al importe del documento")}
         }
+        else 
+        {
+            do dbr.apps.action.pre("GC51")
+        }
+            
+        do dbr.begin(db)
         //verificar documento
+        
+        ref doc=dbr.rec(db,"SELECT 
+                        d.sys_pk,
+                        d.sys_guid,
+                        d.f_autorizacion,
+                        d.f_autorizacion2,
+                        d.f_prevpago,
+                        d.u_autorizo,
+                        d.u_autorizo2,
+                        d.autorizado,
+                        if(NOW() > d.fultmoratorios,NOW(),d.fultmoratorios) fecha_prevpago,
+                        (IFNULL(d.haber,0) + IFNULL(d.intmoratorios,0) - IFNULL(d.pagos,0) - IFNULL(d.bonificaciones,0)) saldo 
+                    FROM dcxp d WHERE d.sys_pk=@_entity_id",params)
+
+            if isnull(doc){do rise_error(500,"No hay datos del documento")}
+            if @@(doc,"#saldo") < 1{do rise_error(513,"No se puede autorizar el pago porque el documento ha sido pagado o cancelado")}
+
+            if @@(doc,"$u_autorizo")==""
+            {
+                new dcxp
+                {
+                    @"f_autorizacion*":now()
+                    @"u_autorizo":@@(@http_context,"$session/user/uid")
+                }
+            }
+            else 
+            {
+                new dcxp
+                {
+                    @"f_autorizacion2*":now()
+                    @"u_autorizo2":@@(@http_context,"$session/user/uid")
+                    @"autorizado": 1
+                }
+            }
+
+            if @@(doc,"$f_prevpago")==""{dcxp<"f_prevpago*">:@@(doc,"&fecha_prevpago")}
+
+            do dbr.update(db,"dcxp",dcxp,"sys_pk=@_entity_id",params)
+
+            do dbr.apps.action.pos(dcxp)
+        do dbr.commit(db)
+            do dbr.apps.action.ext(dcxp)
+        
+        return dcxp
+        
+        exception
+        {
+            if dbr.in_transaction(db){ do dbr.rollback(db) }
+            if isset("@@_action_context"){do dbr.apps.action.log()}
+            do rise_error(last_error_code(),last_error())
+        }
+        
     }
 }
