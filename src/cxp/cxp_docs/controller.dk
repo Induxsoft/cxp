@@ -34,6 +34,11 @@ module "controller"
         case "calendar_pagos"
         {
             point @update to cxp.desautorizarPago
+
+            if parse.bool(@@(input_data,"$change_data"))
+            {
+                point @update to cxp.change_data
+            }
             break
         }
         case ""

@@ -197,6 +197,19 @@ module "lib.dk"
         }
         return l
     }
+    GetUrlReferent::encode
+    {
+        if @("$parameters/_from_url_e")!="" { url=url_dcode(@("$parameters/_from_url_e"))}
+        else { url=ifstr(@('$parameters/---from_url')=='', @('$http/request/headers/HTTP_REFERER'), @('$parameters/---from_url')) }
+
+        if not(encode)
+        {
+            if not(contains(url,"http")){url=url_dcode(url)}
+            return url
+        }
+
+        return url_encode(url)
+    }
     GetCodeStatusPago::&info_dcxp
     {
         if @@(info_dcxp,"#autorizado") || (@@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")!=""){return 1} //autorizado

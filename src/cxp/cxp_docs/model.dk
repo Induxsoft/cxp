@@ -883,6 +883,11 @@ module "model"
             ref item=@item(data,i)
             cod_status=GetCodeStatusPago(item)
 
+            if @@(item,"$u_autorizo2")==@@(@http_context,"$session/user/uid")
+            {
+                item<"edit_fprevpago">:cxp.checkPrivileges("GC52")
+            }else{item<"edit_fprevpago">:@false}
+
             switch cod_status
             {
                 case 1
@@ -911,6 +916,17 @@ module "model"
         }
         return result
     }
+    cxp.checkPrivileges::iditem
+    {
+        do dbr.apps.action.grant(iditem)
+        
+        return @true
+
+        exception
+        {
+           return @false
+        }
+    }
     #!
     cxp.desautorizarPago::&db,&params,&data
     {
@@ -925,5 +941,16 @@ module "model"
 
         res=dbr.execute(db,sql,params)
         if not(res){do rise_error(500,"No se logró el proceso de desautorizar, verifque los datos del pago")}
+    }
+    #!
+    cxp.change_data::&db,&params,&data
+    {
+        new dcxp
+        {
+            @"f_prevpago":@@(data,"$f_prevpago")
+        }
+        do dbr.update(db,"dcxp",dcxp,"sys_pk=@_entity_id",params)
+        
+        return dcxp
     }
 }

@@ -7,18 +7,37 @@ module ""
     #include "uielements.v12.dkl"
     #include "../_lib/icons.dk"
     #include "../_lib/config.dk"
+    #include "../_lib/lib.dk"
 
     do @context.begin(@crud_context)
 
-    createEditable::&defin,id
-    {
 
-    }
-    tbtn_style = "cursor:pointer; text-decoration:none; outline:none; padding: 0px 8px; color:#000000;"
+    tbtn_style = "cursor:pointer; text-decoration:none; outline:none; padding: 0px 8px; color:#000000;display: inline-block;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: middle;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    background-color: transparent;
+    border: 1px solid transparent;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    border-radius: .25rem;
+    transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    border:1px solid;
+    padding: .25rem .5rem;
+    font-size: .875rem;
+    border-radius: 0 !important;
+    "
     new table_definition
     {
         @"datatable*": @("&./data")
-        @"tableheight":"20vh"
+        @"tableheight":"75vh"
         @"leyend": "Mostrando los primeros # documentos ordenados por fecha de emisión"
         member @"columns"
         {
@@ -42,7 +61,6 @@ module ""
             member @"f_prevpago"
             {
                 @"caption":"F. P. Previsto"
-                @"align": "end"
             }
             member @"saldo"
             {
@@ -59,8 +77,8 @@ module ""
                 @"no-print":@true
                 @"template":ftext('
                                 <div>
-                                    ${DataRow.cod_status== 1 ? `<a href="#<replace(@DOC_PAGOS,"@doc","${DataRow.sys_pk}")>" style="#<tbtn_style>">[Pagar]</a>`:``}
-                                    ${DataRow.cod_status== 2 ? `<button style="#<tbtn_style>">[Autorizar]</button>`:``}
+                                    ${DataRow.cod_status== 1 ? `<a href="#<replace(@DOC_PAGOS,"@doc","${DataRow.sys_pk}")>" style="#<tbtn_style>">Pagar</a>`:``}
+                                    ${DataRow.cod_status== 2 ? `<button style="#<tbtn_style>">Autorizar</button>`:``}
                                 </div>
                             ')
             }
@@ -71,19 +89,21 @@ module ""
                 @"align": "center"
                 @"template":ftext('
                                 <div>
-                                    ${DataRow.cod_status== 1 ? `<button style="#<tbtn_style>" onclick="documento.DesautorizarPago(${DataRow.sys_pk})">[Desautorizar]</button>`:``}
-                                    ${DataRow.cod_status== 2 ? `<a href="#<replace(@DOC_PAGOS,"@doc","${DataRow.sys_pk}")>" style="#<tbtn_style>">[Pagar]</a>`:``}
+                                    ${DataRow.cod_status== 1 ? `<button style="#<tbtn_style>" onclick="documento.DesautorizarPago(${DataRow.sys_pk})">Desautorizar</button>`:``}
+                                    ${DataRow.cod_status== 2 ? `<a href="#<replace(@DOC_PAGOS,"@doc","${DataRow.sys_pk}")>" style="#<tbtn_style>">Pagar</a>`:``}
                                 </div>
                             ')
             }
         }
     }
 
+    // url =GetUrlReferent(@false)
+    // if trim(url)==""{url=@CXP_PROVS}
     new nav_config
     {
         @"title": "Documentos por pagar"
         @"buttons*": @null
-        @"urlexit": "/"
+        @"urlexit": @CXP_PROVS
         @"jscurrentcontext": "documento.getCurrentContext"
     }
     del=@("$parameters/del")
@@ -94,11 +114,11 @@ module ""
         script(src="#<@JS_DOCUMENTOS>"){$""}
         section(id="top_area" class="mb-2")
         {
-            #! 
-            do uie.printV12FormBar(nav_config)
-            #$
-            form(method="get")
+            form(method="GET")
             {
+                #! 
+                do uie.printV12FormBar(nav_config)
+                #$
                 div(class="row")
                 {
                     div(clasS="col-lg-2")
@@ -115,6 +135,9 @@ module ""
                     {
                         button(class="btn btn-primary induxsoft-corners"){"Filtrar"}
                     }
+                    // #!
+                    // do uie.print_from_url_field()
+                    // #$
                 }
             }
         }
@@ -162,9 +185,51 @@ module ""
                     var parent=divtable.parentNode;
                     if(parent)parent.setAttribute("style","height: auto;");
 
-                    table.Events[table.EdiTable.Const.Events.Enter] = (e) =>
+                    var _global_data=null;
+
+                    table.Events[table.EdiTable.Const.Events.EnterCell] = (e) =>
                     {
-                        console.log("1212")
+                        var data=table.DataArray[table.CurrentRowIndex()];
+                        if(!data)return;
+
+                        if(data.edit_fprevpago)table.Columns[4]={type:table.EdiTable.Const.Columns.Types.Date, field:"f_prevpago"};
+                        else table.Columns[4]={type:table.EdiTable.Const.Columns.Types.NoEditable, field:"f_prevpago"};
+
+                        _global_data=data;
+                    }
+                    table.Events[table.EdiTable.Const.Events.ConfirmEdition] = (e) =>
+                    {
+                        let index=table.RowIndexOfTd(e.td);
+                        if(index < 1)return;
+
+                        var data=table.DataArray[index];
+                        if(!data)return;
+                       
+                        if((data.f_prevpago??"") != (e.text??"") && (e.text??"")!="")
+                        {
+                             let fecha_fprev=(data.f_prevpago??"");
+                            var request=
+                            {
+                                f_prevpago:e.text,
+                                change_data:true
+                            }
+
+                            let onSuccess=(data)=>
+                            {
+                                alert("Fecha prevista cambiada correctamente");
+                            }
+                            let onFailure=(failure)=>
+                            {
+                                data["f_prevpago"]=fecha_fprev;
+                                e.Cancel=true;
+                                alert(failure.message??JSON.stringify(failure));
+                                table._printRows();
+                            }
+                            let url=documento.url_calendar_pagos.replace("@doc",data.sys_pk);
+
+                            InduxsoftCrudlModel.InvokeService(url,request,onSuccess,onFailure,"PATCH",false,false);
+                        }
+                        
                     }
                 });
             '
