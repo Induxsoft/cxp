@@ -754,22 +754,41 @@ module "model"
         cxp_m_aut=parse.num(dbr.vars.get(db,"cxp_m_aut"))
         cxp_m_aut2=parse.num(dbr.vars.get(db,"cxp_m_aut2"))
         importe=@@(data,"#importe")
-        autorizado =dbr.num(db,"select ifnull(autorizado,0) from dcxp where sys_pk=@_entity_id ",params)
+
+        ref doc=cxp.GetDoc(db,params)
+        autorizado =@@(doc,"#autorizado")
 
         if @@(params,"#auth")
         {
             if cxp_m_aut== 0{do rise_error(511,"Se requiere autorización para pagar este documento")}
-            if importe > cxp_m_aut && (cxp_m_aut2 > 0 && importe > cxp_m_aut2) {do rise_error(512,"Se requiere una segunda autorización para pagar este documento")}
-            if importe == 0{do rise_error(513,"No se puede autorizar el pago porque el documento ha sido pagado o cancelado")}
+            if @@(doc,"$u_autorizo")==@@(@http_context,"$session/user/uid") {do rise_error(512,"Se requiere una segunda autorización para pagar este documento")}
+            if @@(doc,"#saldo") == 0{do rise_error(513,"No se puede autorizar el pago porque el documento ha sido pagado o cancelado")}
         }
+
         if autorizado{auth=@true}
-        else if importe > cxp_m_aut2 &&cxp_m_aut2 > 0
+        else if importe > cxp_m_aut2 && cxp_m_aut2 > 0
         {
-            auth=cxp.checkPrivileges("GC52")
+            iditem="GC51"
+            if @@(params,"#auth") && @@(doc,"$u_autorizo")==""{auth=cxp.checkPrivileges(iditem)}
+            else
+            {
+                iditem="GC52"
+                auth=cxp.checkPrivileges(iditem)
+            }
+            
+            if not(auth)
+            {
+                do rise_error(598,"Denegado por falta de privilegio requerido: "+iditem)
+            }
+            else if iditem=="GC51"{auth=@false}
         }
         else if importe > cxp_m_aut && cxp_m_aut > 0 
         {
             auth=cxp.checkPrivileges("GC51")
+            if not(auth)
+            {
+                do rise_error(598,"Denegado por falta de privilegio requerido: GC51")
+            }
         }
         else 
         {
@@ -777,15 +796,9 @@ module "model"
         }
         return auth
     }
-    cxp.autorizar::&db,&params,&data
+    cxp.GetDoc::&db,&params
     {
-        params<"auth">:@true
-        auth=cxp.CheckAuth(db,params,data)
-
-        do dbr.begin(db)
-        //verificar documento
-        
-        ref doc=dbr.rec(db,"SELECT 
+        return dbr.rec(db,"SELECT 
                         d.sys_pk,
                         d.sys_guid,
                         d.f_autorizacion,
@@ -797,6 +810,16 @@ module "model"
                         if(NOW() > d.fultmoratorios,NOW(),d.fultmoratorios) fecha_prevpago,
                         (IFNULL(d.haber,0) + IFNULL(d.intmoratorios,0) - IFNULL(d.pagos,0) - IFNULL(d.bonificaciones,0)) saldo 
                     FROM dcxp d WHERE d.sys_pk=@_entity_id",params)
+    }
+    cxp.autorizar::&db,&params,&data
+    {
+        params<"auth">:@true
+        
+        do dbr.begin(db)
+        auth=cxp.CheckAuth(db,params,data)
+        //verificar documento
+        
+        ref doc=cxp.GetDoc(db,params)
 
             if isnull(doc){do rise_error(500,"No hay datos del documento")}
             if @@(doc,"#saldo") < 1{do rise_error(513,"No se puede autorizar el pago porque el documento ha sido pagado o cancelado")}
@@ -825,9 +848,10 @@ module "model"
 
             do dbr.update(db,"dcxp",dcxp,"sys_pk=@_entity_id",params)
 
-            do dbr.apps.action.pos(dcxp)
+        if isset("@@_action_context"){do dbr.apps.action.pos(dcxp)}
         do dbr.commit(db)
-            do dbr.apps.action.ext(dcxp)
+        if isset("@@_action_context"){do dbr.apps.action.ext(dcxp)}
+         
         
         return dcxp
         
@@ -864,7 +888,14 @@ module "model"
             ROUND(IFNULL(cxp.intfinancieros,0),@decimals) AS intfinancieros,
             ROUND(IFNULL(cxp.pagos,0),@decimals) AS pagos,
             ROUND(IFNULL(cxp.bonificaciones,0),@decimals) AS bonificaciones,
-            ROUND(IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0),@decimals) __saldo,
+            ROUND(IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0),@decimals) = 0 as pagado,
+            ROUND(
+                if(
+                    IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0) > 0,
+                    IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0),
+                    IFNULL(cxp.pagos,0) + IFNULL(cxp.bonificaciones,0)
+                )
+                ,@decimals) __saldo,
             ROUND(cxp.tipocambio,@decimals) tipocambio,
             cxp.xaplicar,
             cxp.iproveedor,
@@ -888,11 +919,13 @@ module "model"
             LEFT JOIN tuser t1 on cxp.u_autorizo=t1.userid        
             LEFT JOIN tuser t2 on cxp.u_autorizo2=t2.userid
         WHERE 
-           true
+           cxp.documento in(3,4,6,17,18)
             "
         
         sql_vencidos=sql + " AND date(cxp.fultmoratorios)<=date(@del)
-                    HAVING vencido AND __saldo > 0"
+                    HAVING vencido 
+                    AND __saldo > 0
+                    and ifnull(pagado,0)=0"
 
         sql_rng_all=sql + " AND 
             date(cxp.fultmoratorios)>=date(@del)
@@ -963,7 +996,11 @@ module "model"
     cxp.desautorizarPago::&db,&params,&data
     {
         sql="update dcxp set 
-        autorizado=0
+        autorizado=0,
+        f_autorizacion=null,
+        f_autorizacion2=null,
+        u_autorizo=null,
+        u_autorizo2=null
         where sys_pk=@_entity_id"
 
         res=dbr.execute(db,sql,params)
