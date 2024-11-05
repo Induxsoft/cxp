@@ -66,7 +66,7 @@ module "cxp.crear.dk"
         // @"urlexit": "javascript:window.history.back();"
         member @"hidden" { @"print": @true }
     }
-    // do rise_error(0,to.json(info_dcxp))
+    
     #$
     div(class="container")
     {
@@ -277,11 +277,14 @@ module "cxp.crear.dk"
         {
             script(src="#<@JS_DOCUMENTOS>"){$""}
             script(src="#<@JS_PROVEEDORES>"){$""}
+            script(src="#<@JS_BITACORA>"){$""}
             script(type="text/javascript")
             {$'
                 document.addEventListener("DOMContentLoaded", () => {
                     documento.crear.init();
                     InduxsoftNumberFields.Init();
+                    _bitacora._url="#<replace(@URL_BITACORA,"@det",@_DET_DOC_PAGAR)>";
+                    _bitacora.EnableLog("#<@@(info_dcxp,"$sys_guid")>");
                 });
             '}
         }

@@ -351,6 +351,7 @@ module "form.dk"
         div(id="_custom_area")
         {
             script(src="#<@JS_GASTO>"){$""}
+            script(src="#<@JS_BITACORA>"){$""}
             script(type="text/javascript")
             {$'
                 function CalImporte()
@@ -480,6 +481,9 @@ module "form.dk"
                     
                     // Script injection
                     #<@@(@crud_context,"script")>
+
+                    _bitacora._url="#<replace(@URL_BITACORA,"@det",@_DET_GASTO)>";
+                    _bitacora.EnableLog("#<@("$./sys_guid")>");
                 });
             '}
         }

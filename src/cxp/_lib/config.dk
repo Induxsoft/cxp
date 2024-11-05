@@ -64,6 +64,7 @@ module
 	@JS_PROVEEDORES = "/$/cxp/js/proveedores.js"
 	@JS_DOCUMENTOS = "/$/cxp/js/documentos.js"
 	@JS_GASTO="/$/cxp/js/gasto.js"
+	@JS_BITACORA="/$/cxp/js/bitacora.js"
 
 	//* ======================================== [ _PACKAGE ]
 	@CXP_MENU = "/!/cxp/"
@@ -95,6 +96,11 @@ module
 	@DOC_APLICAR = "/!/cxp/documentos/@doc/aplicar/"
 	@CALENDAR_PAGOS = "/!/cxp/documentos/@doc/calendar_pagos/"
 	//#endregion
+
+	//bitacora
+	@URL_BITACORA="/!/webshell/log/@det/@guid/"
+	@_DET_GASTO="DET024"
+	@_DET_DOC_PAGAR="DET01E"
 
 	//#region ut_gasto
 	@UT_GASTO = "/!/cxp/gastos/"

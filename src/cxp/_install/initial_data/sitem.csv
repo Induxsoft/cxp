@@ -34,3 +34,7 @@ GC43,Historial de pagos por proveedor,cxp.reports
 GC50,Ver calendario de pagos autorizados,cxp.documentos
 GC51,Autorizar pago de documento,cxp.documentos
 GC52,Otorgar segunda autorización a pago de documento,cxp.documentos
+GC60,Ver mensajes de gasto,cxp.gastos
+GC61,Publicar mensajes de gasto,cxp.gastos
+GC62,Ver mensajes de documentos por pagar,cxp.documentos
+GC63,Publicar mensajes de documentos por pagar,cxp.documentos
