@@ -69,7 +69,11 @@ module "lib.dk"
 			ref @_POST = from.json(field.dstr(@http_context,"request/post_string","{}"))
 		}
     }
-
+    function GetPkUsr(&db,usrId)
+    {
+        new params { @"id": usrId }
+        return dbr.num(db,"SELECT usr.sys_pk FROM tuser AS usr LEFT JOIN sys_session AS ss ON usr.sys_pk = ss.iuser WHERE usr.sys_guid = @id OR usr.userid = @id OR ss.sys_guid = @id",params)
+    }
     function form(name,type,&obj)
     {
         name = trim(str(name))

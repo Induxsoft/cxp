@@ -37,7 +37,7 @@ module ""
     new table_definition
     {
         @"datatable*": @("&./data")
-        @"tableheight":"75vh"
+        @"tableheight":"65vh"
         @"leyend": "Mostrando los primeros # documentos ordenados por fecha de emisión"
         member @"columns"
         {
@@ -48,7 +48,7 @@ module ""
                 @"caption":"Vencimiento"
                 @"align": "end"
                 @"template":ftext('
-                                <div style="background:${DataRow.vencido ? "red":"" };width: 100%;">
+                                <div style="background:${(DataRow.vencido && DataRow.cod_status!= 3 ) ? "red":"" };width: 100%;">
                                     ${DataRow.fultmoratorios}
                                 </div>
                                 ')
@@ -78,7 +78,7 @@ module ""
                 @"template":ftext('
                                 <div>
                                     ${DataRow.cod_status== 1 ? `<a href="#<replace(@DOC_PAGOS,"@doc","${DataRow.sys_pk}")>" style="#<tbtn_style>">Pagar</a>`:``}
-                                    ${DataRow.cod_status== 2 ? `<button style="#<tbtn_style>">Autorizar</button>`:``}
+                                    ${DataRow.cod_status== 2 || DataRow.cod_status== 99 ? `<button style="#<tbtn_style>" onclick="documento.AuthPago(${DataRow.saldo},${DataRow.sys_pk})">Autorizar</button>`:``}
                                 </div>
                             ')
             }
@@ -90,7 +90,7 @@ module ""
                 @"template":ftext('
                                 <div>
                                     ${DataRow.cod_status== 1 ? `<button style="#<tbtn_style>" onclick="documento.DesautorizarPago(${DataRow.sys_pk})">Desautorizar</button>`:``}
-                                    ${DataRow.cod_status== 2 ? `<a href="#<replace(@DOC_PAGOS,"@doc","${DataRow.sys_pk}")>" style="#<tbtn_style>">Pagar</a>`:``}
+                                    ${DataRow.cod_status== 2 || DataRow.cod_status== 99 ? `<a href="#<replace(@DOC_PAGOS,"@doc","${DataRow.sys_pk}")>" style="#<tbtn_style>">Pagar</a>`:``}
                                 </div>
                             ')
             }
@@ -114,39 +114,28 @@ module ""
         script(src="#<@JS_DOCUMENTOS>"){$""}
         section(id="top_area" class="mb-2")
         {
-            form(method="GET")
+            form(method="GET" id="form_search")
             {
                 #! 
                 do uie.printV12FormBar(nav_config)
                 #$
                 div(class="row")
                 {
-                    div(clasS="col-lg-2")
+                    div(clasS="col-lg-6")
                     {
-                        label{"Del:"}
-                        input(type="date" class="induxsoft-form-control" id="del" name="del" value="#<del>")
+                        "date-range"(id="filter_date"
+                            "hidden-input-name-start"="del"
+                            "hidden-input-name-end"="al"
+                            start="#<del>"
+                            "start-label"="Del:"
+                            end="#<al>"
+                            "end-label"="Al:"){""}
                     }
-                    div(clasS="col-lg-2")
-                    {
-                        label{"Al:"}
-                        input(type="date" class="induxsoft-form-control" id="al" name="al" value="#<al>")
-                    }
-                    div(clasS="col-lg-2 mt-4")
-                    {
-                        button(class="btn btn-primary induxsoft-corners"){"Filtrar"}
-                    }
-                    // #!
-                    // do uie.print_from_url_field()
-                    // #$
                 }
             }
         }
         section(id="work_area")
         {
-            #! 
-            do uie.dbeditable(table_definition,"tbl_calendar_cxp")
-            #$
-
             div(class="mt-2 d-flex justify-content-center")
             {
                 table(class="table")
@@ -170,15 +159,21 @@ module ""
                     }
                 }
             }
+            #! 
+            do uie.dbeditable(table_definition,"tbl_calendar_cxp")
+            #$
         }
         
         script
         {
             $'
                 documento.url_calendar_pagos="#<@CALENDAR_PAGOS>";
+                documento.consultar="#<@DOC_CONSULTAR>";
 
                 document.addEventListener("DOMContentLoaded",(e)=>
                 {
+                    
+
                     var divtable=document.getElementById("list_table_container");
                     var table=document.getElementById("tbl_calendar_cxp");
                     
@@ -231,6 +226,12 @@ module ""
                         }
                         
                     }
+
+                    var filter_date=document.getElementById("filter_date");
+                    if(filter_date._btnDone)filter_date._btnDone.addEventListener("click",()=>
+                    {
+                        document.getElementById("form_search").submit();
+                    });
                 });
             '
         }

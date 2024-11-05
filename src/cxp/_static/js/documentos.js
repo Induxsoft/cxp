@@ -72,6 +72,22 @@ var documento =
             window.location.reload();
         });
     },
+    AuthPago(saldo,sys_pk)
+    {
+        let onSuccess=(data)=>
+        {
+            window.location.reload();
+        }
+        let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
+        let url=documento.consultar.replace("@doc",sys_pk);
+
+        var data=
+        {
+            importe:saldo,
+            auth:{authorizer:true}
+        }
+        InduxsoftCrudlModel.InvokeService(url,data,onSuccess,onFailure,"POST",false,false);
+    },
     setTableEvents()
     {
         if (!this.table) return;

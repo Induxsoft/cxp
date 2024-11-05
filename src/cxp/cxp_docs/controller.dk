@@ -54,7 +54,7 @@ module "controller"
                 point @list to cxp.list
                 point @read to cxp.read
                 point @blank to cxp.blank
-
+                
 
                 if @@(input_data,"$auth")!=""
                 {

@@ -192,6 +192,8 @@ module "model"
         do dbr.apps.action.pre("GC13")
         do dbr.begin(db)
         
+        do cxp.CheckAuth(db,params,data)
+
         if @@(data,"#pkparent")>0{params<"pkparent">:@@(data,"#pkparent")}
         do cxp.validateAplicable(db,params)
 
@@ -746,26 +748,40 @@ module "model"
         do list.ins(list, 0, record)
         return list
     }
-    cxp.autorizar::&db,&params,&data
+    cxp.CheckAuth::&db,&params,&data
     {
-        cxp_m_aut=dbr.vars.get(db,"cxp_m_aut")
-        if trim(cxp_m_aut)==""{do rise_error(511,"Se requiere autorización para pagar este documento")}
-        
         auth=@false
-        if @@(data,"#importe") > parse.num(cxp_m_aut)
-        {
-            do dbr.apps.action.pre("GC52")
-            cxp_m_aut2=dbr.vars.get(db,"cxp_m_aut2")
-            if trim(cxp_m_aut2)==""{do rise_error(512,"Se requiere una segunda autorización para pagar este documento")}
+        cxp_m_aut=parse.num(dbr.vars.get(db,"cxp_m_aut"))
+        cxp_m_aut2=parse.num(dbr.vars.get(db,"cxp_m_aut2"))
+        importe=@@(data,"#importe")
+        autorizado =dbr.num(db,"select ifnull(autorizado,0) from dcxp where sys_pk=@_entity_id ",params)
 
-            if @@(data,"#importe") > parse.num(cxp_m_aut2){do rise_error(500,"El monto de la seguna autorización es menor al importe del documento")}
+        if @@(params,"#auth")
+        {
+            if cxp_m_aut== 0{do rise_error(511,"Se requiere autorización para pagar este documento")}
+            if importe > cxp_m_aut && (cxp_m_aut2 > 0 && importe > cxp_m_aut2) {do rise_error(512,"Se requiere una segunda autorización para pagar este documento")}
+            if importe == 0{do rise_error(513,"No se puede autorizar el pago porque el documento ha sido pagado o cancelado")}
+        }
+        if autorizado{auth=@true}
+        else if importe > cxp_m_aut2 &&cxp_m_aut2 > 0
+        {
+            auth=cxp.checkPrivileges("GC52")
+        }
+        else if importe > cxp_m_aut && cxp_m_aut > 0 
+        {
+            auth=cxp.checkPrivileges("GC51")
         }
         else 
         {
-            do dbr.apps.action.pre("GC51")
             auth=@true
         }
-            
+        return auth
+    }
+    cxp.autorizar::&db,&params,&data
+    {
+        params<"auth">:@true
+        auth=cxp.CheckAuth(db,params,data)
+
         do dbr.begin(db)
         //verificar documento
         
@@ -826,6 +842,10 @@ module "model"
     cxp.CelendarioPagos::&db,&params
     {
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
+
+        if not(field.exist(params,"del")){params<"del">:dbr.str(db,"select trim(DATE(DATE_ADD(NOW(), INTERVAL -(WEEKDAY(NOW())+1) DAY)))",@null)}
+        if not(field.exist(params,"al")){params<"al">:dbr.str(db,"select trim(DATE_ADD(DATE(DATE_ADD(NOW(), INTERVAL -(WEEKDAY(NOW())+1) DAY)),INTERVAL 6 day))",@null)}
+
         sql="SELECT
             cxp.sys_pk,
             cxp.sys_guid,
@@ -844,7 +864,7 @@ module "model"
             ROUND(IFNULL(cxp.intfinancieros,0),@decimals) AS intfinancieros,
             ROUND(IFNULL(cxp.pagos,0),@decimals) AS pagos,
             ROUND(IFNULL(cxp.bonificaciones,0),@decimals) AS bonificaciones,
-            ROUND(IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0),@decimals) AS saldo,
+            ROUND(IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0),@decimals) __saldo,
             ROUND(cxp.tipocambio,@decimals) tipocambio,
             cxp.xaplicar,
             cxp.iproveedor,
@@ -868,25 +888,33 @@ module "model"
             LEFT JOIN tuser t1 on cxp.u_autorizo=t1.userid        
             LEFT JOIN tuser t2 on cxp.u_autorizo2=t2.userid
         WHERE 
-           (trim(cxp.u_autorizo)!=''
-        OR trim(cxp.u_autorizo2)!='')
-        AND 
-            if(ifnull(@del,'')='',true,date(cxp.sys_dtcreated)>=date(@del))
-        AND  
-            if(ifnull(@al,'')='',true,date(cxp.sys_dtcreated)<=date(@al))
+           true
             "
-        ref data=dbr.list(db,ftext(sql),params)
+        
+        sql_vencidos=sql + " AND date(cxp.fultmoratorios)<=date(@del)
+                    HAVING vencido AND __saldo > 0"
 
+        sql_rng_all=sql + " AND 
+            date(cxp.fultmoratorios)>=date(@del)
+        AND  
+            date(cxp.fultmoratorios)<=date(@al)
+        HAVING __saldo > 0
+        "
+
+        query=sql_vencidos+" union all "+ sql_rng_all
+        ref data=dbr.list(db,ftext(query),params)
+       
         ref totales=record.create()
         for i = 0; i < @count(data)
         {
             ref item=@item(data,i)
+            item<"saldo">:@@(item,"#__saldo")
             cod_status=GetCodeStatusPago(item)
-
-            if @@(item,"$u_autorizo2")==@@(@http_context,"$session/user/uid")
-            {
-                item<"edit_fprevpago">:cxp.checkPrivileges("GC52")
-            }else{item<"edit_fprevpago">:@false}
+            item<"edit_fprevpago">:@true
+            // if @@(item,"$u_autorizo2")==@@(@http_context,"$session/user/uid")
+            // {
+            //     item<"edit_fprevpago">:cxp.checkPrivileges("GC52")
+            // }else{item<"edit_fprevpago">:@false}
 
             switch cod_status
             {
@@ -897,6 +925,9 @@ module "model"
                 case 3
                 {
                     totales<"pagado">:@@(totales,"#pagado") + @@(item,"#saldo")
+                    item<"edit_fprevpago">:@false
+                    
+                    //  if @@(item,"#saldo")== 0 {item<"saldo">:@@(item,"#bonificaciones") + @@(item,"#pagos")}
                 }
                 default
                 {
@@ -924,6 +955,7 @@ module "model"
 
         exception
         {
+            do pop_exception()
            return @false
         }
     }
@@ -931,12 +963,7 @@ module "model"
     cxp.desautorizarPago::&db,&params,&data
     {
         sql="update dcxp set 
-        f_autorizacion=null,
-        f_autorizacion2=null,
-        f_prevpago=null,
-        u_autorizo=null,
-        u_autorizo2=null,
-        autorizado=null
+        autorizado=0
         where sys_pk=@_entity_id"
 
         res=dbr.execute(db,sql,params)
