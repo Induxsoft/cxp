@@ -756,41 +756,34 @@ module "model"
         importe=@@(data,"#importe")
 
         ref doc=cxp.GetDoc(db,params)
-        autorizado =@@(doc,"#autorizado")
 
+        if not(@@(doc,"#autorizado")) && @@(params,"#auth") && @@(doc,"$u_autorizo")==@@(@http_context,"$session/user/uid"){do rise_error(512,"Este usuario ya ha autorizado el documento")}
+        if not(@@(doc,"#autorizado")) && not(@@(params,"#auth")) && @@(doc,"$u_autorizo")!="" && @@(doc,"$u_autorizo2")==""{do rise_error(512,"Se requiere una segunda autorización para pagar este documento")}
+        
         if @@(params,"#auth")
         {
-            if cxp_m_aut== 0{do rise_error(511,"Se requiere autorización para pagar este documento")}
-            if @@(doc,"$u_autorizo")==@@(@http_context,"$session/user/uid") {do rise_error(512,"Se requiere una segunda autorización para pagar este documento")}
             if @@(doc,"#saldo") == 0{do rise_error(513,"No se puede autorizar el pago porque el documento ha sido pagado o cancelado")}
         }
 
-        if autorizado{auth=@true}
-        else if importe > cxp_m_aut2 && cxp_m_aut2 > 0
-        {
-            iditem="GC51"
-            if @@(params,"#auth") && @@(doc,"$u_autorizo")==""{auth=cxp.checkPrivileges(iditem)}
-            else
-            {
-                iditem="GC52"
-                auth=cxp.checkPrivileges(iditem)
-            }
-            
-            if not(auth)
-            {
-                do rise_error(598,"Denegado por falta de privilegio requerido: "+iditem)
-            }
-            else if iditem=="GC51"{auth=@false}
-        }
-        else if importe > cxp_m_aut && cxp_m_aut > 0 
+        if @@(doc,"#autorizado"){auth=@true}
+        else if (importe > cxp_m_aut && cxp_m_aut > 0) && (importe < cxp_m_aut2 && cxp_m_aut2 > 0 ) //caso 3
         {
             auth=cxp.checkPrivileges("GC51")
-            if not(auth)
-            {
-                do rise_error(598,"Denegado por falta de privilegio requerido: GC51")
-            }
+            if not(auth){do rise_error(598,"Denegado por falta de privilegio requerido: GC51")}
         }
-        else 
+        else if importe > cxp_m_aut2 && cxp_m_aut2 > 0 // fin caso 3
+        {
+            iditem=ifstr(@@(doc,"$u_autorizo")=="","GC51","GC52")
+            auth=cxp.checkPrivileges(iditem)
+            if not(auth){do rise_error(598,"Denegado por falta de privilegio requerido: "+iditem)}
+            else if @@(doc,"$u_autorizo")==""{auth=@false}
+        }
+        else if importe > cxp_m_aut && cxp_m_aut > 0 //caso 2
+        {
+            auth=cxp.checkPrivileges("GC51")
+            if not(auth){do rise_error(598,"Denegado por falta de privilegio requerido: GC51")}
+        }
+        else // caso 1
         {
             auth=@true
         }
@@ -814,7 +807,7 @@ module "model"
     cxp.autorizar::&db,&params,&data
     {
         params<"auth">:@true
-        
+        do errordet(@false)
         do dbr.begin(db)
         auth=cxp.CheckAuth(db,params,data)
         //verificar documento
@@ -996,7 +989,7 @@ module "model"
     cxp.desautorizarPago::&db,&params,&data
     {
         sql="update dcxp set 
-        autorizado=0,
+        autorizado=null,
         f_autorizacion=null,
         f_autorizacion2=null,
         u_autorizo=null,
