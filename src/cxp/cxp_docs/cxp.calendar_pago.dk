@@ -78,7 +78,7 @@ module ""
                 @"template":ftext('
                                 <div>
                                     ${DataRow.cod_status== 1 ? `<a href="#<replace(@DOC_PAGOS,"@doc","${DataRow.sys_pk}")>" style="#<tbtn_style>">Pagar</a>`:``}
-                                    ${DataRow.cod_status== 2 || DataRow.cod_status== 99 ? `<button style="#<tbtn_style>" onclick="documento.AuthPago(${DataRow.saldo},${DataRow.sys_pk})">Autorizar</button>`:``}
+                                    ${ DataRow.req_auth && (DataRow.cod_status== 2 || DataRow.cod_status== 99) ? `<button style="#<tbtn_style>" onclick="documento.AuthPago(${DataRow.saldo},${DataRow.sys_pk})">Autorizar</button>`:``}
                                 </div>
                             ')
             }
@@ -89,7 +89,7 @@ module ""
                 @"align": "center"
                 @"template":ftext('
                                 <div>
-                                    ${DataRow.cod_status== 1 ? `<button style="#<tbtn_style>" onclick="documento.DesautorizarPago(${DataRow.sys_pk})">Desautorizar</button>`:``}
+                                    ${DataRow.cod_status== 1 && DataRow.can_des_auth ? `<button style="#<tbtn_style>" onclick="documento.DesautorizarPago(${DataRow.sys_pk})">Desautorizar</button>`:``}
                                     ${DataRow.cod_status== 2 || DataRow.cod_status== 99 ? `<a href="#<replace(@DOC_PAGOS,"@doc","${DataRow.sys_pk}")>" style="#<tbtn_style>">Pagar</a>`:``}
                                 </div>
                             ')

@@ -931,16 +931,21 @@ module "model"
         ref data=dbr.list(db,ftext(query),params)
        
         ref totales=record.create()
+
+        cxp_m_aut=parse.num(dbr.vars.get(db,"cxp_m_aut"))
+        cxp_m_aut2=parse.num(dbr.vars.get(db,"cxp_m_aut2"))
+
+        auth_=cxp.checkPrivileges("GC51")
+        auth_2=cxp.checkPrivileges("GC52")
         for i = 0; i < @count(data)
         {
             ref item=@item(data,i)
             item<"saldo">:@@(item,"#__saldo")
             cod_status=GetCodeStatusPago(item)
             item<"edit_fprevpago">:@true
-            // if @@(item,"$u_autorizo2")==@@(@http_context,"$session/user/uid")
-            // {
-            //     item<"edit_fprevpago">:cxp.checkPrivileges("GC52")
-            // }else{item<"edit_fprevpago">:@false}
+
+            item<"req_auth">:if(@@(item,"#saldo") > cxp_m_aut || @@(item,"#saldo") > cxp_m_aut2,@true,@false)
+            item<"can_des_auth">:if(@@(item,"$u_autorizo2")!="",auth_2,auth_)
 
             switch cod_status
             {
