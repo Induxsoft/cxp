@@ -762,7 +762,7 @@ module "model"
         if isnull(doc){do rise_error(500,"No hay datos del documento indicado")}
         importe=@@(doc,"#saldo")
 
-        if not(@@(doc,"#autorizado")) && @@(params,"#auth") && @@(doc,"$u_autorizo")==@@(@http_context,"$session/user/uid"){do rise_error(512,"Este usuario ya ha autorizado el documento")}
+        if not(@@(doc,"#autorizado")) && @@(params,"#auth") && @@(doc,"$u_autorizo")==@@(@http_context,"$session/user/uid"){do rise_error(512,"Este usuario ya autorizó el documento")}
         if not(@@(doc,"#autorizado")) && not(@@(params,"#auth")) && @@(doc,"$u_autorizo")!="" && @@(doc,"$u_autorizo2")==""{do rise_error(512,"Se requiere una segunda autorización para pagar este documento")}
         
         if @@(params,"#auth") //solo para autorizar 
@@ -792,13 +792,13 @@ module "model"
                 auth=@true
             }
         }
-        else  //  en momento de pagar un documento
+        else  //  en momento de pagar o aplicar un documento
         {
             _pagar=@false
             if @@(doc,"#saldo") == 0{do rise_error(513,"No se puede pagar o aplicar el documento porque ha sido pagado o cancelado")}
 
             if @@(doc,"#autorizado"){_pagar=@true}
-            else if importe > cxp_m_aut2 && cxp_m_aut2 > 0 // fin caso 3
+            else if importe > cxp_m_aut2 && cxp_m_aut2 > 0 //caso 3
             {
                 _pagar=@false
             }
@@ -810,7 +810,7 @@ module "model"
             {
                 _pagar=@true
             }
-            if not(_pagar){do rise_error(500,"Se necesita autorización para poder pagar o aplicar el documento ("+@@(doc,"$referencia")+").")}
+            if not(_pagar){do rise_error(500,"Se requiere autorización para pagar o aplicar este documento ("+@@(doc,"$referencia")+").")}
             auth=_pagar
         }
        

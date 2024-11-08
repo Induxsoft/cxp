@@ -76,7 +76,7 @@ module ""
                 @"align": "center"
                 @"no-print":@true
                 @"template":ftext('
-                                <div>
+                                <div class="no-print">
                                     ${DataRow.cod_status== 1 ? `<a href="#<replace(@DOC_PAGOS,"@doc","${DataRow.sys_pk}")>" style="#<tbtn_style>">Pagar</a>`:``}
                                     ${ DataRow.req_auth && (DataRow.cod_status== 2 || DataRow.cod_status== 99) ? `<button style="#<tbtn_style>" onclick="documento.AuthPago(${DataRow.saldo},${DataRow.sys_pk})">Autorizar</button>`:``}
                                 </div>
@@ -88,20 +88,24 @@ module ""
                 @"no-print":@true
                 @"align": "center"
                 @"template":ftext('
-                                <div>
+                                <div class="no-print">
                                     ${DataRow.cod_status== 1 && DataRow.can_des_auth ? `<button style="#<tbtn_style>" onclick="documento.DesautorizarPago(${DataRow.sys_pk})">Desautorizar</button>`:``}
                                     ${DataRow.cod_status== 2 || DataRow.cod_status== 99 ? `<a href="#<replace(@DOC_PAGOS,"@doc","${DataRow.sys_pk}")>" style="#<tbtn_style>">Pagar</a>`:``}
                                 </div>
                             ')
             }
         }
+        @"control_styles":'@media print
+                        {
+                            tr td[data-cell=""] { display:none; }
+                        }'
     }
 
     // url =GetUrlReferent(@false)
     // if trim(url)==""{url=@CXP_PROVS}
     new nav_config
     {
-        @"title": "Documentos por pagar"
+        @"title": "Calendario de documentos por pagar"
         @"buttons*": @null
         @"urlexit": @CXP_PROVS
         @"jscurrentcontext": "documento.getCurrentContext"
@@ -109,7 +113,7 @@ module ""
     del=@("$parameters/del")
     al=@("$parameters/al")
     #$
-    div(class="v12-list-view container" id="view")
+    div(class="v12-list-view container-fluid" id="view")
     {
         script(src="#<@JS_DOCUMENTOS>"){$""}
         section(id="top_area" class="mb-2")
