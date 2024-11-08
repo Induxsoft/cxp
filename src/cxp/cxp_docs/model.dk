@@ -192,7 +192,7 @@ module "model"
         do dbr.apps.action.pre("GC13")
         do dbr.begin(db)
         
-        do cxp.CheckAuth(db,params,data)
+        do cxp.CheckAuth(db,params)
 
         if @@(data,"#pkparent")>0{params<"pkparent">:@@(data,"#pkparent")}
         do cxp.validateAplicable(db,params)
@@ -413,6 +413,10 @@ module "model"
             if @@(dst,"#aplicar") > 0
             {
                 do dbr.begin(db)
+                //validación de autorización
+                new p{@"_entity_id":@@(dst,"#id_destino")}
+                do cxp.CheckAuth(db,p)
+                //fin de la validación
 
                 dst<"aplicado"> : 0
 
@@ -748,45 +752,68 @@ module "model"
         do list.ins(list, 0, record)
         return list
     }
-    cxp.CheckAuth::&db,&params,&data
+    cxp.CheckAuth::&db,&params
     {
         auth=@false
         cxp_m_aut=parse.num(dbr.vars.get(db,"cxp_m_aut"))
         cxp_m_aut2=parse.num(dbr.vars.get(db,"cxp_m_aut2"))
-        importe=@@(data,"#importe")
-
+        
         ref doc=cxp.GetDoc(db,params)
+        if isnull(doc){do rise_error(500,"No hay datos del documento indicado")}
+        importe=@@(doc,"#saldo")
 
         if not(@@(doc,"#autorizado")) && @@(params,"#auth") && @@(doc,"$u_autorizo")==@@(@http_context,"$session/user/uid"){do rise_error(512,"Este usuario ya ha autorizado el documento")}
         if not(@@(doc,"#autorizado")) && not(@@(params,"#auth")) && @@(doc,"$u_autorizo")!="" && @@(doc,"$u_autorizo2")==""{do rise_error(512,"Se requiere una segunda autorización para pagar este documento")}
         
-        if @@(params,"#auth")
+        if @@(params,"#auth") //solo para autorizar 
         {
             if @@(doc,"#saldo") == 0{do rise_error(513,"No se puede autorizar el pago porque el documento ha sido pagado o cancelado")}
-        }
 
-        if @@(doc,"#autorizado"){auth=@true}
-        else if (importe > cxp_m_aut && cxp_m_aut > 0) && (importe < cxp_m_aut2 && cxp_m_aut2 > 0 ) //caso 3
-        {
-            auth=cxp.checkPrivileges("GC51")
-            if not(auth){do rise_error(598,"Denegado por falta de privilegio requerido: GC51")}
+            if @@(doc,"#autorizado"){auth=@true}
+            else if (importe > cxp_m_aut && cxp_m_aut > 0) && (importe < cxp_m_aut2 && cxp_m_aut2 > 0 ) //caso 3
+            {
+                auth=cxp.checkPrivileges("GC51")
+                if not(auth){do rise_error(598,"No se logró autorizar.\ndenegado por falta de privilegio requerido: GC51")}
+            }
+            else if importe > cxp_m_aut2 && cxp_m_aut2 > 0 // fin caso 3
+            {
+                iditem=ifstr(@@(doc,"$u_autorizo")=="","GC51","GC52")
+                auth=cxp.checkPrivileges(iditem)
+                if not(auth){do rise_error(598,"No se logró autorizar.\ndenegado por falta de privilegio requerido: "+iditem)}
+                else if @@(doc,"$u_autorizo")==""{auth=@false}
+            }
+            else if importe > cxp_m_aut && cxp_m_aut > 0 //caso 2
+            {
+                auth=cxp.checkPrivileges("GC51")
+                if not(auth){do rise_error(598,"No se logró autorizar.\ndenegado por falta de privilegio requerido: GC51")}
+            }
+            else // caso 1
+            {
+                auth=@true
+            }
         }
-        else if importe > cxp_m_aut2 && cxp_m_aut2 > 0 // fin caso 3
+        else  //  en momento de pagar un documento
         {
-            iditem=ifstr(@@(doc,"$u_autorizo")=="","GC51","GC52")
-            auth=cxp.checkPrivileges(iditem)
-            if not(auth){do rise_error(598,"Denegado por falta de privilegio requerido: "+iditem)}
-            else if @@(doc,"$u_autorizo")==""{auth=@false}
+            _pagar=@false
+            if @@(doc,"#saldo") == 0{do rise_error(513,"No se puede pagar o aplicar el documento porque ha sido pagado o cancelado")}
+
+            if @@(doc,"#autorizado"){_pagar=@true}
+            else if importe > cxp_m_aut2 && cxp_m_aut2 > 0 // fin caso 3
+            {
+                _pagar=@false
+            }
+            else if importe > cxp_m_aut && cxp_m_aut > 0 //caso 2
+            {
+                _pagar=@false
+            }
+            else // caso 1
+            {
+                _pagar=@true
+            }
+            if not(_pagar){do rise_error(500,"Se necesita autorización para poder pagar o aplicar el documento ("+@@(doc,"$referencia")+").")}
+            auth=_pagar
         }
-        else if importe > cxp_m_aut && cxp_m_aut > 0 //caso 2
-        {
-            auth=cxp.checkPrivileges("GC51")
-            if not(auth){do rise_error(598,"Denegado por falta de privilegio requerido: GC51")}
-        }
-        else // caso 1
-        {
-            auth=@true
-        }
+       
         return auth
     }
     cxp.GetDoc::&db,&params
@@ -800,6 +827,7 @@ module "model"
                         d.u_autorizo,
                         d.u_autorizo2,
                         d.autorizado,
+                        d.referencia,
                         if(NOW() > d.fultmoratorios,NOW(),d.fultmoratorios) fecha_prevpago,
                         (IFNULL(d.haber,0) + IFNULL(d.intmoratorios,0) - IFNULL(d.pagos,0) - IFNULL(d.bonificaciones,0)) saldo 
                     FROM dcxp d WHERE d.sys_pk=@_entity_id",params)
@@ -809,12 +837,13 @@ module "model"
         params<"auth">:@true
         do errordet(@false)
         do dbr.begin(db)
-        auth=cxp.CheckAuth(db,params,data)
-        //verificar documento
-        
-        ref doc=cxp.GetDoc(db,params)
+            auth=cxp.CheckAuth(db,params)
+            //verificar documento
+            
+            ref doc=cxp.GetDoc(db,params)
 
             if isnull(doc){do rise_error(500,"No hay datos del documento")}
+            if @@(doc,"#autorizado"){do rise_error(500,"El documento ya ha sido autorizado")}
             if @@(doc,"#saldo") < 1{do rise_error(513,"No se puede autorizar el pago porque el documento ha sido pagado o cancelado")}
 
             if @@(doc,"$u_autorizo")==""
@@ -945,26 +974,20 @@ module "model"
             item<"edit_fprevpago">:@true
 
             item<"req_auth">:if(@@(item,"#saldo") > cxp_m_aut || @@(item,"#saldo") > cxp_m_aut2,@true,@false)
-            item<"can_des_auth">:if(@@(item,"$u_autorizo2")!="",auth_2,auth_)
 
+            if @@(item,"$u_autorizo2")!=""{item<"can_des_auth">:auth_2}
+            else if @@(item,"$u_autorizo")!=""{item<"can_des_auth">:auth_}
+            else{item<"can_des_auth">:@false}
+            
             switch cod_status
             {
-                case 1
-                {
-                    totales<"autorizado">:@@(totales,"#autorizado") + @@(item,"#saldo")
-                }
+                case 1{totales<"autorizado">:@@(totales,"#autorizado") + @@(item,"#saldo")}
                 case 3
                 {
                     totales<"pagado">:@@(totales,"#pagado") + @@(item,"#saldo")
                     item<"edit_fprevpago">:@false
-                    
-                    //  if @@(item,"#saldo")== 0 {item<"saldo">:@@(item,"#bonificaciones") + @@(item,"#pagos")}
                 }
-                default
-                {
-                    totales<"pendiente">:@@(totales,"#pendiente") + @@(item,"#saldo")
-                    break
-                }
+                default{totales<"pendiente">:@@(totales,"#pendiente") + @@(item,"#saldo")}
             }
             totales<"total">: @@(totales,"#autorizado") + @@(totales,"#pagado") + @@(totales,"#pendiente")
 

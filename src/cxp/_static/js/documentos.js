@@ -439,7 +439,8 @@ var documento =
             fetch(endpoint, options).then((response) => response.json())
             .then((res) => {
                 // Manejar la respuesta del servidor
-                if (res.message) {
+                if (res.message) 
+                {
                     alert(res.message);
                     return;
                 }
@@ -468,7 +469,8 @@ var documento =
                 {
                     id_origen: this.source.sys_pk,
                     id_destino: doc.sys_pk,
-                    aplicar: aplicar
+                    aplicar: aplicar,
+                    referencia:doc.referencia??""
                 }
 
                 lista.push(destino);
@@ -477,7 +479,27 @@ var documento =
             if (lista.length === 0) return;
             let data = { aplicacion: lista }
 
-            this.submit("./?_act=aplicar", data, function(res){ window.location.reload() });
+            this.submit("./?_act=aplicar", data, 
+            (res)=>
+            { 
+                if(res)
+                {
+                    let error="Los siguientes documentos no pudieron ser aplicados:";
+                    let cerror=0;
+                    for (let i = 0; i < res.length; i++) 
+                    {
+                        const element = res[i];
+                        if(element && element.error)
+                        {
+                            error+="\n\r"+element.referencia+" => "+element.error;
+                            cerror++;
+                        }
+                    }
+                    if(cerror>0)alert(error);
+                }
+                window.location.reload(); 
+            }
+            );
         },
 
         desaplicar()
