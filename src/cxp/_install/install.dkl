@@ -29,8 +29,7 @@ program "instalador"
         "ctasasiva.csv",
         "divisa.csv",
         "tipoproveedor.csv",
-        "tipooperacion.csv",
-        "sys_app_item_type_finder.csv"
+        "tipooperacion.csv"
     ]')
     vars_file = path.concat(path_app_info,"vars.json")
     // Lista de privilegios iniciales (arreglo de id de privilegios)
