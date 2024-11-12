@@ -885,12 +885,54 @@ module "model"
         }
         
     }
+    prepareDefaultReportData::&db,&data
+    {
+        using data
+        {
+            member @"titles"
+            {
+                @"title": dbr.vars.getd(db,"FXCA108","")
+                @"subtitle": dbr.vars.getd(db,"FXCA109","")
+                @"subtitle_2": dbr.vars.getd(db,"FXCA110","")
+                @"footer": dbr.vars.getd(db,"FXCA111","")
+            }
+        }
+    }
+    cxp.Filter::&params,status
+    {
+        sts=@@(params,"$sts")
+        if sts=="*"{return @true}
+
+        nsts=parse.num(sts)
+        switch nsts
+        {
+            case 1 //por autorizar
+            {
+                if status== 2 || status== 99{return @true}//pre-autorizado y pendiente
+            }
+            case 2 //Autorizados
+            {
+                if status== 1{return @true} //autorizado
+            }
+            case 3 //pagados
+            {
+                if status== 3{return @true} //pagados
+            }
+            case 4 //Por pagar
+            {
+                if status== 2 || status== 99 || status== 1{return @true}
+            }
+            default{ return @false }
+        }
+        return @false
+    }
     cxp.CelendarioPagos::&db,&params
     {
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
         if not(field.exist(params,"del")){params<"del">:dbr.str(db,"select trim(DATE(DATE_ADD(NOW(), INTERVAL -(WEEKDAY(NOW())+1) DAY)))",@null)}
         if not(field.exist(params,"al")){params<"al">:dbr.str(db,"select trim(DATE_ADD(DATE(DATE_ADD(NOW(), INTERVAL -(WEEKDAY(NOW())+1) DAY)),INTERVAL 6 day))",@null)}
+        if not(field.exist(params,"sts")){params<"sts">:"*"}
 
         sql="SELECT
             cxp.sys_pk,
@@ -954,10 +996,12 @@ module "model"
         AND  
             date(cxp.fultmoratorios)<=date(@al)
         HAVING __saldo > 0
+      
         "
 
         query=sql_vencidos+" union all "+ sql_rng_all
-        ref data=dbr.list(db,ftext(query),params)
+        query=query + " LIMIT 200"
+        ref ldata=dbr.list(db,ftext(query),params)
        
         ref totales=record.create()
 
@@ -966,39 +1010,51 @@ module "model"
 
         auth_=cxp.checkPrivileges("GC51")
         auth_2=cxp.checkPrivileges("GC52")
-        for i = 0; i < @count(data)
+
+        ref data=list.create()
+        for i = 0; i < @count(ldata)
         {
-            ref item=@item(data,i)
-            item<"saldo">:@@(item,"#__saldo")
+            ref item=@item(ldata,i)
             cod_status=GetCodeStatusPago(item)
-            item<"edit_fprevpago">:@true
-
-            item<"req_auth">:if(@@(item,"#saldo") > cxp_m_aut || @@(item,"#saldo") > cxp_m_aut2,@true,@false)
-
-            if @@(item,"$u_autorizo2")!=""{item<"can_des_auth">:auth_2}
-            else if @@(item,"$u_autorizo")!=""{item<"can_des_auth">:auth_}
-            else{item<"can_des_auth">:@false}
-            
-            switch cod_status
+            if cxp.Filter(params,cod_status)
             {
-                case 1{totales<"autorizado">:@@(totales,"#autorizado") + @@(item,"#saldo")}
-                case 3
-                {
-                    totales<"pagado">:@@(totales,"#pagado") + @@(item,"#saldo")
-                    item<"edit_fprevpago">:@false
-                }
-                default{totales<"pendiente">:@@(totales,"#pendiente") + @@(item,"#saldo")}
-            }
-            totales<"total">: @@(totales,"#autorizado") + @@(totales,"#pagado") + @@(totales,"#pendiente")
+                item<"saldo">:@@(item,"#__saldo")
+                item<"edit_fprevpago">:@true
+                item<"req_auth">:if(@@(item,"#saldo") > cxp_m_aut || @@(item,"#saldo") > cxp_m_aut2,@true,@false)
 
-            item<"status">:GetStatusPago(item)
-            item<"cod_status">:cod_status
+                if @@(item,"#saldo") > cxp_m_aut2{item<"two_auth">:@true}
+                else{item<"two_auth">:@false}
+                
+                if @@(item,"$u_autorizo2")!=""{item<"can_des_auth">:auth_2}
+                else if @@(item,"$u_autorizo")!=""{item<"can_des_auth">:auth_}
+                else{item<"can_des_auth">:@false}
+                
+                switch cod_status
+                {
+                    case 1{totales<"autorizado">:@@(totales,"#autorizado") + @@(item,"#saldo")}
+                    case 3
+                    {
+                        totales<"pagado">:@@(totales,"#pagado") + @@(item,"#saldo")
+                        item<"edit_fprevpago">:@false
+                    }
+                    default{totales<"pendiente">:@@(totales,"#pendiente") + @@(item,"#saldo")}
+                }
+                totales<"total">: @@(totales,"#autorizado") + @@(totales,"#pagado") + @@(totales,"#pendiente")
+
+                item<"status">:GetStatusPago(item)
+                item<"cod_status">:cod_status
+                do list.add(data,item)
+            }
         }
         new result
         {
             @"totales*":totales
             @"data*":data
+            @"status*":from.json(@STATUS_DOC_PAGOS)
         }
+
+        do prepareDefaultReportData(db,result)
+
         return result
     }
     cxp.checkPrivileges::iditem

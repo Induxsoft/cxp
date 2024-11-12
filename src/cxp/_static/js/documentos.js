@@ -53,7 +53,7 @@ var documento =
     {
         let onSuccess=(data)=>
         {
-            window.location.reload();
+            documento.SetTemplate(1);
         }
         let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
         let url=documento.url_calendar_pagos.replace("@doc",sys_pk);
@@ -76,7 +76,7 @@ var documento =
     {
         let onSuccess=(data)=>
         {
-            window.location.reload();
+            documento.SetTemplate(0);
         }
         let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
         let url=documento.consultar.replace("@doc",sys_pk);
@@ -120,7 +120,64 @@ var documento =
 
         v12navbar.toggleButtonInteraction(true);
     },
+    GetTextStatus(status)
+    {
+        let text="";
+        switch (status) 
+        {
+            case 1:
+                text="Autorizado";
+                break;
+            case 2:
+                text="Pre-autorizado";
+                break;
+            case 3:
+                text="Pagado";
+            break;
+            case 99:
+                text="Pendiente";
+            break;
+        }
+        return text;
+    },
+    SetTemplate(temp)
+    {
+        window.location.reload();
 
+        var td=this.table.CurrentTd();
+        if(!td)window.location.reload();
+        else
+        {
+            //temp = 0 autorizar
+            //temp = 1 desautorizar
+            window.location.reload();
+            // documento.SetTemplateTMP(td,temp);
+        }
+    },
+    SetTemplateTMP(td,temp)
+    {
+        var index=this.table.RowIndexOfTd(td);
+        var DataRow=this.table.DataArray[index];
+        let status=0;
+        if(temp==0)
+        {
+            if(DataRow.two_auth && DataRow.cod_status== 99)status=2;
+            else status=1;
+        }
+        else
+        {
+            status=1;
+        }
+        DataRow["cod_status"]=status;
+        DataRow["status"]=documento.GetTextStatus(status);
+
+        var tmp=temp==0? documento.template_pa : documento.template_depa;
+        tmp=tmp.replaceAll("@","`");
+        tmp=tmp.replaceAll("#","$");
+        var template=this.table.applyTemplate(tmp,DataRow);
+        this.table.SetTdValue(td,template);
+        this.table.CellFocus(td);
+    },
     list: {},
 
     form: {},

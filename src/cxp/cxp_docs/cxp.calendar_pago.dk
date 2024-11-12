@@ -4,6 +4,7 @@ module ""
 {
     #include "functions.dkh"
     #include "serialize.dkh"
+    #include "uielements.dkl"
     #include "uielements.v12.dkl"
     #include "../_lib/icons.dk"
     #include "../_lib/config.dk"
@@ -70,7 +71,7 @@ module ""
                 @"thousandssep": @true
                 @"decs": @DECIMAL_PRECISION
             }
-            member @"PA"
+            member @"pa"
             {
                 @"caption":""
                 @"align": "center"
@@ -82,7 +83,7 @@ module ""
                                 </div>
                             ')
             }
-            member @"DEPA"
+            member @"depa"
             {
                 @"caption":""
                 @"no-print":@true
@@ -112,6 +113,30 @@ module ""
     }
     del=@("$parameters/del")
     al=@("$parameters/al")
+
+    new status
+    {
+        @"datatable*": ifnull(@("&./status"),list.create())
+        @"id": "sts"
+        new member "attributes"
+        {
+            @"class": "induxsoft-form-select rounded-0 rounded-0"
+            @"name": "sts"
+            @"required": ""
+        }
+        @"value_field": "id"
+        @"text_field": "const"
+        @"selected": @("$parameters/sts")
+        @"first_text":"Todos(*)"
+        @"first_value":"*"
+    }
+    ref titles=@("&./titles")
+
+    template_pa=replace(@@(table_definition,"$columns/pa/template"),"`","@")
+    template_pa=replace(template_pa,"$","#")
+
+    template_depa=replace(@@(table_definition,"$columns/depa/template"),"`","@")
+    template_depa=replace(template_depa,"$","#")
     #$
     div(class="v12-list-view container-fluid" id="view")
     {
@@ -127,6 +152,7 @@ module ""
                 {
                     div(clasS="col-lg-6")
                     {
+                        label(class="fw-bold"){"Filtro:"}
                         "date-range"(id="filter_date"
                             "hidden-input-name-start"="del"
                             "hidden-input-name-end"="al"
@@ -135,57 +161,101 @@ module ""
                             end="#<al>"
                             "end-label"="Al:"){""}
                     }
+                    div(clasS="col-lg-2")
+                    {
+                        label{"Estado:"}
+                        #!
+                        do uie.dbSelect(status)
+                        #$
+                    }
                 }
             }
         }
         section(id="work_area")
         {
-            div(class="mt-2 d-flex justify-content-center")
+            div(class="" style="box-shadow: inset 0 -3em 3em rgba(0, 0, 0, 0.1), 0.3em 0.3em 1em rgba(0, 0, 0, 0.3);")
             {
-                table(class="table")
+                div(class="bg-white p-1" id="section-to-print")
                 {
-                    thead
+                    p(class="text-center mb-0"){$"#<@@(titles,'$title')>"}
+                    p(class="text-center mb-0"){$"#<@@(titles,'$subtitle')>"}
+                    p(class="text-center mb-0"){$"#<@@(titles,'$subtitle_2')>"}
+
+                    div(class="row")
                     {
-                        th{"Total"}
-                        th{"Autorizado"}
-                        th{"Pagado"}
-                        th{"Pendiente"}
-                    }
-                    tbody
-                    {
-                        tr
+                        div(class="col-3")
                         {
-                            td{"#<format(@('#./totales/total'),@FMT_MONEY)>"}
-                            td{"#<format(@('#./totales/autorizado'),@FMT_MONEY)>"}
-                            td{"#<format(@('#./totales/pagado'),@FMT_MONEY)>"}
-                            td{"#<format(@('#./totales/pendiente'),@FMT_MONEY)>"}
+                            small(class="d-block"){ $"#<cut(@('$http/session/user/name'),25)>" }
+                            small(class="d-block"){ b{$"Impresión: "} $"#<hoy('dd/MMM/yyyy')>" }
+                        }
+                        div(class="col-6")
+                        {
+                            h4(class="text-center"){$"Calendario de documentos por pagar"}
                         }
                     }
+                    div(class="mt-2 d-flex justify-content-center")
+                    {
+                        table(class="table")
+                        {
+                            thead
+                            {
+                                th{"Total"}
+                                th{"Autorizado"}
+                                th{"Pagado"}
+                                th{"Pendiente"}
+                            }
+                            tbody
+                            {
+                                tr
+                                {
+                                    td{"#<format(@('#./totales/total'),@FMT_MONEY)>"}
+                                    td{"#<format(@('#./totales/autorizado'),@FMT_MONEY)>"}
+                                    td{"#<format(@('#./totales/pagado'),@FMT_MONEY)>"}
+                                    td{"#<format(@('#./totales/pendiente'),@FMT_MONEY)>"}
+                                }
+                            }
+                        }
+                    }
+                    #! 
+                    do uie.dbeditable(table_definition,"tbl_calendar_cxp")
+                    #$
                 }
             }
-            #! 
-            do uie.dbeditable(table_definition,"tbl_calendar_cxp")
-            #$
+            
         }
-        
+        //#<replace(@@(table_definition,"$columns/pa/template"),"$","@")>
+        //#<@@(table_definition,"$columns/depa/template")>
         script
         {
             $'
                 documento.url_calendar_pagos="#<@CALENDAR_PAGOS>";
                 documento.consultar="#<@DOC_CONSULTAR>";
+                documento.template_pa=`#<template_pa>`;
+                documento.template_depa=`#<template_depa>`;
 
                 document.addEventListener("DOMContentLoaded",(e)=>
                 {
-                    
-
+                    var sts=document.getElementById("sts");
                     var divtable=document.getElementById("list_table_container");
                     var table=document.getElementById("tbl_calendar_cxp");
-                    
+                    if(!documento.table)documento.table=table;
+
                     var parent=divtable.parentNode;
                     if(parent)parent.setAttribute("style","height: auto;");
 
                     var _global_data=null;
-
+                    table.onTdPaint=(td, row, col, field) =>
+                    {
+                        var data=table.DataArray[row];
+                        if(field!="f_prevpago" && data.edit_fprevpago)
+                        {
+                            td.style="background:lightgray;"
+                        }
+                        else if (!data.edit_fprevpago)
+                        {
+                            td.style="background:lightgray;"
+                        }
+                    };
                     table.Events[table.EdiTable.Const.Events.EnterCell] = (e) =>
                     {
                         var data=table.DataArray[table.CurrentRowIndex()];
@@ -230,14 +300,42 @@ module ""
                         }
                         
                     }
+                    table._printRows();
 
                     var filter_date=document.getElementById("filter_date");
                     if(filter_date._btnDone)filter_date._btnDone.addEventListener("click",()=>
                     {
                         document.getElementById("form_search").submit();
                     });
+
+                    if(sts)sts.addEventListener("change",
+                    ()=>
+                    {
+                        document.getElementById("form_search").submit();
+                    });
                 });
             '
         }
+        style
+        {$'
+            tr th { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; -o-text-overflow:ellipsis; }
+            tr td { font-size:.8rem; }
+            th { font-size:.9rem; outline:none!important; }
+
+            @media print 
+            {
+                @page 
+                { 
+                    margin-top: 0;
+                    margin-bottom: 0;
+                    size: auto !important; 
+                }
+                body { visibility: hidden; }
+            }
+
+            .bg-light-gray { background-color: #DCDCDC !important; }
+            .bg-yellow { background-color: #ffe484 !important; }
+            .fw-500 { font-weight:500!important; }
+        '}
     }
 }
