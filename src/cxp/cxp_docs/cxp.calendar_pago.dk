@@ -176,23 +176,30 @@ module ""
             div(class="" style="box-shadow: inset 0 -3em 3em rgba(0, 0, 0, 0.1), 0.3em 0.3em 1em rgba(0, 0, 0, 0.3);")
             {
                 div(class="bg-white p-1" id="section-to-print")
-                {
-                    p(class="text-center mb-0"){$"#<@@(titles,'$title')>"}
-                    p(class="text-center mb-0"){$"#<@@(titles,'$subtitle')>"}
-                    p(class="text-center mb-0"){$"#<@@(titles,'$subtitle_2')>"}
-
-                    div(class="row")
+                {   
+                    div(clasS="show-on-print")
                     {
-                        div(class="col-3")
+                        p(class="text-center mb-0"){$"#<@@(titles,'$title')>"}
+                        p(class="text-center mb-0"){$"#<@@(titles,'$subtitle')>"}
+                        p(class="text-center mb-0"){$"#<@@(titles,'$subtitle_2')>"}
+                    }
+                    
+                    div(class="show-on-print")
+                    {
+                        div(class="row")
                         {
-                            small(class="d-block"){ $"#<cut(@('$http/session/user/name'),25)>" }
-                            small(class="d-block"){ b{$"Impresión: "} $"#<hoy('dd/MMM/yyyy')>" }
-                        }
-                        div(class="col-6")
-                        {
-                            h4(class="text-center"){$"Calendario de documentos por pagar"}
+                            div(class="col-3")
+                            {
+                                small(class="d-block"){ $"#<cut(@('$http/session/user/name'),25)>" }
+                                small(class="d-block"){ b{$"Impresión: "} $"#<hoy('dd/MMM/yyyy')>" }
+                            }
+                            div(class="col-6")
+                            {
+                                h4(class="text-center"){$"Calendario de documentos por pagar"}
+                            }
                         }
                     }
+                    
                     div(class="mt-2 d-flex justify-content-center")
                     {
                         table(class="table")
@@ -249,12 +256,14 @@ module ""
                         var data=table.DataArray[row];
                         if(field!="f_prevpago" && data.edit_fprevpago)
                         {
-                            td.style="background:lightgray;"
+                            td.style="background:#F5F5F5;color:black;"
                         }
                         else if (!data.edit_fprevpago)
                         {
-                            td.style="background:lightgray;"
+                            td.style="background:#F5F5F5;color:black;"
                         }
+
+                        if(field=="pa" || field=="depa")td.style="background:white;color:black;"
                     };
                     table.Events[table.EdiTable.Const.Events.EnterCell] = (e) =>
                     {
@@ -285,7 +294,7 @@ module ""
 
                             let onSuccess=(data)=>
                             {
-                                alert("Fecha prevista cambiada correctamente");
+                                
                             }
                             let onFailure=(failure)=>
                             {
@@ -321,7 +330,7 @@ module ""
             tr th { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; -o-text-overflow:ellipsis; }
             tr td { font-size:.8rem; }
             th { font-size:.9rem; outline:none!important; }
-
+         
             @media print 
             {
                 @page 

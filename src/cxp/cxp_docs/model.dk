@@ -1015,10 +1015,22 @@ module "model"
         for i = 0; i < @count(ldata)
         {
             ref item=@item(ldata,i)
+            item<"saldo">:@@(item,"#__saldo")
             cod_status=GetCodeStatusPago(item)
+            switch cod_status
+            {
+                case 1{totales<"autorizado">:@@(totales,"#autorizado") + @@(item,"#saldo")}
+                case 3
+                {
+                    totales<"pagado">:@@(totales,"#pagado") + @@(item,"#saldo")
+                    item<"edit_fprevpago">:@false
+                }
+                default{totales<"pendiente">:@@(totales,"#pendiente") + @@(item,"#saldo")}
+            }
+            totales<"total">:@@(totales,"#total")  + (@@(totales,"#autorizado") + @@(totales,"#pagado") + @@(totales,"#pendiente"))
+
             if cxp.Filter(params,cod_status)
             {
-                item<"saldo">:@@(item,"#__saldo")
                 item<"edit_fprevpago">:@true
                 item<"req_auth">:if(@@(item,"#saldo") > cxp_m_aut || @@(item,"#saldo") > cxp_m_aut2,@true,@false)
 
@@ -1028,18 +1040,7 @@ module "model"
                 if @@(item,"$u_autorizo2")!=""{item<"can_des_auth">:auth_2}
                 else if @@(item,"$u_autorizo")!=""{item<"can_des_auth">:auth_}
                 else{item<"can_des_auth">:@false}
-                
-                switch cod_status
-                {
-                    case 1{totales<"autorizado">:@@(totales,"#autorizado") + @@(item,"#saldo")}
-                    case 3
-                    {
-                        totales<"pagado">:@@(totales,"#pagado") + @@(item,"#saldo")
-                        item<"edit_fprevpago">:@false
-                    }
-                    default{totales<"pendiente">:@@(totales,"#pendiente") + @@(item,"#saldo")}
-                }
-                totales<"total">: @@(totales,"#autorizado") + @@(totales,"#pagado") + @@(totales,"#pendiente")
+            
 
                 item<"status">:GetStatusPago(item)
                 item<"cod_status">:cod_status
