@@ -1016,6 +1016,8 @@ module "model"
         {
             ref item=@item(ldata,i)
             item<"saldo">:@@(item,"#__saldo")
+            importe=@@(item,"#__saldo")
+            
             cod_status=GetCodeStatusPago(item)
             switch cod_status
             {
@@ -1037,10 +1039,22 @@ module "model"
                 if @@(item,"#saldo") > cxp_m_aut2{item<"two_auth">:@true}
                 else{item<"two_auth">:@false}
                 
-                if @@(item,"$u_autorizo2")!=""{item<"can_des_auth">:auth_2}
-                else if @@(item,"$u_autorizo")!=""{item<"can_des_auth">:auth_}
-                else{item<"can_des_auth">:@false}
-            
+                if (importe > cxp_m_aut && cxp_m_aut > 0) && (importe < cxp_m_aut2 && cxp_m_aut2 > 0 ) //caso 3
+                {
+                    item<"can_des_auth">:auth_
+                }
+                else if importe > cxp_m_aut2 && cxp_m_aut2 > 0 // fin caso 3
+                {
+                    item<"can_des_auth">:auth_2
+                }
+                else if importe > cxp_m_aut && cxp_m_aut > 0 //caso 2
+                {
+                    item<"can_des_auth">:auth_
+                }
+                else // caso 1
+                {
+                    item<"can_des_auth">:@false
+                }
 
                 item<"status">:GetStatusPago(item)
                 item<"cod_status">:cod_status
