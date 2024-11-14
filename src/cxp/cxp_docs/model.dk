@@ -762,7 +762,7 @@ module "model"
         if isnull(doc){do rise_error(500,"No hay datos del documento indicado")}
         importe=@@(doc,"#saldo")
 
-        if not(@@(doc,"#autorizado")) && @@(params,"#auth") && @@(doc,"$u_autorizo")==@@(@http_context,"$session/user/uid"){do rise_error(512,"Este usuario ya autorizó el documento")}
+        // if not(@@(doc,"#autorizado")) && @@(params,"#auth") && @@(doc,"$u_autorizo")==@@(@http_context,"$session/user/uid"){do rise_error(512,"Este usuario ya autorizó el documento")}
         if not(@@(doc,"#autorizado")) && not(@@(params,"#auth")) && @@(doc,"$u_autorizo")!="" && @@(doc,"$u_autorizo2")==""{do rise_error(512,"Se requiere una segunda autorización para pagar este documento")}
         
         if @@(params,"#auth") //solo para autorizar 

@@ -79,7 +79,8 @@ module ""
                 @"template":ftext('
                                 <div class="no-print">
                                     ${DataRow.cod_status== 1 ? `<a href="#<replace(@DOC_PAGOS,"@doc","${DataRow.sys_pk}")>" style="#<tbtn_style>">Pagar</a>`:``}
-                                    ${ DataRow.req_auth && (DataRow.cod_status== 2 || DataRow.cod_status== 99) ? `<button style="#<tbtn_style>" onclick="documento.AuthPago(${DataRow.saldo},${DataRow.sys_pk})">Autorizar</button>`:``}
+                                    ${ DataRow.req_auth && DataRow.cod_status== 99 ? `<button style="#<tbtn_style>" onclick="documento.AuthPago(${DataRow.saldo},${DataRow.sys_pk})">Autorizar</button>`:``}
+                                    ${ DataRow.req_auth && DataRow.cod_status== 2 ? `<button style="#<tbtn_style>" onclick="documento.AuthPago(${DataRow.saldo},${DataRow.sys_pk})">Confirmar</button>`:``}
                                 </div>
                             ')
             }
@@ -90,7 +91,7 @@ module ""
                 @"align": "center"
                 @"template":ftext('
                                 <div class="no-print">
-                                    ${DataRow.cod_status== 1 && DataRow.can_des_auth ? `<button style="#<tbtn_style>" onclick="documento.DesautorizarPago(${DataRow.sys_pk})">Desautorizar</button>`:``}
+                                    ${(DataRow.cod_status== 1 || DataRow.cod_status== 2 ) && DataRow.can_des_auth ? `<button style="#<tbtn_style>" onclick="documento.DesautorizarPago(${DataRow.sys_pk})">Desautorizar</button>`:``}
                                     ${DataRow.cod_status== 2 || DataRow.cod_status== 99 ? `<a href="#<replace(@DOC_PAGOS,"@doc","${DataRow.sys_pk}")>" style="#<tbtn_style>">Pagar</a>`:``}
                                 </div>
                             ')
@@ -268,8 +269,8 @@ module ""
                     };
                     table.Events[table.EdiTable.Const.Events.EnterCell] = (e) =>
                     {
-                        documento.tr_selected=documento.table.GetTrByIndex(table.RowIndexOfTd(e.td));
                         var data=table.DataArray[table.CurrentRowIndex()];
+                        documento.tr_selected=documento.table.GetTrByIndex(table.RowIndexOfTd(e.td));
                         
                         if(!data)return;
 
