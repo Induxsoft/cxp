@@ -117,7 +117,7 @@ var documento =
             if (btn_intmor) btn_intmor.parentElement.hidden = (Number(obj?.haber) <= 0);
             if (btn_aplicar) btn_aplicar.parentElement.hidden = (Number(obj?.debe) <= 0);
         }
-
+        
         v12navbar.toggleButtonInteraction(true);
     },
     GetTextStatus(status)
@@ -142,22 +142,35 @@ var documento =
     },
     SetTemplate(temp)
     {
-        window.location.reload();
-
         var td=this.table.CurrentTd();
         if(!td)window.location.reload();
         else
         {
             //temp = 0 autorizar
             //temp = 1 desautorizar
-            window.location.reload();
-            // documento.SetTemplateTMP(td,temp);
+            
+            if(!documento.tr_selected){window.location.reload();}
+            else
+            {
+                documento.SetTemplateTMP(td,temp);
+            }
         }
+    },
+    GetCellByIndex(index)
+    {
+        var elements=documento.tr_selected.querySelectorAll("td");
+        for (let i = 0; i < elements.length; i++) 
+        {
+            const element = elements[i];
+            if(index==i)return element;
+        }
+        return null;
     },
     SetTemplateTMP(td,temp)
     {
-        var index=this.table.RowIndexOfTd(td);
-        var DataRow=this.table.DataArray[index];
+        var index=documento.table.RowIndexOfTd(td);
+        var DataRow=documento.table.DataArray[index];
+        
         let status=0;
         if(temp==0)
         {
@@ -166,7 +179,7 @@ var documento =
         }
         else
         {
-            status=1;
+            status=99;
         }
         DataRow["cod_status"]=status;
         DataRow["status"]=documento.GetTextStatus(status);
@@ -176,7 +189,23 @@ var documento =
         tmp=tmp.replaceAll("#","$");
         var template=this.table.applyTemplate(tmp,DataRow);
         this.table.SetTdValue(td,template);
-        this.table.CellFocus(td);
+        
+        let index_td=6
+        if(temp==0)
+        {
+            index_td=7
+        }
+        td=documento.GetCellByIndex(index_td);
+        if(td)
+        {
+            var tmp=index_td == 6 ?documento.template_pa : documento.template_depa;
+            tmp=tmp.replaceAll("@","`");
+            tmp=tmp.replaceAll("#","$");
+            var template=this.table.applyTemplate(tmp,DataRow);
+            this.table.SetTdValue(td,template);
+        }
+        documento.table._printRows();
+        documento.tr_selected=null;
     },
     list: {},
 

@@ -1027,7 +1027,7 @@ module "model"
                 }
                 default{totales<"pendiente">:@@(totales,"#pendiente") + @@(item,"#saldo")}
             }
-            totales<"total">:@@(totales,"#total")  + (@@(totales,"#autorizado") + @@(totales,"#pagado") + @@(totales,"#pendiente"))
+            
 
             if cxp.Filter(params,cod_status)
             {
@@ -1047,6 +1047,8 @@ module "model"
                 do list.add(data,item)
             }
         }
+        totales<"total">: @@(totales,"#autorizado") + @@(totales,"#pagado") + @@(totales,"#pendiente")
+        
         new result
         {
             @"totales*":totales

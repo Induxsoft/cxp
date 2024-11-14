@@ -239,6 +239,7 @@ module ""
                 documento.consultar="#<@DOC_CONSULTAR>";
                 documento.template_pa=`#<template_pa>`;
                 documento.template_depa=`#<template_depa>`;
+                documento.tr_selected=null;
 
                 document.addEventListener("DOMContentLoaded",(e)=>
                 {
@@ -267,7 +268,9 @@ module ""
                     };
                     table.Events[table.EdiTable.Const.Events.EnterCell] = (e) =>
                     {
+                        documento.tr_selected=documento.table.GetTrByIndex(table.RowIndexOfTd(e.td));
                         var data=table.DataArray[table.CurrentRowIndex()];
+                        
                         if(!data)return;
 
                         if(data.edit_fprevpago)table.Columns[4]={type:table.EdiTable.Const.Columns.Types.Date, field:"f_prevpago"};
@@ -309,6 +312,7 @@ module ""
                         }
                         
                     }
+                   
                     table._printRows();
 
                     var filter_date=document.getElementById("filter_date");
