@@ -789,7 +789,9 @@ module "model"
             }
             else // caso 1
             {
-                auth=@true
+                //auth=@true
+                auth=cxp.checkPrivileges("GC51")
+                if not(auth){do rise_error(598,"No se logró autorizar.\ndenegado por falta de privilegio requerido: GC51")}
             }
         }
         else  //  en momento de pagar o aplicar un documento
@@ -1034,7 +1036,7 @@ module "model"
             if cxp.Filter(params,cod_status)
             {
                 item<"edit_fprevpago">:@true
-                item<"req_auth">:if(@@(item,"#saldo") > cxp_m_aut || @@(item,"#saldo") > cxp_m_aut2,@true,@false)
+                item<"req_auth">:@true//if(@@(item,"#saldo") > cxp_m_aut || @@(item,"#saldo") > cxp_m_aut2,@true,@false)
 
                 if @@(item,"#saldo") > cxp_m_aut2{item<"two_auth">:@true}
                 else{item<"two_auth">:@false}
@@ -1053,7 +1055,7 @@ module "model"
                 }
                 else // caso 1
                 {
-                    item<"can_des_auth">:@false
+                    item<"can_des_auth">:auth_
                 }
 
                 item<"status">:GetStatusPago(item)
