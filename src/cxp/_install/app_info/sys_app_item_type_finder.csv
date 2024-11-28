@@ -1,2 +1,0 @@
-det,class,sql_query,primarykey,keyfield,textfield
-DET03F,*,"SELECT sys_pk, codigo, nombre FROM proveedor WHERE IF(IFNULL(@primarykey,0)=0, codigo=@search OR nombre LIKE CONCAT('%',@search,'%'), sys_pk=@primarykey);",sys_pk,codigo,nombre

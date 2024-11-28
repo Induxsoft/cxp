@@ -16,6 +16,11 @@ module "list.dk"
     ref db = @("&database")
     ref get = @@(@http_context,"&request/get")
 
+    ref titles = ifnull(@("&./titles"),record.create())
+
+    @_entities_type = @("$parameters/_entities_type")
+    table_id = "tbl_"+@_entities_type
+
     new fil_tipo_proveedor
     {
         @"id": "fil_tipo"
@@ -76,9 +81,11 @@ module "list.dk"
         @"jscurrentcontext": "proveedor.getCurrentContext"
     }
     
-    #$ div(class="v12-list-view" id="view")
+    #$
+    div(class="container-fluid" id="view")
     {
-        section(class="container-fluid bg-white" id="top_area")
+        // Filtros y acciones
+        section(id="top_area")
         {
             #!
             do uie.printV12FormBar(nav_config)
@@ -107,25 +114,60 @@ module "list.dk"
                 }
             }
         }
-
-        section(class="container-fluid" id="work_area")
+        // Contenido principal
+        section(id="work_area")
         {
+            div(class="show-on-print")
+            {
+                p(class="text-center my-0"){$"#<@@(titles,'$title')>"}
+                p(class="text-center my-0"){$"#<@@(titles,'$subtitle')>"}
+                p(class="text-center my-0"){$"#<@@(titles,'$subtitle_2')>"}
+
+                div(class="row")
+                {
+                    div(class="col-3 text-start")
+                    {
+                        small(class="d-block"){ $"#<cut(@('$http/session/user/name'),25)>" }
+                        small(class="d-block"){ $"#<date_str(now(),'dd/MMM/yyyy')>" }
+                    }
+                    div(class="col-6 text-center")
+                    {
+                        h4(class=""){$"Informe general de proveedores"}
+                    }
+                    div(class="col-3 text-end")
+                    {
+                        small(class="d-block" id="lbl_filter_1"){$""}
+                        small(class="d-block" id="lbl_filter_2"){$""}
+                        small(class="d-block" id="lbl_filter_3"){$""}
+                    }
+                }
+            }
+
             #!
-            do uie.dbeditable(table_definition, "tbl_proveedores")
+            do uie.dbeditable(table_definition,table_id)
             #$
-        }
 
-        div
+            div(class="show-on-print"){p(class="fixed-bottom text-center my-1"){$"#<@@(titles,'$footer')>"}}
+        }
+        // Resúmenes y datos al pie
+        section(id="bottom_area")
         {
-            script(src="#<@JS_PROVEEDORES>"){$""}
-            script(type="text/javascript")
-            {$'
-                document.addEventListener("DOMContentLoaded", () => {
-                    proveedor.tableId = "tbl_proveedores";
-                    proveedor.init();
-                    proveedor.list.init();
-                });
-            '}
+            //////////////////////////////////////////////////////////////////
+            div(id="_custom_area")
+            {
+                script(src="#<@JS_PROVEEDORES>"){$""}
+                script(type="text/javascript")
+                {$' 
+                    document.addEventListener("DOMContentLoaded", () => {
+                        proveedor.tableId = "#<table_id>";
+                        proveedor.init();
+                        proveedor.list.init();
+
+                        // Script injection
+                        #<@@(@crud_context,"script")>
+                    });
+                '}
+            }
         }
     }
 }

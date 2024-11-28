@@ -166,6 +166,20 @@ module "model"
         return cxp.buscarProveedor(db,params)
     }
 
+    function setPrintTitles(&db,&data)
+    {
+        using data
+        {
+            member @"titles"
+            {
+                @"title": dbr.vars.getd(db,"FXCA108","")
+                @"subtitle": dbr.vars.getd(db,"FXCA109","")
+                @"subtitle_2": dbr.vars.getd(db,"FXCA110","")
+                @"footer": dbr.vars.getd(db,"FXCA111","")
+            }
+        }
+    }
+
     cxp.prepareView::&db,&params,&data
     {
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
@@ -677,6 +691,7 @@ module "model"
             @"data*": dbr.list(db,ftext(sql_proveedores),params)
             @"list_tipos*": dbr.list(db,"select sys_pk, descripcion from tipoproveedor where not ifnull(sys_deleted,0)",@null)
         }
+        do setPrintTitles(db,data)
     
         return data
 
