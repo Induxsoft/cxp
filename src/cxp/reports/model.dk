@@ -52,30 +52,33 @@ module "Reportes de Cuentas por Pagar"
 
         sql_antiguedad_saldo = "
         SELECT
-            dcxp.sys_pk,
-            DATE_FORMAT(dcxp.aplicacion,'%d/%m/%Y') AS aplicacion,
-            DATE_FORMAT(dcxp.fecha,'%d/%m/%Y') AS fecha,
-            dcxp.referencia,
+            x.sys_pk,
+            DATE_FORMAT(x.aplicacion,'%d/%m/%Y') AS aplicacion,
+            DATE_FORMAT(x.fecha,'%d/%m/%Y') AS fecha,
+            x.referencia,
             z.codigo,
             z.nombre,
             z.rfc,
             z.telefonos,
-            cdocumentos.const AS documento,
-            DATEDIFF(@fil_fcorte, dcxp.aplicacion) AS dias,
-            (dcxp.haber + dcxp.intmoratorios - dcxp.bonificaciones - dcxp.pagos) AS saldo
+            d.const AS documento,
+            DATEDIFF(@fil_fcorte, x.aplicacion) AS dias,
+            (x.haber + x.intmoratorios - x.bonificaciones - x.pagos) AS saldo
         FROM
             (
                 proveedor z
                 INNER JOIN (
-                    cdocumentos
-                    INNER JOIN dcxp ON cdocumentos.id = dcxp.documento
-                ) ON z.sys_pk = dcxp.iproveedor
+                    cdocumentos d
+                    INNER JOIN dcxp x ON d.id = x.documento
+                ) ON z.sys_pk = x.iproveedor
             )
         WHERE
-            dcxp.aplicable <> 0
-            AND (dcxp.haber + dcxp.intmoratorios - dcxp.bonificaciones - dcxp.pagos) <> 0
+            x.aplicable <> 0
+            AND (x.haber + x.intmoratorios - x.bonificaciones - x.pagos) <> 0
             #<conditions>
-        ORDER BY z.nombre;
+        ORDER BY
+            z.nombre,
+            x.fecha,
+            x.referencia;
         "
 
         conditions = ""
@@ -119,8 +122,11 @@ module "Reportes de Cuentas por Pagar"
             inner join dcxp y on a.aplicadoa=y.sys_pk 
             inner join proveedor p on y.iproveedor=p.sys_pk
         where y.fecha between @finicio and @ffinal
-        order by y.fecha, y.sys_pk, x.aplicacion
-        ;"
+        order by
+            y.fecha,
+            y.sys_pk,
+            x.aplicacion;
+        "
 
         new data
         {
