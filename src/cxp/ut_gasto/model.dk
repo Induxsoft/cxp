@@ -2,6 +2,8 @@
 #!
 module "model"
 {
+    #include "webshell.dkh"
+
     @sys_fields = "sys_pk,sys_guid,sys_dtcreated,sys_timestamp,sys_info,sys_user,sys_lastuser,sys_exported,sys_dtexported,sys_recver,sys_deleted,sys_lock"
     @update_fields = @sys_fields + ",concepto,retisr,retiva,iva,subtotal,icategoria"
 
@@ -322,7 +324,9 @@ module "model"
             }
             do erp.cxp.movimientos.crearCxP(db,cxp)
         }
-        do SaveAdjuntos(db,params,gasto)
+        
+        // do SaveAdjuntos(db,params,gasto)
+        do webshell.detlog.files.save("DET024",@@(entity,"$sys_guid"))
 
         do dbr.apps.action.pos(@null)
         do dbr.commit(db)
