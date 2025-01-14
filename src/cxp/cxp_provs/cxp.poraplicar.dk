@@ -19,6 +19,9 @@ module "cxp.poraplicar.dk"
     get<"year">: ifstr(trim(@@(get,"year"))!="", @@(get,"year"), str(ndatetime.year(ndatetime.now())))
     get<"month">: ifstr(trim(@@(get,"month"))!="", @@(get,"month"), str(ndatetime.month(ndatetime.now())))
 
+    @_entities_type = @("$parameters/_entities_type")
+	@_entity_id = @("$parameters/_entity_id")
+    
     @DECIMAL_PRECISION = @("#parameters/decimals")
 
     new nav_config
@@ -30,6 +33,14 @@ module "cxp.poraplicar.dk"
         @"actions*": dbr.apps.itemactions(@('&database'),"DET01E","action","",0)
         @"reports*": dbr.apps.itemactions(@('&database'),"DET01E","report","",0)
         @"jscurrentcontext": "getCurrentContext"
+
+        member @"parameters"
+        {
+            member @"GC11"
+            {
+                @"prov": @_entity_id
+            }
+        }
     }
 
     #$ div(class="v12-list-view" id="view")
@@ -149,21 +160,18 @@ module "cxp.poraplicar.dk"
                 const table = document.getElementById("table_poraplicar");
                 const event = table.EdiTable.Const.Events;
 
-                table.Events[event.LostFocus] = (e) => {
-                }
-
-                table.Events[event.BeforeCellFocus] = (e) => {
-                }
-
                 table.Events[event.RowChanged] = (e) => {
                     let obj = table.DataArray[e.index];
+                    
                     v12navbar.toggleButtonInteraction(!obj);
 
+                    const btn_consultar = document.getElementById("v12_GC12");
                     const btn_pagar = document.getElementById("v12_GC13");
                     const btn_bonif = document.getElementById("v12_GC14");
                     const btn_intmor = document.getElementById("v12_GC15");
                     const btn_aplicar = document.getElementById("v12_GC16");
 
+                    if (btn_consultar) btn_consultar.parentElement.hidden = (Number(obj?.haber) <= 0);
                     if (btn_pagar) btn_pagar.parentElement.hidden = (Number(obj?.haber) <= 0);
                     if (btn_bonif) btn_bonif.parentElement.hidden = (Number(obj?.haber) <= 0);
                     if (btn_intmor) btn_intmor.parentElement.hidden = (Number(obj?.haber) <= 0);
