@@ -37,14 +37,19 @@ module "cxp.aplicar.dk"
         @"buttons*": @null //general_act
         @"urlexit": "javascript:window.history.back()" //url_exit
     }
-
+    ref list_years = list_years(11,0)
+    fdr_year_opt = ""
+    for i = 0; i < list.count(list_years) { fdr_year_opt = fdr_year_opt + list.str(list_years,i) + "," }
+    fdr_year_opt = rremove(fdr_year_opt,1)
     #$
-    div(class="container-fluid")
+    div(class="container-fluid v12-list-view" id="view")
     {
-        // #! do uie.printMainBar(@null, "Aplicación de pago o bonificación a uno o más documentos", @false, url_exit)
-        #! do uie.printV12FormBar(nav_config)
-
-        #$ div
+        div(id="top_area")
+        {
+            // #! do uie.printMainBar(@null, "Aplicación de pago o bonificación a uno o más documentos", @false, url_exit)
+            #! do uie.printV12FormBar(nav_config)
+        }
+        #$ div(id="work_area")
         {
             form(action="./" method="GET" id="form_filter" class="no-print my-1")
             {
@@ -69,7 +74,7 @@ module "cxp.aplicar.dk"
                             "to-field"="dateto"
                             "selection"='#<to.json(get)>'
                             "lastdays-options"="15,30,45,60,90"
-                            "years-options"="2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024"
+                            "years-options"="#<fdr_year_opt>"
                             "custom-range"="true"
                             "form"="#form_filter"
                             "auto-submit"="true"
@@ -125,7 +130,7 @@ module "cxp.aplicar.dk"
                     div(class="d-flex justify-content-end align-items-center gap-1 px-2 my-2" id="tbl_action_bar")
                     {
                         small(class="flex-grow-1 text-muted"){$"Indique el importe a 'Aplicar' a los documentos en la cuadrícula"}
-                        button(class="btn btn-sm btn-primary" type="button" id="btn_aplicar"){$"Aplicar"}
+                        button(class="btn btn-sm btn-primary no-print" type="button" id="btn_aplicar"){$"Aplicar"}
                     }
                     div(class="" id="div_tbl_xaplicar" style="width:auto; min-width:100%; max-height:60vh; display:flex;")
                     {
@@ -135,6 +140,11 @@ module "cxp.aplicar.dk"
                             tr th { font-size:.9rem; outline:none !important; font-weight:500 !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; -o-text-overflow:ellipsis; }
                             tr td { font-size:.8rem; }
                             #__table_input { font-size:unset !important; }
+                            @media print
+                            {
+                                tr th { background-color: #DCDCDC; }
+                                tr td { background-color: #FFF !important; color:#000 !important; }
+                            }
                         ")
                         {
                             "edit-thead"
@@ -159,7 +169,7 @@ module "cxp.aplicar.dk"
                     div(class="d-flex justify-content-end align-items-center gap-1 px-2 my-2" id="tbl_action_bar")
                     {
                         // small(class="flex-grow-1 text-muted"){$""}
-                        button(class="btn btn-sm btn-primary" type="button" id="btn_desaplicar"){$"Desaplicar todo"}
+                        button(class="btn btn-sm btn-primary no-print" type="button" id="btn_desaplicar"){$"Desaplicar todo"}
                     }
                     div(class="" id="div_tbl_aplicados" style="width:auto; min-width:100%; max-height:60vh; display:flex;")
                     {
@@ -169,6 +179,11 @@ module "cxp.aplicar.dk"
                             tr th { font-size:.9rem; outline:none !important; font-weight:500 !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; -o-text-overflow:ellipsis; }
                             tr td { font-size:.8rem; }
                             #__table_input { font-size:unset !important; }
+                            @media print
+                            {
+                                tr th { background-color: #DCDCDC; }
+                                tr td { background-color: #FFF !important; color:#000 !important; }
+                            }
                         ")
                         {
                             "edit-thead"

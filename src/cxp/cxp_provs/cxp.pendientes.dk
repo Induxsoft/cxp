@@ -42,7 +42,10 @@ module "cxp.pendientes.dk"
             }
         }
     }
-
+    ref list_years = list_years(11,0)
+    fdr_year_opt = ""
+    for i = 0; i < list.count(list_years) { fdr_year_opt = fdr_year_opt + list.str(list_years,i) + "," }
+    fdr_year_opt = rremove(fdr_year_opt,1)
     #$ div(class="v12-list-view" id="view")
     {
         section(class="container-fluid bg-white" id="top_area")
@@ -74,7 +77,7 @@ module "cxp.pendientes.dk"
                             "to-field"="dateto"
                             "selection"='#<to.json(get)>'
                             "lastdays-options"="15,30,45,60,90"
-                            "years-options"="2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024"
+                            "years-options"="#<fdr_year_opt>"
                             "custom-range"="true"
                             "form"="#form_filter"
                             "auto-submit"="true"
