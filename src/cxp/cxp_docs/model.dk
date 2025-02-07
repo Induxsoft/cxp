@@ -945,6 +945,7 @@ module "model"
     }
     cxp.CelendarioPagos::&db,&params
     {
+        do dbr.apps.action.grant("GC50")
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
         if not(field.exist(params,"del")){params<"del">:dbr.str(db,"select trim(DATE(DATE_ADD(NOW(), INTERVAL -(WEEKDAY(NOW())+1) DAY)))",@null)}

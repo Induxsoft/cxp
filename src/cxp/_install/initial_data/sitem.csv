@@ -10,6 +10,11 @@ GC15,Aplicar intereses moratorios a documento por pagar,cxp.documentos
 GC16,Aplicar abonos a documentos por pagar,cxp.documentos
 GC17,Desaplicar abonos de documentos por pagar,cxp.documentos
 GC18,Permitir exceder límite de crédito,cxp.documentos
+GC50,Ver calendario de pagos autorizados,cxp.documentos
+GC51,Autorizar pago de documento,cxp.documentos
+GC52,Otorgar segunda autorización a pago de documento,cxp.documentos
+GC62,Ver mensajes de documentos por pagar,cxp.documentos
+GC63,Publicar mensajes de documentos por pagar,cxp.documentos
 cxp.gastos,Gastos,cxp
 GC30,Gastos,cxp.gastos
 GC31,Agregar gasto,cxp.gastos
@@ -17,6 +22,8 @@ GC32,Consultar gasto,cxp.gastos
 GC33,Administrar archivos adjuntos,cxp.gastos
 GC34,Corregir gasto,cxp.gastos
 GC35,Eliminar gasto,cxp.gastos
+GC60,Ver mensajes de gasto,cxp.gastos
+GC61,Publicar mensajes de gasto,cxp.gastos
 cxp.proveedores,Proveedores y cuentas por pagar,cxp
 GC20,Proveedores y CxP,cxp.proveedores
 GC21,Nuevo proveedor,cxp.proveedores
@@ -31,10 +38,3 @@ cxp.reports,Informes de Cuentas por Pagar,cxp
 GC41,Informe de antigüedad de saldos por pagar,cxp.reports
 GC42,Origen y aplicación,cxp.reports
 GC43,Historial de pagos por proveedor,cxp.reports
-GC50,Ver calendario de pagos autorizados,cxp.documentos
-GC51,Autorizar pago de documento,cxp.documentos
-GC52,Otorgar segunda autorización a pago de documento,cxp.documentos
-GC60,Ver mensajes de gasto,cxp.gastos
-GC61,Publicar mensajes de gasto,cxp.gastos
-GC62,Ver mensajes de documentos por pagar,cxp.documentos
-GC63,Publicar mensajes de documentos por pagar,cxp.documentos
