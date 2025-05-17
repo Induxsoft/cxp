@@ -25,23 +25,23 @@ module ":erp.cxp.movimientos"
             @"sys_guid": uuid()
             @"sys_dtcreated*": dbr.sql("now()")
             @"sys_timestamp*": dbr.sql("now()")
+            @"sys_dtexported*": dbr.sql("now()")
             @"sys_info": ""
             @"sys_user": ""
             @"sys_lastuser": ""
             @"sys_exported": @false
-            @"sys_dtexported*": @null
-            @"sys_recver": 0
             @"sys_deleted": @false
-            @"sys_lock": 0
+            @"sys_recver": 0
+            @"sys_lock*": @null
             @"aplicable": @true
-            @"aplicacion*": dbr.sql("now()")
+            @"aplicacion*": @null
             @"auditado": @false
             @"basecm*": @null
             @"bonificaciones": 0.0
             @"contabilizado": @false
             @"debe": 0.0
             @"documento*": @null
-            @"fecha*": dbr.sql("now()")
+            @"fecha*": @null
             @"fultmoratorios*": @null
             @"haber": 0.0
             @"intfinancieros": 0.0
@@ -212,16 +212,19 @@ module ":erp.cxp.movimientos"
         {
             cxp<"debe"> : importe
             cxp<"haber"> : 0
+            cxc<"xaplicar"> : importe
         }
         else if afecta_haber
         {
             cxp<"debe"> : 0
             cxp<"haber"> : importe
+            cxc<"xaplicar"> : 0
         }
         else
         {
             cxp<"haber"> : 0
             cxp<"debe"> : 0
+            cxc<"xaplicar"> : 0
         }
     }
 

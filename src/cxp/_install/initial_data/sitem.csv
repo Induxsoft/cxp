@@ -15,6 +15,9 @@ GC51,Autorizar pago de documento,cxp.documentos
 GC52,Otorgar segunda autorización a pago de documento,cxp.documentos
 GC62,Ver mensajes de documentos por pagar,cxp.documentos
 GC63,Publicar mensajes de documentos por pagar,cxp.documentos
+GCF0,Importar movimientos iniciales por pagar,cxp.documentos
+GCF1,Podar movimientos por pagar,cxp.documentos
+GCF2,Limpiar movimientos por pagar,cxp.documentos
 cxp.gastos,Gastos,cxp
 GC30,Gastos,cxp.gastos
 GC31,Agregar gasto,cxp.gastos

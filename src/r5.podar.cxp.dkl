@@ -1,0 +1,294 @@
+#include "dkli.dkh"
+#!
+program "Podar movimientos por pagar"
+{
+    if not(isset("@batch_context"))
+    {
+        #include "functions.dkh"
+        #include "serialize.dkh"
+        #include "dbr.dkh"
+    }
+
+    module "Constantes"
+    {
+        //#region >CONSTANTES
+        do errordet(@false)
+
+        @table_aplcxp = "aplcxp"
+        @table_dcxp = "dcxp"
+        @table_proveedor = "proveedor"
+        @id_to_delete = "r5.eliminar.cxp"
+    }
+    module "Funciones"
+    {
+        //#region >FUNCIONES
+        function print_error(error)
+        {
+            do print("")
+            do print("-  ERROR -")
+            do print(error)
+            do print("------------------------------------------------------------")
+            do print("")
+            do print("- USO DE LA HERRAMIENTA -")
+            do print('./dkl r5.eliminar.cxp bd="miconexion@grupoapps" ff="yyyy-MM-dd"')
+            do print("    o")
+            do print('./dkl r5.eliminar.cxp bd="miconexion@grupoapps" ff="yyyy-MM-dd" truncate')
+            do print("")
+            do print("Donde:")
+            do print("bd=Nombre cualificado de conexión a la base de datos.")
+            do print("ff=Fecha final hasta donde se eliminarán los movimientos.")
+            do print("'truncate' Indica si se truncarán los datos.")
+            do print("------------------------------------------------------------")
+        }
+
+        function Log(text)
+        {
+            if isset("@batch_context") { do batch.saveLog(@("$job/token"),text) }
+            else { do print(text) }
+        }
+
+        function UpdatePercent(value)
+        {
+            if not(isset("@batch_context")) { return }
+
+            new params
+            {
+                @"token":@("$job/token")
+            }
+            new data
+            {
+                @"percentage":value
+                @"progress_type":2
+            }
+            do dbr.update(batch.openDB(),"job",data,"sys_guid=@token",params)
+        }
+
+        function CrearCxP(&db,iproveedor,debe,haber,documento)
+        {
+            uuid_cxp = uuid()
+            new data
+            {
+                @"sys_guid": uuid_cxp
+                @"sys_dtcreated*": dbr.sql("now()")
+                @"sys_timestamp*": dbr.sql("now()")
+                @"sys_dtexported*": dbr.sql("now()")
+                @"sys_exported": @false
+                @"sys_deleted": @false
+                @"sys_recver": 0
+                @"auditado": @false
+                @"contabilizado": @false
+                @"aplicable": (haber > 0)
+                @"referencia": uuid_cxp
+                @"notas": "Generado automáticamente"
+                @"fecha*": dbr.sql("date(now())")
+                @"aplicacion*": dbr.sql("date(now())")
+                @"fultmoratorios*": dbr.sql("date(now())")
+                @"documento": documento
+                @"debe": debe
+                @"haber": haber
+                @"intfinancieros": 0.0
+                @"intmoratorios": 0.0
+                @"pagos": 0.0
+                @"bonificaciones": 0.0
+                @"xaplicar": if(documento==5, debe, 0)
+                @"tipocambio": 1
+                @"iproveedor": iproveedor
+                @"basecm": 0
+            }
+            do dbr.insert(db,@table_dcxp,data)
+        }
+
+        /**
+        * Determina los movimientos que pueden eliminarse y les asigna una marca.
+        */
+        function DeterminarDocumentosAEliminar(&db,ff)
+        {
+            ff >> params
+
+            sql_select = ftext("
+            SELECT
+                cxp.*
+            FROM #<@table_dcxp> cxp
+            WHERE cxp.fecha <= @ff
+                -- 1. Si el documento actual es un pago, no debe haber aplicado a cargos fuera de fecha
+                AND (SELECT COUNT(c.sys_pk) FROM #<@table_aplcxp> ap INNER JOIN #<@table_dcxp> c ON ap.aplicadoa = c.sys_pk WHERE ap.fk_dcxp_aplicadoa = cxp.sys_pk AND c.fecha > @ff) = 0
+                -- 2. Si el documento actual es un cargo, no debe haber sido aplicado por pagos fuera de fecha
+                AND (SELECT COUNT(p.sys_pk) FROM #<@table_aplcxp> ac INNER JOIN #<@table_dcxp> p ON ac.fk_dcxp_aplicadoa = p.sys_pk WHERE ac.aplicadoa = cxp.sys_pk AND p.fecha > @ff) = 0
+                -- 3. Si el documento actual es un cargo, el pago que lo aplicó no debe haber aplicado a otros cargos fuera de fecha
+                AND (
+                    SELECT COUNT(otros_cargos.sys_pk)
+                    FROM #<@table_aplcxp> apl_cargo
+                        INNER JOIN #<@table_dcxp> pago ON apl_cargo.fk_dcxp_aplicadoa = pago.sys_pk
+                        INNER JOIN #<@table_aplcxp> apl_pago ON apl_pago.fk_dcxp_aplicadoa = pago.sys_pk
+                        INNER JOIN #<@table_dcxp> otros_cargos ON apl_pago.aplicadoa = otros_cargos.sys_pk
+                    WHERE apl_cargo.aplicadoa = cxp.sys_pk
+                        AND otros_cargos.fecha > @ff
+                ) = 0
+            ")
+            sql_update = ftext("UPDATE #<@table_dcxp> cxp INNER JOIN (#<sql_select>) x ON cxp.sys_pk = x.sys_pk SET cxp.sys_info = '#<@id_to_delete>'")
+            
+            affected_rows = dbr.execute(db,sql_update,params)
+            do Log(" + Documentos: " + str(affected_rows))
+        }
+
+        /**
+        * Consolida los documentos que se han marcado para eliminarse sumando debe y haber, y de acuerdo al que tenga el importe mayor se crea un nuevo documento.
+        */
+        function ConsolidarDocumentos(&db)
+        {
+            ref list = dbr.list(db,ftext("
+                SELECT
+                    CONCAT(p.codigo,' - ',p.nombre) `proveedor`,
+                    IFNULL(SUM(IFNULL(d.debe,0)),0) debe,
+                    IFNULL(SUM(IFNULL(d.haber,0)),0) haber,
+                    d.iproveedor
+                FROM #<@table_dcxp> d
+                    INNER JOIN #<@table_proveedor> p ON d.iproveedor = p.sys_pk
+                WHERE d.sys_info = '#<@id_to_delete>'
+                GROUP BY d.iproveedor
+            "),@null)
+            for i = 0; i < list.count(list)
+            {
+                ref item = list.obj(list,i)
+                iproveedor = @@(item,"#iproveedor")
+                proveedor = @@(item,"$proveedor")
+
+                // Si el proveedor tenia saldo en contra, crear: '17 - cNota_de_cargo'
+                if @@(item,"#haber") > @@(item,"#debe") {
+                    do Log(" + Creando 'Nota_de_cargo' para "+proveedor)
+                    haber = (@@(item,"#haber") - @@(item,"#debe"))
+
+                    do CrearCxP(db,iproveedor,0,haber,17)
+                }
+                // Si el proveedor tenia saldo a favor, crear: '5 - cNota_de_crédito'
+                if @@(item,"#haber") < @@(item,"#debe") {
+                    do Log(" + Creando 'Nota_de_crédito' para "+proveedor)
+                    debe = (@@(item,"#debe") - @@(item,"#haber"))
+
+                    do CrearCxP(db,iproveedor,debe,0,5)
+                }
+            }
+        }
+
+        /**
+        * Elimina los documentos marcados
+        */
+        function EliminarDocumentos(&db)
+        {
+            do Log(" + Eliminando las aplicaciones relacionadas a los documentos")
+            do dbr.execute(db,ftext("
+                DELETE apl
+                FROM #<@table_aplcxp> apl
+                    JOIN #<@table_dcxp> cxp ON (apl.fk_dcxp_aplicadoa = cxp.sys_pk AND cxp.sys_info = '#<@id_to_delete>')
+                        OR (apl.aplicadoa = cxp.sys_pk AND cxp.sys_info = '#<@id_to_delete>')
+            "),@null)
+            
+            do Log(" + Eliminando documentos")
+            do dbr.execute(db,ftext("DELETE FROM #<@table_dcxp> WHERE sys_info = '#<@id_to_delete>'"),@null)
+        }
+
+        function RecalcularSaldosProveedores(&db)
+        {
+            do dbr.execute(db,ftext("
+                UPDATE #<@table_proveedor> p
+                    LEFT JOIN (select iproveedor, (ifnull(sum(ifnull(haber,0)),0)-ifnull(sum(ifnull(debe,0)),0)) as saldo from #<@table_dcxp> group by iproveedor) x ON p.sys_pk = x.iproveedor
+                SET p.saldo = x.saldo
+            "),@null)
+        }
+
+        function LimpiarCxP(&db,ff)
+        {
+            do Log("- Determinando documentos a eliminar")
+            do DeterminarDocumentosAEliminar(db,ff)
+            do UpdatePercent(25)
+            
+            do Log("- Consolidando documentos")
+            do ConsolidarDocumentos(db)
+            do UpdatePercent(50)
+            
+            do Log("- Eliminando documentos")
+            do EliminarDocumentos(db)
+            do UpdatePercent(75)
+            
+            do Log("- Recalculando saldos de proveedores")
+            do RecalcularSaldosProveedores(db)
+            do UpdatePercent(100)
+        }
+
+        function Truncate(&db,ff)
+        {
+            ff >> params
+
+            do Log("- Limpiando aplicaciones de cuentas por pagar")
+            do dbr.execute(db,ftext("DELETE FROM #<@table_aplcxp>"),@null)
+            do UpdatePercent(25)
+            
+            do Log("- Limpiando cuentas por pagar")
+            do dbr.execute(db,ftext("DELETE FROM #<@table_dcxp> WHERE fecha <= @ff"),params)
+            do UpdatePercent(50)
+            
+            do Log("- Actualizando importes de los documentos fuera de rango: pagos=0, bonificaciones=0, intmoratorios=0, intfinancieros=0")
+            do dbr.execute(db,ftext("UPDATE #<@table_dcxp> SET pagos=0, bonificaciones=0, intmoratorios=0, intfinancieros=0 WHERE TRUE"),@null)
+            do UpdatePercent(75)
+            
+            do Log("- Recalculando saldos de proveedores")
+            do RecalcularSaldosProveedores(db)
+            do UpdatePercent(100)
+        }
+    }
+    module "Ejecución"
+    {
+        //#region >EJECUCIÓN
+        if isset("@batch_context")
+        {
+            ref args = @("&params")
+            ref db = @("&database")
+            
+            ff = @@(args,"$ff")
+            truncate = parse.bool(@@(args,"$truncate"))
+
+            if ff == "" { do rise_error(511,"Debe indicar la fecha de corte.") }
+        }
+        else
+        {
+            ref args = commandline("=")
+            ref keys = list.create_from_fields(args)
+
+            str_keys = trim(ranychars(to.json(keys),"[]"," "))
+            qn = @@(args,"$bd")
+            ff = @@(args,"$ff")
+            truncate = isanyword('"truncate"',str_keys)
+
+            if qn == "" { qn = @@(args,"$db") }
+            if qn == "" { qn = @@(args,"$qn") }
+            if qn == "" { do rise_error(99,"Debe indicar una conexión a su base de datos.") }
+            if ff == "" { do rise_error(99,"Debe indicar la fecha de corte.") }
+
+            ref db = dbr.open(qn)
+        }
+
+        do Log("> Podar movimientos por pagar " + ifstr(truncate,"[Truncar datos]",""))
+        do dbr.begin(db)
+
+        if truncate { do Truncate(db,ff) }
+        else { do LimpiarCxP(db,ff) }
+
+        do dbr.commit(db)
+        do Log("**Operación completada.")
+
+        exception
+        {
+            code = last_error_code()
+            error = last_error()
+
+            if isset("db")
+            {
+                if dbr.in_transaction(db){ do dbr.rollback(db) }
+                if not(isset("@batch_context")) { do dbr.close(db) }
+            }
+            
+            if not(isset("@batch_context")) { do print_error(error) }
+            else { do rise_error(code,error) }
+        }
+    }
+}

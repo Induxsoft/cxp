@@ -1,0 +1,217 @@
+#include "dkli.dkh"
+#!
+program "Importar Cuentas por Pagar"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "dbr.dkh"
+    #include "dbr.apps.dkl"
+    #include "dbr.security.dkl"
+    #include "batch.v12.dkl"
+    #include "cxp/movimientos.dkh"
+
+    do @context.begin(@batch_context)
+    
+    module "Constantes"
+    {
+        //#region >CONSTANTES
+        do errordet(@false)
+        @qname = @("$qname")
+        @token = @("$job/token")
+        @sys_fields = "sys_pk,sys_guid,sys_dtcreated,sys_timestamp,sys_dtexported,sys_info,sys_user,sys_lastuser,sys_exported,sys_deleted,sys_lock,sys_recver"
+        // cdocumentos (documentos de cuentas por pagar)
+        @cRemision = 3
+        @cFactura = 4
+        @cNotaCredito = 5
+        @cTicket = 6
+        @cNotaCargo = 17
+        @cPagare = 18
+        @cRecibo = 19
+    }
+    module "Funciones"
+    {
+        //#region >FUNCIONES
+        ref lib_csv = _import_library("devkron.serialize.csv.dll")
+        do _map_function(lib_csv,"devkron.serialize.csv.csvHelper","CsvRead","csv.read","System.String,System.String","*")
+        do _map_function(lib_csv,"devkron.serialize.csv.csvHelper","CsvWrite","csv.write","System.String,*System.Object","void")
+
+        function between(value,min,max)
+        {
+            return value >= min && value <= max
+        }
+
+        function date_format(dtm,fmt)
+        {
+            if dtm == "" { return "" }
+            if fmt == "" { fmt = "yyyy-MM-dd HH:mm:ss" }
+
+            fecha = date_str(str2dt(dtm),fmt)
+            return fecha
+
+            exception
+            {
+                do pop_exception()
+                return ""
+            }
+        }
+
+        function updatePercent(value)
+        {
+            new params
+            {
+                @"token":@token
+            }
+            new data
+            {
+                @"percentage":value
+                @"progress_type":2
+            }
+            do dbr.update(batch.openDB(),"job",data,"sys_guid=@token",params)
+        }
+
+        function getProvider(&db,pdr)
+        {
+            pdr >> params
+            ref proveedor = dbr.rec(db,"
+                SELECT
+                    p.sys_pk,
+                    d.tcambio
+                FROM proveedor p
+                    INNER JOIN divisa d ON p.idivisa = d.sys_pk
+                WHERE (p.sys_guid = @pdr OR p.codigo = @pdr)
+            ",params)
+
+            return proveedor
+        }
+
+        function getDocumentCxP(&db,const)
+        {
+            const >> params
+            id = dbr.num(db,"SELECT d.id FROM cdocumentos d INNER JOIN cfg_cxp_docs c ON d.id = c.documento WHERE (d.id = @const OR d.const = @const) AND COALESCE(c.pagable,c.apl_int_fin,c.apl_int_mor,c.apl_bonific,c.apl_pago) IS NOT NULL",params)
+
+            exception
+            {
+                do pop_exception()
+                id = 0
+            }
+
+            return id
+        }
+
+        function import(&db,&data)
+        {
+            length = list.count(data)
+            progress = (100 / length)
+            percent = 0
+
+            if length < 1 {
+                do batch.saveLog(@token,"Nada para importar.")
+                do updatePercent(100)
+                return
+            }
+
+            for i = 0; i < length
+            {
+                ref item = record.caseinsensitive(list.obj(data,i))
+
+                pProveedor = trim(@@(item,"$proveedor"))
+                pReferencia = trim(@@(item,"$referencia"))
+                pFecha = trim(@@(item,"$fecha"))
+                pAplicacion = trim(@@(item,"$aplicacion"))
+                pDocumento = trim(@@(item,"$documento"))
+                pDebe = @@(item,"#debe")
+                pHaber = @@(item,"#haber")
+                pTCambio = @@(item,"#tipocambio")
+                pNotas = trim(@@(item,"$notas"))
+
+                message = ""
+                if pProveedor == "" { message = "No se establecio valor para 'proveedor'." }
+                else if pReferencia == "" { message = "No se establecio valor para 'referencia'." }
+                else if length(pReferencia) > 50 { message = "La longitud de 'referencia' es mayor al permitido (50)." }
+                else if pDocumento == "" { message = "No se establecio valor para 'documento'." }
+                else if (pDebe + pHaber) == 0 { message = "No se establecio un importe en 'debe' o 'haber'." }
+                if message != "" { do rise_error(511,message) }
+
+                ref proveedor = getProvider(db,pProveedor)
+                if isnull(proveedor) { do rise_error(512,"No se encontro información del 'proveedor' proporcionado.") }
+                iproveedor = @@(proveedor,"#sys_pk")
+                if pTCambio == 0 { pTCambio = @@(proveedor,"#tcambio") }
+                idocumento = getDocumentCxP(db,pDocumento)
+                if idocumento == 0 { do rise_error(513,"No se encontro el 'documento' proporcionado para las cuentas por cobrar.") }
+                // if idocumento == @cRecibo { do rise_error(514,"Importar '"+pDocumento+"' no implementado.") }
+
+                if pFecha == "" { pFecha = date_str(now(),"yyyy-MM-dd") }
+                if pAplicacion == "" {
+                    ndt_fecha = ndatetime.fromstr(pFecha,"yyyy-MM-dd")
+                    ndt_aplicacion = ndatetime.add(ndt_fecha,1,"m")
+                    pAplicacion = ndatetime.tostr(ndt_aplicacion,"yyyy-MM-dd")
+                }
+
+                new dcxp
+                {
+                    @"iproveedor": iproveedor
+                    @"documento": idocumento
+                    @"referencia": pReferencia
+                    @"fecha": pFecha
+                    @"aplicacion": pAplicacion
+                    @"fultmoratorios": pAplicacion
+                    @"debe": pDebe
+                    @"haber": pHaber
+                    @"xaplicar": if(idocumento==@cNotaCredito || idocumento==@cRecibo, pDebe, 0)
+                    @"tipocambio": pTCambio
+                    @"notas": pNotas
+                }
+                do erp.cxp.movimientos.saveCxP(db,dcxp)
+
+                exception
+                {
+                    code = last_error_code()
+                    error = last_error()
+                    
+                    if between(code,511,589) {
+                        do pop_exception()
+                        do batch.saveLog(@token,error +"\r\n"+ to.json(item))
+                    }
+                    else {
+                        do rise_error(code,error)
+                    }
+                }
+
+                percent = percent + progress
+                do updatePercent(percent)
+                // do batch.saveLog(@token,"En proceso ..."+str(percent)+"%")
+            }
+        }
+    }
+    module "Inicio"
+    {
+        //#region >INICIO
+        fsrc = @("$params/archivo")
+
+        if fsrc == "" { do rise_error(511,"El 'Archivo a importar' es requerido.") }
+        if not(file.exists(fsrc)) { do rise_error(512,"No se encontro el archivo a importar.") }
+        if file.extension(fsrc)!=".csv" { do rise_error(513,"Se esperaba un archivo de tipo `csv`.") }
+
+        do batch.v12.grant("GCF0") //GCF0 - Importar movimientos iniciales por pagar
+        ref db = @("&database")
+        ref data = csv.read(fsrc,"")
+        
+        do import(db,data)
+
+        if file.exists(fsrc) { do file.delete(fsrc) }
+
+        exception
+        {
+            code = last_error_code()
+            error = last_error()
+
+            if file.exists(fsrc) { do file.delete(fsrc) }
+            if isset("db") {
+                if dbr.in_transaction(db) { do dbr.rollback(db) }
+            }
+            do rise_error(code,error)
+        }
+    }
+    
+    do @context.end()
+}

@@ -1,0 +1,10 @@
+{
+    "archivo": {
+        "control":"file",
+        "required":"true",
+        "caption":"Importar desde (.csv)",
+        "wrp_attr": {
+            "class":"col-auto"
+        }
+    }
+}

@@ -1,0 +1,76 @@
+#include "dkli.dkh"
+#!
+program "Limpiar movimientos por cobrar"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "dbr.dkh"
+    #include "dbr.apps.dkl"
+    #include "dbr.security.dkl"
+    #include "batch.v12.dkl"
+
+    do @context.begin(@batch_context)
+
+    module "Contantes"
+    {
+        //#region >CONTANTES
+        do errordet(@false)
+
+        @qname = @("$qname")
+        @token = @("$job/token")
+    }
+    module "Funciones"
+    {
+        //#region >FUNCIONES
+        function UpdatePercent(value)
+        {
+            new params
+            {
+                @"token":@("$job/token")
+            }
+            new data
+            {
+                @"percentage":value
+                @"progress_type":2
+            }
+            do dbr.update(batch.openDB(),"job",data,"sys_guid=@token",params)
+        }
+    }
+    module "Ejecución"
+    {
+        //#region >EJECUCIÓN
+        do batch.v12.grant("GCF2") //GBF2 - Limpiar movimientos por cobrar
+        
+        ref db = @("&database")
+        do dbr.begin(db)
+
+        do batch.saveLog(@token,"Limpiando aplicaciones de movimientos por pagar...")
+        do dbr.execute(db,"DELETE FROM aplcxp",@null)
+        do UpdatePercent(33)
+
+        do batch.saveLog(@token,"Limpiando movimientos por pagar...")
+        do dbr.execute(db,"DELETE FROM dcxp",@null)
+        do UpdatePercent(66)
+
+        do batch.saveLog(@token,"Limpiando saldos de proveedores...")
+        do dbr.execute(db,"UPDATE proveedor SET saldo = 0",@null)
+        do UpdatePercent(99)
+
+        do dbr.commit(db)
+        do UpdatePercent(100)
+        do batch.saveLog(@token,"**Operación completada.")
+
+        exception
+        {
+            code = last_error_code()
+            error = last_error()
+
+            if isset("db") {
+                if dbr.in_transaction(db) { do dbr.rollback(db) }
+            }
+            do rise_error(code,error)
+        }
+    }
+
+    do @context.end()
+}

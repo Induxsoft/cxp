@@ -1,0 +1,18 @@
+#include "dkli.dkh"
+#!
+program "Podar movimientos por pagar"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "dbr.dkh"
+    #include "dbr.apps.dkl"
+    #include "dbr.security.dkl"
+    #include "batch.v12.dkl"
+
+    do @context.begin(@batch_context)
+
+    do batch.v12.grant("GCF1") //GBF1 - Podar movimientos por cobrar
+    #include "r5.podar.cxp.dkl"
+
+    do @context.end()
+}
