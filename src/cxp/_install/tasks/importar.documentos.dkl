@@ -101,14 +101,16 @@ program "Importar Cuentas por Pagar"
         function import(&db,&data)
         {
             length = list.count(data)
-            progress = (100 / length)
-            percent = 0
-
             if length < 1 {
                 do batch.saveLog(@token,"Nada para importar.")
                 do updatePercent(100)
                 return
             }
+
+            do batch.saveLog(@token,"> Importando movimientos...")
+            progress = (100 / length)
+            affected_rows = 0
+            percent = 0
 
             for i = 0; i < length
             {
@@ -162,6 +164,7 @@ program "Importar Cuentas por Pagar"
                     @"notas": pNotas
                 }
                 do erp.cxp.movimientos.saveCxP(db,dcxp)
+                affected_rows = affected_rows + 1
 
                 exception
                 {
@@ -181,6 +184,8 @@ program "Importar Cuentas por Pagar"
                 do updatePercent(percent)
                 // do batch.saveLog(@token,"En proceso ..."+str(percent)+"%")
             }
+
+            do batch.saveLog(@token,"** Movimientos importados ("+str(affected_rows)+"/"+str(length)+")")
         }
     }
     module "Inicio"

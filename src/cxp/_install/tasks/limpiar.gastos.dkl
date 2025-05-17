@@ -1,6 +1,6 @@
 #include "dkli.dkh"
 #!
-program "Limpiar movimientos por pagar"
+program "Limpiar gastos"
 {
     #include "functions.dkh"
     #include "serialize.dkh"
@@ -39,26 +39,17 @@ program "Limpiar movimientos por pagar"
     module "Ejecución"
     {
         //#region >EJECUCIÓN
-        do batch.v12.grant("GCF2") //GCF2 - Limpiar movimientos por pagar
+        do batch.v12.grant("GCF4") //GCF4 - Limpiar gastos
         
         ref db = @("&database")
         do dbr.begin(db)
 
-        do batch.saveLog(@token,"Limpiando aplicaciones de movimientos por pagar...")
-        do dbr.execute(db,"DELETE FROM aplcxp",@null)
-        do UpdatePercent(33)
-
-        do batch.saveLog(@token,"Limpiando movimientos por pagar...")
-        do dbr.execute(db,"DELETE FROM dcxp",@null)
-        do UpdatePercent(66)
-
-        do batch.saveLog(@token,"Limpiando saldos de proveedores...")
-        do dbr.execute(db,"UPDATE proveedor SET saldo = 0",@null)
-        do UpdatePercent(99)
+        do batch.saveLog(@token,"> Limpiando gastos...")
+        affected_rows = dbr.execute(db,"DELETE FROM ut_gasto",@null)
+        do batch.saveLog(@token,"** Gastos eliminados: "+str(affected_rows))
 
         do dbr.commit(db)
         do UpdatePercent(100)
-        do batch.saveLog(@token,"**Operación completada.")
 
         exception
         {
@@ -67,6 +58,9 @@ program "Limpiar movimientos por pagar"
 
             if isset("db") {
                 if dbr.in_transaction(db) { do dbr.rollback(db) }
+            }
+            if contains(error,"Cannot delete or update a parent row: a foreign key constraint fails") {
+                error = "No es posible limpiar, otros registros dependen de los gastos."
             }
             do rise_error(code,error)
         }

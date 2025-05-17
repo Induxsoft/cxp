@@ -27,6 +27,8 @@ GC34,Corregir gasto,cxp.gastos
 GC35,Eliminar gasto,cxp.gastos
 GC60,Ver mensajes de gasto,cxp.gastos
 GC61,Publicar mensajes de gasto,cxp.gastos
+GCF3,Podar gastos,cxp.gastos
+GCF4,Limpiar gastos,cxp.gastos
 cxp.proveedores,Proveedores y cuentas por pagar,cxp
 GC20,Proveedores y CxP,cxp.proveedores
 GC21,Nuevo proveedor,cxp.proveedores

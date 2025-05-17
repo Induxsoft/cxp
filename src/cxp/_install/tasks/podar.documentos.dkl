@@ -11,7 +11,7 @@ program "Podar movimientos por pagar"
 
     do @context.begin(@batch_context)
 
-    do batch.v12.grant("GCF1") //GBF1 - Podar movimientos por cobrar
+    do batch.v12.grant("GCF1") //GCF1 - Podar movimientos por pagar
     #include "r5.podar.cxp.dkl"
 
     do @context.end()

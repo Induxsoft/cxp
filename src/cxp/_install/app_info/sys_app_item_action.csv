@@ -25,3 +25,6 @@ GC50,Ver calendario de pagos autorizados,Calendario de pagos,,/!/cxp/documentos/
 GCF0,Importar movimientos iniciales por pagar,"Importar",,/!/batch/taskman/GC/importar.documentos/,0,cxp.documentos,DET01E,0,action
 GCF1,Podar movimientos por pagar,"Podar",,/!/batch/taskman/GC/podar.documentos/,0,cxp.documentos,DET01E,0,action
 GCF2,Limpiar movimientos por pagar,"Limpiar",,/!/batch/taskman/GC/limpiar.documentos/,0,cxp.documentos,DET01E,0,action
+
+GCF3,Podar gastos,"Podar",,/!/batch/taskman/GC/podar.gastos/,0,cxp.gastos,DET024,0,action
+GCF4,Limpiar gastos,"Limpiar",,/!/batch/taskman/GC/limpiar.gastos/,0,cxp.documentos,DET024,0,action

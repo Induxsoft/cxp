@@ -116,7 +116,7 @@ module "form.dk"
             #$
         }
 
-        section(id="work_area" style="overflow-y:auto; overflow-x:hidden;")
+        section(id="work_area" class="px-1" style="overflow-y:auto; overflow-x:hidden;")
         {
             form(action="." method="POST" enctype="multipart/form-data" id="#<form_id>")
             {

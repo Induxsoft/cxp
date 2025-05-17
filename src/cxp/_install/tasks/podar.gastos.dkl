@@ -1,0 +1,125 @@
+#include "dkli.dkh"
+#!
+program "Podar gastos"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "dbr.dkh"
+    #include "dbr.apps.dkl"
+    #include "dbr.security.dkl"
+    #include "batch.v12.dkl"
+
+    do @context.begin(@batch_context)
+
+    module "Contantes"
+    {
+        //#region >CONTANTES
+        do errordet(@false)
+
+        @qname = @("$qname")
+        @token = @("$job/token")
+    }
+    module "Funciones"
+    {
+        //#region >FUNCIONES
+        function contains_all_words(sentence,keywords)
+        {
+            ref list = split(trim(keywords),",")
+            success = @false
+            for i = 0; i < list.count(list)
+            {
+                word = trim(list.str(list,i))
+                if word != "" {
+                    if not(contains(sentence,word)) { return @false }
+                    success = @true
+                }
+            }
+            return success
+        }
+
+        function UpdatePercent(value)
+        {
+            new params
+            {
+                @"token":@("$job/token")
+            }
+            new data
+            {
+                @"percentage":value
+                @"progress_type":2
+            }
+            do dbr.update(batch.openDB(),"job",data,"sys_guid=@token",params)
+        }
+
+        function podar(&db,&params)
+        {
+            ref gastos = dbr.list(db,"SELECT sys_pk, referencia FROM ut_gasto WHERE fecha <= @ff",params)
+
+            length = list.count(gastos)
+            if length < 1 {
+                do batch.saveLog(@token,"Nada para hacer.")
+                do updatePercent(100)
+                return
+            }
+
+            do batch.saveLog(@token,"> Limpiando gastos...")
+            affected_rows = 0
+            progress = (100 / length)
+            percent = 0
+
+            for i = 0; i < length
+            {
+                ref gasto = list.obj(gastos,i)
+                referencia = @@(gasto,"$referencia")
+
+                do dbr.delete(db,"ut_gasto","sys_pk=@sys_pk",gasto)
+                affected_rows = affected_rows + 1
+
+                exception
+                {
+                    code = last_error_code()
+                    error = last_error()
+
+                    if contains_all_words(error,"DELETE Error,CONSTRAINT,FOREIGN KEY,REFERENCES") {
+                        error = "No es posible eliminar, otros registros dependen de '"+referencia+"'"
+                    }
+                    else {
+                        error = "No fue posible eliminar '"+referencia+"': "+ error
+                    }
+                    
+                    do pop_exception()
+                    do batch.saveLog(@token,error)
+                }
+
+                percent = percent + progress
+                do updatePercent(percent)
+                // do batch.saveLog(@token,"En proceso ..."+str(percent)+"%")
+            }
+
+            do batch.saveLog(@token,"** Gastos eliminados ("+str(affected_rows)+"/"+str(length)+")")
+        }
+    }
+    module "Ejecución"
+    {
+        //#region >EJECUCIÓN
+        do batch.v12.grant("GCF3") //GCF3 - Podar gastos
+        
+        ref params = @("&params")
+        ref db = @("&database")
+
+        do podar(db,params)
+
+        exception
+        {
+            code = last_error_code()
+            error = last_error()
+
+            if isset("db") {
+                if dbr.in_transaction(db) { do dbr.rollback(db) }
+            }
+            do rise_error(code,error)
+        }
+    }
+
+    do @context.end()
+}
