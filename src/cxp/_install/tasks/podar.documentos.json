@@ -11,7 +11,16 @@
         "control":"bool",
         "caption":"Truncar datos",
         "wrp_attr": {
-            "class":"col-auto form-check align-self-center"
+            "class":"col-auto form-check align-self-end"
+        }
+    },
+    "confirm": {
+        "control":"bool",
+        "name":"confirm_GCF1",
+        "required":"true",
+        "caption":"Confirmo y entiendo que al ejecutar esta tarea los datos no se podrán recuperar.",
+        "wrp_attr": {
+            "class":"col-auto form-check align-self-end"
         }
     }
 }

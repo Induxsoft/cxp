@@ -40,20 +40,38 @@ program "Limpiar movimientos por pagar"
     {
         //#region >EJECUCIÓN
         do batch.v12.grant("GCF2") //GCF2 - Limpiar movimientos por pagar
-        
+
+        ref params = @("&params")
         ref db = @("&database")
+
+        iproveedor = @@(params,"#iproveedor")
+        confirmed = parse.bool(@@(params,"$confirm_GCF2"))
+        
+        if not(confirmed) { do rise_error(511,"No se confirmo la acción.") }
+        params<"iproveedor"> : iproveedor
+        
         do dbr.begin(db)
 
+        if iproveedor > 0 {
+            proveedor = dbr.str(db,"select concat(codigo,' - ',nombre) from proveedor where sys_pk = @iproveedor",params)
+            do batch.saveLog(@token,"> "+proveedor)
+        }
+
         do batch.saveLog(@token,"Limpiando aplicaciones de movimientos por pagar...")
-        do dbr.execute(db,"DELETE FROM aplcxp",@null)
+        do dbr.execute(db,"
+            DELETE apl
+            FROM aplcxp apl
+                JOIN dcxp cxp ON (apl.fk_dcxp_aplicadoa = cxp.sys_pk OR apl.aplicadoa = cxp.sys_pk)
+            WHERE IF(@iproveedor < 1, TRUE, cxp.iproveedor = @iproveedor)
+        ",params)
         do UpdatePercent(33)
 
         do batch.saveLog(@token,"Limpiando movimientos por pagar...")
-        do dbr.execute(db,"DELETE FROM dcxp",@null)
+        do dbr.execute(db,"DELETE FROM dcxp WHERE IF(@iproveedor < 1, TRUE, iproveedor = @iproveedor)",params)
         do UpdatePercent(66)
 
         do batch.saveLog(@token,"Limpiando saldos de proveedores...")
-        do dbr.execute(db,"UPDATE proveedor SET saldo = 0",@null)
+        do dbr.execute(db,"UPDATE proveedor SET saldo = 0 WHERE IF(@iproveedor < 1, TRUE, sys_pk = @iproveedor)",params)
         do UpdatePercent(99)
 
         do dbr.commit(db)

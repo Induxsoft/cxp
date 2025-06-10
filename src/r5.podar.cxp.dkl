@@ -246,8 +246,10 @@ program "Podar movimientos por pagar"
             
             ff = @@(args,"$ff")
             truncate = parse.bool(@@(args,"$truncate"))
+            confirmed = parse.bool(@@(args,"$confirm_GCF1"))
 
-            if ff == "" { do rise_error(511,"Debe indicar la fecha de corte.") }
+            if not(confirmed) { do rise_error(511,"No se confirmo la acción.") }
+            if ff == "" { do rise_error(512,"Debe indicar la fecha de corte.") }
         }
         else
         {
