@@ -212,7 +212,7 @@ module ":erp.cxp.movimientos"
         {
             cxp<"debe"> : importe
             cxp<"haber"> : 0
-            cxp<"xaplicar"> : importe
+            //cxp<"xaplicar"> : importe
         }
         else if afecta_haber
         {
