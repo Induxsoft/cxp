@@ -42,10 +42,23 @@ program "Limpiar gastos"
         do batch.v12.grant("GCF4") //GCF4 - Limpiar gastos
         
         ref db = @("&database")
+        ref params = @("&params")
+
+        iproveedor = @@(params,"#iproveedor")
+        confirmed = parse.bool(@@(params,"$confirm_GCF4"))
+        
+        if not(confirmed) { do rise_error(511,"No se confirmo la acción.") }
+        params<"iproveedor"> : iproveedor
+
         do dbr.begin(db)
 
-        do batch.saveLog(@token,"> Limpiando gastos...")
-        affected_rows = dbr.execute(db,"DELETE FROM ut_gasto",@null)
+        if iproveedor > 0 {
+            proveedor = dbr.str(db,"select concat(codigo,' - ',nombre) from proveedor where sys_pk = @iproveedor",params)
+            do batch.saveLog(@token,"> "+proveedor)
+        }
+
+        do batch.saveLog(@token,"Limpiando gastos...")
+        affected_rows = dbr.execute(db,"DELETE FROM ut_gasto WHERE IF(@iproveedor > 0, iproveedor = @iproveedor, TRUE)",params)
         do batch.saveLog(@token,"** Gastos eliminados: "+str(affected_rows))
 
         do dbr.commit(db)

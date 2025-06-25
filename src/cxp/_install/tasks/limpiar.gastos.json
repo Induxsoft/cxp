@@ -1,0 +1,24 @@
+{
+    "iproveedor": {
+        "control":"input-key",
+        "caption":"Filtrar por proveedor",
+        "source": {
+            "type":"service",
+            "source":"/!/cxp/proveedores/?_view=buscar-proveedor&search=@search",
+            "keyfield":"sys_pk",
+            "searchfield":"codigo",
+            "showfield":"nombre",
+            "columns":"codigo,nombre",
+            "ccaptions":"Código,Nombre"
+        }
+    },
+    "confirm": {
+        "control":"bool",
+        "name":"confirm_GCF4",
+        "required":"true",
+        "caption":"Confirmo y entiendo que al ejecutar esta tarea los datos no se podrán recuperar.",
+        "wrp_attr": {
+            "class":"form-check ms-3"
+        }
+    }
+}
