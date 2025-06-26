@@ -435,15 +435,8 @@ module "model"
         data<"saldos*"> : saldos
     }
 
-    cxp.obtenerBalance::&db,&params
+    cxp.getConditionFilter::&params
     {
-        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_ESTADO_CUENTA_PROVD)) { do rise_error(0,"No autorizado")}
-        do dbr.apps.action.grant("GC23")
-
-        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
-        params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
-        params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
-
         // fdr_init
         if not(field.exist(params,"fdr_mode")) { params<"fdr_mode"> : "month" }
         // [month]
@@ -466,7 +459,7 @@ module "model"
         }
         fdr_field = @@(vnt_date_fields,str(@@(params,"#fil_fdr_field")))
         if trim(fdr_field)==""{fdr_field=@@(vnt_date_fields,"1")}
-
+        
         switch @@(params,"$fdr_mode")
         {
             case "month"
@@ -517,10 +510,27 @@ module "model"
                 break
             }
         }
-        //#endregion
+
+        if @@(params,"$s") != "" {
+            conditions = conditions + " AND cxp.referencia LIKE CONCAT('%',@s,'%')"
+        }
+
         conditions=ftext(conditions)
         params<"fdr_field">:fdr_field
         params<"conditions">:conditions
+
+        return conditions
+    }
+
+    cxp.obtenerBalance::&db,&params
+    {
+        do dbr.apps.action.grant("GC23")
+
+        if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
+        params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
+        params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
+
+        conditions = cxp.getConditionFilter(params)
 
         sql = "
         SELECT
@@ -535,7 +545,7 @@ module "model"
             INNER JOIN cdocumentos AS doc ON doc.id = cxp.documento
         WHERE cxp.iproveedor = @_entity_id 
             #<conditions>
-            ;
+        ORDER BY cxp.fecha DESC
         "
         // AND DATE(cxp.aplicacion) BETWEEN @fd AND LAST_DAY(@fd)
         //     AND IF(IFNULL(@s,'')='', true, cxp.referencia LIKE CONCAT('%',@s,'%'))
@@ -543,6 +553,7 @@ module "model"
         //     AND IF(IFNULL(@month,'')='', true, (YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=IFNULL(@year,YEAR(NOW())) AND MONTH(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@month))
         //     AND IF(IFNULL(@range,'-99')='-99', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
         //     AND IF(IFNULL(@datefrom,'')='', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE(@datefrom) AND DATE(@dateto)))
+        
         ref data = cxp.obtenerProveedor(db,@@(params,"_entity_id"))
         do cxp.obtenerSaldos(db,params,data)
         data<"docs*"> : dbr.list(db,ftext(sql),params)
@@ -561,12 +572,13 @@ module "model"
 
     cxp.obtenerDocsPendientesDePago::&db,&params
     {
-        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_DOCS_POR_PAGAR_PROVD)) { do rise_error(0,"No autorizado")}
         do dbr.apps.action.grant("GC24")
 
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
         params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
         params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
+
+        conditions = cxp.getConditionFilter(params)
 
         sql = "
         SELECT
@@ -584,13 +596,14 @@ module "model"
             INNER JOIN cdocumentos AS doc ON doc.id = cxp.documento
         WHERE cxp.iproveedor = @_entity_id
             AND (IFNULL(cxp.haber,0) + IFNULL(cxp.intmoratorios,0) - IFNULL(cxp.pagos,0) - IFNULL(cxp.bonificaciones,0)) > 0
-            AND IF(IFNULL(@s,'')='', true, cxp.referencia LIKE CONCAT('%',@s,'%'))
-            AND IF(IFNULL(@year,'')='', true, YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@year)
-            AND IF(IFNULL(@month,'')='', true, (YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=IFNULL(@year,YEAR(NOW())) AND MONTH(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@month))
-            AND IF(IFNULL(@range,'-99')='-99', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
-            AND IF(IFNULL(@datefrom,'')='', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE(@datefrom) AND DATE(@dateto)))
-            ;
+            #<conditions>
+        ORDER BY cxp.fecha DESC
         "
+        // AND IF(IFNULL(@s,'')='', true, cxp.referencia LIKE CONCAT('%',@s,'%'))
+        // AND IF(IFNULL(@year,'')='', true, YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@year)
+        // AND IF(IFNULL(@month,'')='', true, (YEAR(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=IFNULL(@year,YEAR(NOW())) AND MONTH(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion))=@month))
+        // AND IF(IFNULL(@range,'-99')='-99', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
+        // AND IF(IFNULL(@datefrom,'')='', true, (DATE(IF(IFNULL(@tdate,'0')='0',cxp.fecha,cxp.aplicacion)) BETWEEN DATE(@datefrom) AND DATE(@dateto)))
 
         ref data = cxp.obtenerProveedor(db,@@(params,"_entity_id"))
         do cxp.obtenerSaldos(db,params,data)
@@ -611,7 +624,12 @@ module "model"
     cxp.obtenerPagosPorAplicar::&db,&params
     {
         do dbr.apps.action.grant("GC25")
+        
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
+        params<"year">: ifstr(trim(@@(params,"year"))!="", @@(params,"year"), str(ndatetime.year(ndatetime.now())))
+        params<"month">: ifstr(trim(@@(params,"month"))!="", @@(params,"month"), str(ndatetime.month(ndatetime.now())))
+
+        conditions = cxp.getConditionFilter(params)
 
         sql = "
         SELECT
@@ -627,12 +645,14 @@ module "model"
             INNER JOIN cdocumentos AS doc ON doc.id = cxp.documento
         WHERE cxp.iproveedor = @_entity_id
             AND IFNULL(cxp.xaplicar,0) > 0
-            AND IF(IFNULL(@s,'')='', true, cxp.referencia LIKE CONCAT('%',@s,'%'))
-            AND IF(IFNULL(@year,'')='', true, YEAR(cxp.fecha)=@year)
-            AND IF(IFNULL(@month,'')='', true, (YEAR(cxp.fecha)=IFNULL(@year,YEAR(NOW())) AND MONTH(cxp.fecha)=@month))
-            AND IF(IFNULL(@range,'-99')='-99', true, (DATE(cxp.fecha) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
-            AND IF(IFNULL(@datefrom,'')='', true, (DATE(cxp.fecha) BETWEEN DATE(@datefrom) AND DATE(@dateto)));
+            #<conditions>
+        ORDER BY cxp.fecha DESC
         "
+        // AND IF(IFNULL(@s,'')='', true, cxp.referencia LIKE CONCAT('%',@s,'%'))
+        // AND IF(IFNULL(@year,'')='', true, YEAR(cxp.fecha)=@year)
+        // AND IF(IFNULL(@month,'')='', true, (YEAR(cxp.fecha)=IFNULL(@year,YEAR(NOW())) AND MONTH(cxp.fecha)=@month))
+        // AND IF(IFNULL(@range,'-99')='-99', true, (DATE(cxp.fecha) BETWEEN DATE_ADD(NOW(), INTERVAL -"+str(@@(params,"#range"))+" DAY) AND NOW()))
+        // AND IF(IFNULL(@datefrom,'')='', true, (DATE(cxp.fecha) BETWEEN DATE(@datefrom) AND DATE(@dateto)));
 
         ref data = cxp.obtenerProveedor(db,@@(params,"_entity_id"))
         do cxp.obtenerSaldos(db,params,data)
