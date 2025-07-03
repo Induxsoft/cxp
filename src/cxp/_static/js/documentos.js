@@ -60,6 +60,23 @@ var documento =
 
         InduxsoftCrudlModel.InvokeService(url,null,onSuccess,onFailure,"PATCH",false,false);
     },
+    Delete()
+    {
+        if(!confirm("¿Esta seguro de eliminar el documento?"))return;
+        
+        let onSuccess=(data)=>
+        {
+            window.location.href="..";
+        }
+        let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
+        let url=".";
+
+        var data=
+        {
+            delete:true
+        }
+        InduxsoftCrudlModel.InvokeService(url,data,onSuccess,onFailure,"DELETE",false,false);
+    },
     AutorizarPago()
     {
         var detail=

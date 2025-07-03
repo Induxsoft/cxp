@@ -139,39 +139,68 @@ module "cxp.balance.dk"
                 }
             }
 
-            div(class="d-flex justify-content-between")
+            
+            div(class="row")
             {
-                h6(class=""){$"#<@('$./nombre')>"}
-                h6(class=""){$"#<@('$./divisa')>"}
-            }
-
-            table(class="table table-bordered")
-            {
-                thead
+                div(class="col-md-8")
                 {
-                    tr
+                    table(class="table table-sm table-bordered")
                     {
-                        th(class="text-center"){$"Saldo inicial"}
-                        th(class="text-center"){$"Debe"}
-                        th(class="text-center"){$"Haber"}
-                        th(class="text-center"){$"Saldo al final"}
-                        th(class="text-center"){$"Saldo docs"}
-                        th(class="text-center"){$"Por aplicar"}
+                        thead
+                        {
+                            tr
+                            {
+                                th(colspan="4"){$"#<@('$./nombre')>"}
+                            }
+                            tr
+                            {
+                                th(class="text-center"){$"Saldo inicial"}
+                                th(class="text-center"){$"Debe"}
+                                th(class="text-center"){$"Haber"}
+                                th(class="text-center"){$"Saldo al final"}
+                            }
+                        }
+                        tbody
+                        {
+                            tr
+                            {
+                                td(class="text-end"){$"$ #<number_format(@('#./saldos/saldo_inicial'))>"}
+                                td(class="text-end"){$"$ #<number_format(@('#./saldos/debe'))>"}
+                                td(class="text-end"){$"$ #<number_format(@('#./saldos/haber'))>"}
+                                td(class="text-end"){$"$ #<number_format(@('#./saldos/saldo_alfinal'))>"}
+                            }
+                        }
                     }
                 }
-                tbody
+                div(class="col-md-4")
                 {
-                    tr
+                    table(class="table table-sm table-bordered")
                     {
-                        td(class="text-end"){$"$ #<number_format(@('#./saldos/saldo_inicial'))>"}
-                        td(class="text-end"){$"$ #<number_format(@('#./saldos/debe'))>"}
-                        td(class="text-end"){$"$ #<number_format(@('#./saldos/haber'))>"}
-                        td(class="text-end"){$"$ #<number_format(@('#./saldos/saldo_alfinal'))>"}
-                        td(class="text-end"){$"$ #<number_format(@('#./saldos/saldo_docs'))>"}
-                        td(class="text-end"){$"$ #<number_format(@('#./saldos/por_aplicar'))>"}
+                        thead
+                        {
+                            tr
+                            {
+                                th(class="text-center"){"Saldo global"}
+                                th(class="text-end"){"$ #<number_format(@('#./saldos/saldo_total'))> #<@('$./divisa')>"}
+                            }
+                            tr
+                            {
+                                th(class="text-center"){$"Saldo docs"}
+                                th(class="text-center"){$"Por aplicar"}
+                            }
+                        }
+                        tbody
+                        {
+                            tr
+                            {
+                                td(class="text-end"){$"$ #<number_format(@('#./saldos/saldo_docs'))>"}
+                                td(class="text-end"){$"$ #<number_format(@('#./saldos/por_aplicar'))>"}
+                            }
+                        }
                     }
                 }
             }
+            
         }
         
         section(class="container-fluid" id="work_area")

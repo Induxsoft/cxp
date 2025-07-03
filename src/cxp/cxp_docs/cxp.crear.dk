@@ -52,9 +52,14 @@ module "cxp.crear.dk"
         {
             #$
             a(class="#<act_btn_cls>" href="#<replace(@DOC_PAGOS,'@doc',@('$./info_dcxp/sys_pk'))>"){$"Pagar"}
+            #!
+        }
+        if not(@is_new)
+        {
+            #$
+            button(class="#<act_btn_cls>" type="button" id="btn_delete" onclick="documento.Delete();"){$"#<@ICON_TRASH> Eliminar"}
         }
         #$
-        
         button(class="#<act_btn_cls> #<ifstr(@is_new,'','disable-ctrl')>" type="button" id="btn_save"){$"#<@ICON_SAVE> Guardar"}
         #!
     }

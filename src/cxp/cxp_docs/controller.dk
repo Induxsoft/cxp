@@ -55,7 +55,6 @@ module "controller"
                 point @read to cxp.read
                 point @blank to cxp.blank
                 
-
                 if @@(input_data,"$auth")!=""
                 {
                     point @create to cxp.autorizar
