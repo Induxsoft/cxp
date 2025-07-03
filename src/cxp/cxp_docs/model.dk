@@ -862,6 +862,8 @@ module "model"
         if @@(documento,"#uf_igasto") > 0 {do rise_error(500,"No se puede eliminar el documento, El documento esta relacionado a un gasto")}
 
         ref entity= entity.delete(db,params)
+        r= dbr.execute(db,"update proveedor set saldo=ifnull(saldo,0) - ifnull(@haber,0) where sys_pk=@iproveedor",documento)
+        if r < 1{do rise_error(500,"No se logró afectar el saldo del proveedor, revise sus datos")}
 
         do dbr.apps.action.pos(entity)
         do dbr.commit(db)

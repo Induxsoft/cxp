@@ -1,7 +1,7 @@
 var documento =
 {
     tableId: "", table: null,
-
+    url_exit:"",
     init()
     {
         if (this.tableId.trim() != "") { this.table = document.getElementById(this.tableId); }
@@ -66,7 +66,8 @@ var documento =
         
         let onSuccess=(data)=>
         {
-            window.location.href="..";
+            if(documento.url_exit.trim()!="")window.location.href=documento.url_exit.trim();
+            else window.location.href="..";
         }
         let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
         let url=".";

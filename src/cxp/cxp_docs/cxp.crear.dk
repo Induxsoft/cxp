@@ -287,6 +287,7 @@ module "cxp.crear.dk"
             {$'
                 document.addEventListener("DOMContentLoaded", () => {
                     documento.crear.init();
+                    documento.url_exit="#<replace(@PDR_XPAGAR,"@proveedor",@@(infoProv,"$sys_pk"))>";
                     InduxsoftNumberFields.Init();
                     _bitacora._url="#<replace(@URL_BITACORA,"@det",@_DET_DOC_PAGAR)>";
                     _bitacora.EnableLog("#<@@(info_dcxp,"$sys_guid")>");
