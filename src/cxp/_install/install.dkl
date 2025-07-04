@@ -70,7 +70,82 @@ program "instalador"
             }
         }
     }
+    //macros que reconocen cada consulta @text, @startdate,@enddata,@selectfilter
+    new query_filter
+    {
+        // @"qry_filter":"sentencia sql"
+        @"list_filter*":from.json('[
+                        {"key":"1","value":"Por afectar"},
+                        {"key":"2","value":"Afectado"},
+                        {"key":"99","value":"Descartado"}
+                        ]')
 
+        member @"queries" //consulta por cada estado o todo con qry_all
+        {
+            //estas qry son para llenar la tabla, segun los estados
+            // @"qyr_all":"sql" aplica para todos los estados
+            //key qry_cdogio del estado como qry_1 por afectar
+            @"qry_2":"SELECT
+            ut.sys_pk,
+            cat.descripcion AS categoria,
+            ut.referencia,
+            DATE_FORMAT(ut.fecha,'%Y-%m-%d') AS fecha,
+            DATE_FORMAT(ut.sys_timestamp,'%Y-%m-%d %H:%i:%s') AS fecha_afectado,
+            DATE_FORMAT(ut.vencimiento,'%Y-%m-%d') AS vencimiento,
+            pdr.nombre AS proveedor,
+            ut.concepto,
+            ut.subtotal,
+            IFNULL(ut.total,0) AS total,
+            dvs.codigo AS divisa,
+            ut.tipocambio AS tcambio,
+            edo.const AS edo_admin,
+            fpg.const AS formapago
+        FROM ut_gasto AS ut
+            INNER JOIN proveedor AS pdr ON pdr.sys_pk = ut.iproveedor
+            INNER JOIN categoria AS cat ON cat.sys_pk = ut.icategoria
+            INNER JOIN divisa AS dvs ON dvs.sys_pk = ut.idivisa
+            INNER JOIN cformaspago AS fpg ON fpg.id = ut.formapago
+            INNER JOIN cstatusadministrativos AS edo ON edo.id = ut.statusadministrativo
+        WHERE ifnull(ut.presupuestado,-1)=1
+        AND if(ifnull(@text,'')='',true, concat_ws(cat.descripcion,ut.referencia,pdr.nombre,ut.concepto,dvs.codigo,edo.const,fpg.const) like concat('%',@text,'%') )
+        AND if(ifnull(@startdate,'')='', true,DATE(ut.fecha) BETWEEN date(@startdate) AND if(ifnull(@enddate,'')='',now(),date(@enddate) ))
+        ORDER BY ut.sys_pk DESC
+        LIMIT 250" //afectado
+
+        @"qry_99":"SELECT
+            ut.sys_pk,
+            cat.descripcion AS categoria,
+            ut.referencia,
+            DATE_FORMAT(ut.fecha,'%Y-%m-%d') AS fecha,
+            DATE_FORMAT(ut.sys_timestamp,'%Y-%m-%d %H:%i:%s') AS fecha_descartado,
+            DATE_FORMAT(ut.vencimiento,'%Y-%m-%d') AS vencimiento,
+            pdr.nombre AS proveedor,
+            ut.concepto,
+            ut.subtotal,
+            IFNULL(ut.total,0) AS total,
+            dvs.codigo AS divisa,
+            ut.tipocambio AS tcambio,
+            edo.const AS edo_admin,
+            fpg.const AS formapago
+        FROM ut_gasto AS ut
+            INNER JOIN proveedor AS pdr ON pdr.sys_pk = ut.iproveedor
+            INNER JOIN categoria AS cat ON cat.sys_pk = ut.icategoria
+            INNER JOIN divisa AS dvs ON dvs.sys_pk = ut.idivisa
+            INNER JOIN cformaspago AS fpg ON fpg.id = ut.formapago
+            INNER JOIN cstatusadministrativos AS edo ON edo.id = ut.statusadministrativo
+        WHERE ifnull(ut.presupuestado,-1)=0
+        AND if(ifnull(@text,'')='',true, concat_ws(cat.descripcion,ut.referencia,pdr.nombre,ut.concepto,dvs.codigo,edo.const,fpg.const) like concat('%',@text,'%') )
+        AND if(ifnull(@startdate,'')='', true,DATE(ut.fecha) BETWEEN date(@startdate) AND if(ifnull(@enddate,'')='',now(),date(@enddate) ))
+        ORDER BY ut.sys_pk DESC
+        LIMIT 250" //descartado
+        }
+        //colocar las llaves solo para las macros
+        member @"qry_links"
+        {
+            member @"referencia"{@"link":"/!/cxp/gastos/{sys_pk}/"} //las macros seran replazados al momento de formar el detalle de la tabla
+        }
+        
+    }
     new src_gasto
     {
         @"dte":"DET024"
@@ -97,6 +172,8 @@ program "instalador"
             INNER JOIN cformaspago AS fpg ON fpg.id = ut.formapago
             INNER JOIN cstatusadministrativos AS edo ON edo.id = ut.statusadministrativo
         WHERE ISNULL(ut.presupuestado)
+        AND if(ifnull(@text,'')='',true, concat_ws(cat.descripcion,ut.referencia,pdr.nombre,ut.concepto,dvs.codigo,edo.const,fpg.const) like concat('%',@text,'%') )
+        AND if(ifnull(@startdate,'')='', true,DATE(ut.fecha) BETWEEN date(@startdate) AND if(ifnull(@enddate,'')='',now(),date(@enddate) ))
         ORDER BY ut.sys_pk DESC
         LIMIT 250
         "
@@ -134,6 +211,7 @@ program "instalador"
         @"key_show":"referencia"
         @"show_text":"proveedor"
         @"info_text":"concepto"
+        @"data_filters":to.json(query_filter)
     }
     using src_gasto
     {
