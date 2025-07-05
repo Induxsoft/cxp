@@ -33,7 +33,24 @@ module "controller"
         }
         case "calendar_pagos"
         {
-            point @update to cxp.desautorizarPago
+            switch @@(params,"$_action")
+            {
+                case "desautorizar-pago"
+                {
+                    point @update to cxp.desautorizarPago
+                    break
+                }
+                case "rechazar-pago"
+                {
+                    point @update to cxp.rechazarPago
+                    break
+                }
+                case "desrechazar-pago"
+                {
+                    point @update to cxp.desrechazarPago
+                    break
+                }
+            }
 
             if parse.bool(@@(input_data,"$change_data"))
             {

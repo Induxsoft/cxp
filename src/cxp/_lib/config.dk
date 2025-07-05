@@ -103,10 +103,11 @@ module
 	@_DET_DOC_PAGAR="DET01E"
 	
 	@STATUS_DOC_PAGOS='[
-	{"id":"1","const":"Por autorizar"},
-	{"id":"2","const":"Autorizados"},
-	{"id":"3","const":"Pagados"},
-	{"id":"4","const":"Por pagar"}
+		{"id":"1","const":"Por autorizar"},
+		{"id":"2","const":"Autorizados"},
+		{"id":"3","const":"Pagados"},
+		{"id":"4","const":"Por pagar"},
+		{"id":"5","const":"Rechazado"}
 	]'
 
 	//#region ut_gasto

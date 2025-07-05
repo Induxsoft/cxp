@@ -439,6 +439,7 @@ model "erp.cxp"
         @"u_autorizo" string(45) // Id del usuario que autorizó el pago
         @"u_autorizo2" string(45) // Id del usuario que hizo la segunda autorización
         @"autorizado" bool // Flag de autorizado o no
+        @"rechazado" bool
     }
     /* Gasto, un pago realizado a un proveedor sin pasar por CxP */
     entity "ut_gasto" : "TableModel"

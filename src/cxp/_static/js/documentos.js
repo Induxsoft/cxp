@@ -56,7 +56,34 @@ var documento =
             documento.SetTemplate(1);
         }
         let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
-        let url=documento.url_calendar_pagos.replace("@doc",sys_pk);
+        let url = documento.url_calendar_pagos.replace("@doc",sys_pk);
+        url += "?_action=desautorizar-pago"
+
+        InduxsoftCrudlModel.InvokeService(url,null,onSuccess,onFailure,"PATCH",false,false);
+    },
+    RechazarPago(sys_pk)
+    {
+        let onSuccess=(data)=>
+        {
+            let index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
+            this.table.DeleteRow(index);
+        }
+        let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
+        let url = documento.url_calendar_pagos.replace("@doc",sys_pk);
+        url += "?_action=rechazar-pago"
+
+        InduxsoftCrudlModel.InvokeService(url,null,onSuccess,onFailure,"PATCH",false,false);
+    },
+    DesrechazarPago(sys_pk)
+    {
+        let onSuccess=(data)=>
+        {
+            let index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
+            this.table.DeleteRow(index);
+        }
+        let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
+        let url = documento.url_calendar_pagos.replace("@doc",sys_pk);
+        url += "?_action=desrechazar-pago"
 
         InduxsoftCrudlModel.InvokeService(url,null,onSuccess,onFailure,"PATCH",false,false);
     },

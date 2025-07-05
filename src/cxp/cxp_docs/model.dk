@@ -1046,21 +1046,24 @@ module "model"
         {
             case 1 //por autorizar
             {
-                if status== 2 || status== 99{return @true}//pre-autorizado y pendiente
+                if (status == 2 || status == 99) && status != 5 { return @true }
             }
             case 2 //Autorizados
             {
-                if status== 1{return @true} //autorizado
+                if status == 1 { return @true }
             }
             case 3 //pagados
             {
-                if status== 3{return @true} //pagados
+                if status == 3 { return @true }
             }
             case 4 //Por pagar
             {
-                if status== 2 || status== 99 || status== 1{return @true}
+                if (status == 2 || status == 99 || status == 1) && status != 5 { return @true }
             }
-            default{ return @false }
+            case 5 //Rechazado
+            {
+                return status == 5
+            }
         }
         return @false
     }
@@ -1114,6 +1117,7 @@ module "model"
             t1.username user_auth,        
             t2.username user_auth2,
             cxp.autorizado,
+            IFNULL(cxp.rechazado,0) rechazado,
             if(NOW() > cxp.fultmoratorios,NOW(),cxp.fultmoratorios) fecha_prevpago,
             if(NOW() > cxp.fultmoratorios,true,false)vencido
         FROM dcxp AS cxp
@@ -1168,7 +1172,6 @@ module "model"
                 }
                 default{totales<"pendiente">:@@(totales,"#pendiente") + @@(item,"#saldo")}
             }
-            
 
             if cxp.Filter(params,cod_status)
             {
@@ -1238,6 +1241,36 @@ module "model"
 
         res=dbr.execute(db,sql,params)
         if not(res){do rise_error(500,"No se logró el proceso de desautorizar, verifque los datos del pago")}
+    }
+    #!
+    cxp.rechazarPago::&db,&params,&data
+    {
+        sql="update dcxp set 
+        rechazado=1,
+        autorizado=0,
+        f_autorizacion=null,
+        f_autorizacion2=null,
+        u_autorizo=null,
+        u_autorizo2=null
+        where sys_pk=@_entity_id"
+
+        res=dbr.execute(db,sql,params)
+        if not(res){do rise_error(500,"No se logró el proceso de rechazar, verifque los datos del pago")}
+    }
+    #!
+    cxp.desrechazarPago::&db,&params,&data
+    {
+        sql="update dcxp set 
+        rechazado=0,
+        autorizado=null,
+        f_autorizacion=null,
+        f_autorizacion2=null,
+        u_autorizo=null,
+        u_autorizo2=null
+        where sys_pk=@_entity_id"
+
+        res=dbr.execute(db,sql,params)
+        if not(res){do rise_error(500,"No se logró el proceso de revertir, verifque los datos del pago")}
     }
     #!
     cxp.change_data::&db,&params,&data
