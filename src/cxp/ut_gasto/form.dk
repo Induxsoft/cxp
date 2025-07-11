@@ -435,7 +435,7 @@ module "form.dk"
                     proveedor.addEventListener("change",() => {
                         let dtpdr = proveedor.getValue();
                         if (beneficiario) beneficiario.value = dtpdr?.nombre ?? "";
-                        if (sel_divisa) {
+                        if (sel_divisa && #<@("#./sys_pk")> < 1) {
                             sel_divisa.value = dtpdr?.idivisa ?? 1;
                             sel_divisa.classList.toggle("disable-ctrl",(dtpdr != null));
                             trigger(sel_divisa,"change");
