@@ -1164,13 +1164,23 @@ module "model"
             cod_status=GetCodeStatusPago(item)
             switch cod_status
             {
-                case 1{totales<"autorizado">:@@(totales,"#autorizado") + @@(item,"#saldo")}
+                case 1
+                {
+                    totales<"autorizado"> : @@(totales,"#autorizado") + @@(item,"#saldo")
+                    break
+                }
                 case 3
                 {
-                    totales<"pagado">:@@(totales,"#pagado") + @@(item,"#saldo")
-                    item<"edit_fprevpago">:@false
+                    totales<"pagado"> : @@(totales,"#pagado") + @@(item,"#saldo")
+                    item<"edit_fprevpago"> : @false
+                    break
                 }
-                default{totales<"pendiente">:@@(totales,"#pendiente") + @@(item,"#saldo")}
+                case 5
+                {
+                    totales<"rechazado"> : @@(totales,"#rechazado") + @@(item,"#saldo")
+                    break
+                }
+                default { totales<"pendiente"> : @@(totales,"#pendiente") + @@(item,"#saldo") }
             }
 
             if cxp.Filter(params,cod_status)
@@ -1203,7 +1213,8 @@ module "model"
                 do list.add(data,item)
             }
         }
-        totales<"total">: @@(totales,"#autorizado") + @@(totales,"#pagado") + @@(totales,"#pendiente")
+
+        totales<"total"> : @@(totales,"#autorizado") + @@(totales,"#rechazado") + @@(totales,"#pagado") + @@(totales,"#pendiente")
         
         new result
         {

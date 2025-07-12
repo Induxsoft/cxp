@@ -12,7 +12,6 @@ module ""
 
     do @context.begin(@crud_context)
 
-
     tbtn_style = "cursor:pointer; text-decoration:none; outline:none; padding: 0px 8px; color:#000000;display: inline-block;
     font-weight: 400;
     line-height: 1.5;
@@ -38,7 +37,7 @@ module ""
     new table_definition
     {
         @"datatable*": @("&./data")
-        @"tableheight":"65vh"
+        @"tableheight": "96%"
         @"leyend": "Mostrando los primeros # documentos ordenados por fecha de emisión"
         member @"columns"
         {
@@ -49,10 +48,10 @@ module ""
                 @"caption":"Vencimiento"
                 @"align": "end"
                 @"template":ftext('
-                                <div style="background:${(DataRow.vencido && DataRow.cod_status!= 3 ) ? "red":"" };width: 100%;">
-                                    ${DataRow.fultmoratorios}
-                                </div>
-                                ')
+                    <div style="background:${(DataRow.vencido && DataRow.cod_status!= 3 ) ? "red":"" };width: 100%;">
+                        ${DataRow.fultmoratorios}
+                    </div>
+                ')
             }
             member @"status"
             {
@@ -117,10 +116,6 @@ module ""
                 ')
             }
         }
-        @"control_styles":'@media print
-                        {
-                            tr td[data-cell=""] { display:none; }
-                        }'
     }
 
     // url =GetUrlReferent(@false)
@@ -158,17 +153,29 @@ module ""
 
     template_depa=replace(@@(table_definition,"$columns/depa/template"),"`","@")
     template_depa=replace(template_depa,"$","#")
+    
     #$
     div(class="v12-list-view container-fluid" id="view")
     {
-        script(src="#<@JS_DOCUMENTOS>"){$""}
-        section(id="top_area" class="mb-2")
+        style
+        {$'
+            tr th { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; -o-text-overflow:ellipsis; }
+            tr td { font-size:.8rem; }
+            th { font-size:.9rem; outline:none!important; }
+
+            .bg-light-gray { background-color: #DCDCDC !important; }
+            .bg-yellow { background-color: #ffe484 !important; }
+            .fw-500 { font-weight:500!important; }
+        '}
+        
+        section(id="top_area" class="pb-1")
         {
-            form(method="GET" id="form_search")
+            #! 
+            do uie.printV12FormBar(nav_config)
+            #$
+
+            form(method="GET" id="form_search" class="")
             {
-                #! 
-                do uie.printV12FormBar(nav_config)
-                #$
                 div(class="row")
                 {
                     div(clasS="col-lg-6")
@@ -191,185 +198,163 @@ module ""
                     }
                 }
             }
+
+            div(class="d-flex justify-content-center")
+            {
+                table(class="table m-0")
+                {
+                    thead
+                    {
+                        th{"Total"}
+                        th{"Autorizado"}
+                        th{"Rechazados"}
+                        th{"Pagado"}
+                        th{"Pendiente"}
+                    }
+                    tbody
+                    {
+                        tr
+                        {
+                            td{"#<format(@('#./totales/total'),@FMT_MONEY)>"}
+                            td{"#<format(@('#./totales/autorizado'),@FMT_MONEY)>"}
+                            td{"#<format(@('#./totales/rechazado'),@FMT_MONEY)>"}
+                            td{"#<format(@('#./totales/pagado'),@FMT_MONEY)>"}
+                            td{"#<format(@('#./totales/pendiente'),@FMT_MONEY)>"}
+                        }
+                    }
+                }
+            }
         }
         section(id="work_area")
         {
-            div(class="" style="box-shadow: inset 0 -3em 3em rgba(0, 0, 0, 0.1), 0.3em 0.3em 1em rgba(0, 0, 0, 0.3);")
+            div(class="show-on-print")
             {
-                div(class="bg-white p-1" id="section-to-print")
-                {   
-                    div(clasS="show-on-print")
-                    {
-                        p(class="text-center mb-0"){$"#<@@(titles,'$title')>"}
-                        p(class="text-center mb-0"){$"#<@@(titles,'$subtitle')>"}
-                        p(class="text-center mb-0"){$"#<@@(titles,'$subtitle_2')>"}
-                    }
-                    
-                    div(class="show-on-print")
-                    {
-                        div(class="row")
-                        {
-                            div(class="col-3")
-                            {
-                                small(class="d-block"){ $"#<cut(@('$http/session/user/name'),25)>" }
-                                small(class="d-block"){ b{$"Impresión: "} $"#<hoy('dd/MMM/yyyy')>" }
-                            }
-                            div(class="col-6")
-                            {
-                                h4(class="text-center"){$"Calendario de documentos por pagar"}
-                            }
-                        }
-                    }
-                    
-                    div(class="mt-2 d-flex justify-content-center")
-                    {
-                        table(class="table")
-                        {
-                            thead
-                            {
-                                th{"Total"}
-                                th{"Autorizado"}
-                                th{"Pagado"}
-                                th{"Pendiente"}
-                            }
-                            tbody
-                            {
-                                tr
-                                {
-                                    td{"#<format(@('#./totales/total'),@FMT_MONEY)>"}
-                                    td{"#<format(@('#./totales/autorizado'),@FMT_MONEY)>"}
-                                    td{"#<format(@('#./totales/pagado'),@FMT_MONEY)>"}
-                                    td{"#<format(@('#./totales/pendiente'),@FMT_MONEY)>"}
-                                }
-                            }
-                        }
-                    }
-                    #! 
-                    do uie.dbeditable(table_definition,"tbl_calendar_cxp")
-                    #$
-                }
-            }
-            
-        }
-        //#<replace(@@(table_definition,"$columns/pa/template"),"$","@")>
-        //#<@@(table_definition,"$columns/depa/template")>
-        script
-        {
-            $'
-                documento.url_calendar_pagos="#<@CALENDAR_PAGOS>";
-                documento.consultar="#<@DOC_CONSULTAR>";
-                documento.template_pa=`#<template_pa>`;
-                documento.template_depa=`#<template_depa>`;
-                documento.tr_selected=null;
-
-                document.addEventListener("DOMContentLoaded",(e)=>
+                p(class="text-center mb-0"){$"#<@@(titles,'$title')>"}
+                p(class="text-center mb-0"){$"#<@@(titles,'$subtitle')>"}
+                p(class="text-center mb-0"){$"#<@@(titles,'$subtitle_2')>"}
+                
+                div(class="row")
                 {
-                    var sts=document.getElementById("sts");
-                    var divtable=document.getElementById("list_table_container");
-                    var table=document.getElementById("tbl_calendar_cxp");
-                    if(!documento.table)documento.table=table;
-
-                    var parent=divtable.parentNode;
-                    if(parent)parent.setAttribute("style","height: auto;");
-
-                    var _global_data=null;
-                    table.onTdPaint=(td, row, col, field) =>
+                    div(class="col-3")
                     {
-                        var data=table.DataArray[row];
-                        if(field!="f_prevpago" && data.edit_fprevpago)
-                        {
-                            td.style="background:#F5F5F5;color:black;"
-                        }
-                        else if (!data.edit_fprevpago)
-                        {
-                            td.style="background:#F5F5F5;color:black;"
-                        }
-
-                        if(field=="pa" || field=="depa")td.style="background:white;color:black;"
-                    };
-                    table.Events[table.EdiTable.Const.Events.EnterCell] = (e) =>
-                    {
-                        var data=table.DataArray[table.CurrentRowIndex()];
-                        documento.tr_selected=documento.table.GetTrByIndex(table.RowIndexOfTd(e.td));
-                        
-                        if(!data)return;
-
-                        if(data.edit_fprevpago)table.Columns[4]={type:table.EdiTable.Const.Columns.Types.Date, field:"f_prevpago"};
-                        else table.Columns[4]={type:table.EdiTable.Const.Columns.Types.NoEditable, field:"f_prevpago"};
-
-                        _global_data=data;
+                        small(class="d-block"){ $"#<cut(@('$http/session/user/name'),25)>" }
+                        small(class="d-block"){ b{$"Impresión: "} $"#<hoy('dd/MMM/yyyy')>" }
                     }
-                    table.Events[table.EdiTable.Const.Events.ConfirmEdition] = (e) =>
+                    div(class="col-6")
                     {
-                        let index=table.RowIndexOfTd(e.td);
-                        if(index < 1)return;
-
-                        var data=table.DataArray[index];
-                        if(!data)return;
-                       
-                        if((data.f_prevpago??"") != (e.text??"") && (e.text??"")!="")
-                        {
-                             let fecha_fprev=(data.f_prevpago??"");
-                            var request=
-                            {
-                                f_prevpago:e.text,
-                                change_data:true
-                            }
-
-                            let onSuccess=(data)=>
-                            {
-                                
-                            }
-                            let onFailure=(failure)=>
-                            {
-                                data["f_prevpago"]=fecha_fprev;
-                                e.Cancel=true;
-                                alert(failure.message??JSON.stringify(failure));
-                                table._printRows();
-                            }
-                            let url=documento.url_calendar_pagos.replace("@doc",data.sys_pk);
-
-                            InduxsoftCrudlModel.InvokeService(url,request,onSuccess,onFailure,"PATCH",false,false);
-                        }
-                        
+                        h4(class="text-center"){$"Calendario de documentos por pagar"}
                     }
-                   
-                    table._printRows();
-
-                    var filter_date=document.getElementById("filter_date");
-                    if(filter_date._btnDone)filter_date._btnDone.addEventListener("click",()=>
-                    {
-                        document.getElementById("form_search").submit();
-                    });
-
-                    if(sts)sts.addEventListener("change",
-                    ()=>
-                    {
-                        document.getElementById("form_search").submit();
-                    });
-                });
-            '
-        }
-        style
-        {$'
-            tr th { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; -o-text-overflow:ellipsis; }
-            tr td { font-size:.8rem; }
-            th { font-size:.9rem; outline:none!important; }
-         
-            @media print 
-            {
-                @page 
-                { 
-                    margin-top: 0;
-                    margin-bottom: 0;
-                    size: auto !important; 
                 }
-                body { visibility: hidden; }
             }
 
-            .bg-light-gray { background-color: #DCDCDC !important; }
-            .bg-yellow { background-color: #ffe484 !important; }
-            .fw-500 { font-weight:500!important; }
-        '}
+            #! 
+            do uie.dbeditable(table_definition,"tbl_calendar_cxp")
+            #$
+
+            // div(class="show-on-print"){p(class="fixed-bottom text-center my-1"){$"#<@@(titles,'$footer')>"}}
+        }
+        section(id="bottom_area")
+        {
+            //////////////////////////////////////////////////////////////////
+            div(id="_custom_area")
+            {
+                script(src="#<@JS_DOCUMENTOS>"){""}
+                script(type="text/javascript")
+                {$'
+                    documento.url_calendar_pagos="#<@CALENDAR_PAGOS>";
+                    documento.consultar="#<@DOC_CONSULTAR>";
+                    documento.template_pa=`#<template_pa>`;
+                    documento.template_depa=`#<template_depa>`;
+                    documento.tr_selected=null;
+
+                    document.addEventListener("DOMContentLoaded",(e)=>
+                    {
+                        var sts=document.getElementById("sts");
+                        var divtable=document.getElementById("list_table_container");
+                        var table=document.getElementById("tbl_calendar_cxp");
+                        if(!documento.table)documento.table=table;
+
+                        // var parent=divtable.parentNode;
+                        // if(parent)parent.setAttribute("style","height: 90%;");
+
+                        var _global_data=null;
+                        table.onTdPaint=(td, row, col, field) =>
+                        {
+                            var data=table.DataArray[row];
+                            if(field!="f_prevpago" && data.edit_fprevpago)
+                            {
+                                td.style="background:#F5F5F5;color:black;"
+                            }
+                            else if (!data.edit_fprevpago)
+                            {
+                                td.style="background:#F5F5F5;color:black;"
+                            }
+
+                            if(field=="pa" || field=="depa")td.style="background:white;color:black;"
+                        };
+                        table.Events[table.EdiTable.Const.Events.EnterCell] = (e) =>
+                        {
+                            var data=table.DataArray[table.CurrentRowIndex()];
+                            documento.tr_selected=documento.table.GetTrByIndex(table.RowIndexOfTd(e.td));
+                            
+                            if(!data)return;
+
+                            if(data.edit_fprevpago)table.Columns[4]={type:table.EdiTable.Const.Columns.Types.Date, field:"f_prevpago"};
+                            else table.Columns[4]={type:table.EdiTable.Const.Columns.Types.NoEditable, field:"f_prevpago"};
+
+                            _global_data=data;
+                        }
+                        table.Events[table.EdiTable.Const.Events.ConfirmEdition] = (e) =>
+                        {
+                            let index=table.RowIndexOfTd(e.td);
+                            if(index < 1)return;
+
+                            var data=table.DataArray[index];
+                            if(!data)return;
+                        
+                            if((data.f_prevpago??"") != (e.text??"") && (e.text??"")!="")
+                            {
+                                let fecha_fprev=(data.f_prevpago??"");
+                                var request=
+                                {
+                                    f_prevpago:e.text,
+                                    change_data:true
+                                }
+
+                                let onSuccess=(data)=>
+                                {
+                                    
+                                }
+                                let onFailure=(failure)=>
+                                {
+                                    data["f_prevpago"]=fecha_fprev;
+                                    e.Cancel=true;
+                                    alert(failure.message??JSON.stringify(failure));
+                                    table._printRows();
+                                }
+                                let url=documento.url_calendar_pagos.replace("@doc",data.sys_pk);
+
+                                InduxsoftCrudlModel.InvokeService(url,request,onSuccess,onFailure,"PATCH",false,false);
+                            }
+                            
+                        }
+                    
+                        table._printRows();
+
+                        var filter_date=document.getElementById("filter_date");
+                        if(filter_date._btnDone)filter_date._btnDone.addEventListener("click",()=>
+                        {
+                            document.getElementById("form_search").submit();
+                        });
+
+                        if(sts)sts.addEventListener("change",
+                        ()=>
+                        {
+                            document.getElementById("form_search").submit();
+                        });
+                    });
+                '}
+            }
+        }
     }
 }
