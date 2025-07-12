@@ -516,7 +516,7 @@ var documento =
     aplicar: {
         tbl_xaplicar:null, arr_xaplicar:[], tbl_aplicados:null, arr_aplicados:[],
         source:{}, decimals:2,
-
+        _rowdata:null,
         init()
         {
             this.tbl_xaplicar = document.getElementById("tbl_xaplicar");
@@ -652,6 +652,7 @@ var documento =
             let sxaplicar = this.source.xaplicar;
 
             let saldo = Number(e.sender.DataArray[cur_row]["saldo"]);
+            let oaplicar = Number(e.sender.DataArray[cur_row]["aplicar"]);
             let aplicar = Number(e.text.trim());
             let sfinal = Math.sub(saldo,aplicar);
 
@@ -661,7 +662,7 @@ var documento =
                 const impAplicar = Number(arr_xaplicar[i]["aplicar"]);
                 aplicado = Math.add(aplicado,impAplicar);
             }
-            aplicado = Math.RoundTo(Math.add(aplicado,aplicar),this.decimals);
+            aplicado = Math.RoundTo(Math.add(Math.sub(aplicado,oaplicar),aplicar), this.decimals);
             xaplicar = Math.RoundTo(Math.sub(sxaplicar,aplicado),this.decimals);
 
             let rst = 
@@ -677,25 +678,29 @@ var documento =
 
         validarImportes(e)
         {
-            if (e.coldef.field === "aplicar" && !e.cancel)
+            let field = e.coldef.field;
+            let index = e.sender.RowIndexOfTd(e.td);
+            this._rowdata = JSON.parse(JSON.stringify(e.sender.DataArray[index]));
+
+            if (field === "aplicar" && !e.cancel)
             {
                 let rst = this.importesAplicar(e);
                 
                 if (rst.aplicar < 0) {
                     alert("El importe a aplicar no puede ser menor a 0.");
-                    e.cancel = true;
+                    e.text = this._rowdata[field].toString();
                     return;
                 }
 
                 if (rst.sfinal < 0) {
                     alert("El importe a aplicar no puede ser mayor al saldo del documento.");
-                    e.cancel = true;
+                    e.text = this._rowdata[field].toString();
                     return;
                 }
 
                 if (rst.xaplicar < 0) {
                     alert("El importe aplicado no puede superar al saldo disponible para aplicar.");
-                    e.cancel = true;
+                    e.text = this._rowdata[field].toString();
                     return;
                 }
             }
@@ -703,9 +708,12 @@ var documento =
 
         actualizarImportes(e)
         {
+            let field = e.coldef.field;
             let cur_row = e.sender.RowIndexOfTd(e.td);
-                        
-            if (e.coldef.field === "aplicar")
+            
+            if (this._rowdata[field] == e.text) return;
+
+            if (field === "aplicar")
             {
                 let lbl_saldo = document.getElementById("lbl_saldo");
                 let lbl_aplicado = document.getElementById("lbl_aplicado");
