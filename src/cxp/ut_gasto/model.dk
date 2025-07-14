@@ -497,6 +497,7 @@ module "model"
         do dbr.apps.action.pre("GC35")
         do dbr.begin(db)
 
+        params<"dte">:@_DET_GASTO
         ref gasto = dbr.rec(db,"SELECT sys_pk AS pk_gasto, sys_guid, formapago, iproveedor, imovchequera FROM ut_gasto WHERE sys_pk = @_entity_id",params)
         if isnull(gasto){ do rise_error(511,"No se encontro el registro para el `id` proporcionado.") }
         
@@ -506,6 +507,7 @@ module "model"
             // Eliminar gasto
             ref result = entity.delete(db,params)
             // Eliminar movcuenta
+            do dbr.delete(db,"movcta_confirmacion","ref_mov=@imovchequera",gasto)
             do dbr.delete(db, "movcuenta", "sys_pk = @imovchequera", gasto)
         }
         else if formapago == @fp_credito
@@ -528,6 +530,45 @@ module "model"
             ref result = entity.delete(db,params)
         }
 
+        //Validar si es posible desaplicar el movimiento de presupuesto
+        if TableExist(db,"gop_mov")
+        {
+            ref movs=dbr.list(db,"select 
+                    sys_pk,ref_partida,referencia,periodo,comprometido,ejercido 
+                    from gop_mov where dte=@dte AND dte_id=@_entity_id",params)
+            count_movs=@count(movs)
+            
+            if count_movs > 0
+            {
+                if not(file.exists(@lib_pregop)){do rise_error(500,"No se puede desaplicar los movimientos del gasto, debido a que no se logró cargar a: pregop.dkh")}
+                if not(AppExist(db,"pregop")){do rise_error(500,"No es posible continuar, es necesario instalar `pregop`. Instale e intente nuevamente.")}
+
+                do dbr.apps.action.grant("GP23") //por afectar/desaplicar
+
+                for i = 0; i < count_movs
+                {
+                    ref mov=@item(movs,i)
+                    comprometido=@@(mov,"#comprometido")
+                    ejercido=@@(mov,"#ejercido")
+
+                    new montos
+                    {
+                        @"comprometido":comprometido
+                        @"ejercido":ejercido
+                    }
+
+                    if comprometido > 0{montos<"comprometido">:comprometido * -1}
+                    if ejercido > 0{montos<"ejercido">:ejercido * -1}
+
+                    do pregop.partida.afectar(db,@@(mov,"#ref_partida"),@@(mov,"#periodo") ,montos)
+                    do dbr.execute(db,"delete from gop_mov where sys_pk=@sys_pk",mov)
+                }
+            }
+        }
+        
+        //Lanzar evento pos antes de eliminar los archivos
+        do dbr.apps.action.pos(result)
+        
         codeblock "Eliminar archivos adjuntos"
         {
             params<"gasto"> : @@(gasto,"$sys_guid")
@@ -538,8 +579,6 @@ module "model"
 
             exception{ do pop_exception() }
         }
-
-        do dbr.apps.action.pos(result)
         do dbr.commit(db)
         do dbr.apps.action.ext(result)
         

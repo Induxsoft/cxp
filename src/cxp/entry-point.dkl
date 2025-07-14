@@ -16,6 +16,11 @@ module "Controller configs"
 	#include "../efectivo/movimientos.dkh"
 	#include "./movimientos.dkh"
 
+	if file.exists(@lib_pregop)
+	{
+		include @lib_pregop
+	}
+
 	@base_path="cxp"
 	@path_root="" // Establezca una ruta de ser necesario
 

@@ -96,7 +96,7 @@ module
 	@DOC_APLICAR = "/!/cxp/documentos/@doc/aplicar/"
 	@CALENDAR_PAGOS = "/!/cxp/documentos/@doc/calendar_pagos/"
 	//#endregion
-
+	@lib_pregop="pregop/pregop.dkh"
 	//bitacora
 	@URL_BITACORA="/!/webshell/log/@det/@guid/"
 	@_DET_GASTO="DET024"

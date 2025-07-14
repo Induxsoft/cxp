@@ -74,6 +74,20 @@ module "lib.dk"
         new params { @"id": usrId }
         return dbr.num(db,"SELECT usr.sys_pk FROM tuser AS usr LEFT JOIN sys_session AS ss ON usr.sys_pk = ss.iuser WHERE usr.sys_guid = @id OR usr.userid = @id OR ss.sys_guid = @id",params)
     }
+    TableExist::&db,table
+    {
+        name_table=dbr.str(db,"SHOW TABLES LIKE '"+table+"';",@null)
+        return trim(name_table)!=""
+    }
+    function AppExist(&db,packId)
+    {
+        new p { @"id": packId }
+        ref InstalledApps = dbr.list(db,"SELECT * FROM sys_app_catalog WHERE pack_id = @id;",p)
+        exist = (list.count(InstalledApps) > 0)
+        return exist
+
+        exception{ return @false }
+    }
     function form(name,type,&obj)
     {
         name = trim(str(name))
