@@ -240,6 +240,7 @@ module "model"
         new retiro
         {
             @"sys_pk": 0
+            @"sys_recver": 0
             @"sys_guid": uuid()
             @"sys_dtcreated*": now()
             @"sys_timestamp*": now()
