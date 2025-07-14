@@ -1,12 +1,12 @@
 var documento =
 {
     tableId: "", table: null,
-    url_exit:"",
+    url_exit: "",
+
     init()
     {
         if (this.tableId.trim() != "") { this.table = document.getElementById(this.tableId); }
         this.setTableEvents();
-        
     },
 
     trigger(element,event) {
@@ -44,95 +44,33 @@ var documento =
         window.location.href = url.replace("@doc",data.sys_pk);
     },
 
+    Delete(sys_pk)
+    {
+        if (!confirm("¿Esta seguro de eliminar el documento?")) return;
+        
+        let endpoint = "/!/cxp/documentos/"+sys_pk+"/";
+
+        const onSuccess = (response)=>
+        {
+            alert("¡El documento se ha eliminado!");
+
+            if (documento.url_exit.trim()!="") window.location.href = documento.url_exit.trim();
+            else window.location.href = '/!/cxp/documentos/';
+        }
+        const onFailure = (failure) => {
+            if (failure.message) alert(failure.message);
+            else console.error(failure);
+        }
+
+        InduxsoftCrudlModel.InvokeService(endpoint,null,onSuccess,onFailure,"DELETE",false,false);
+    },
+
     getCurrentContext()
     {
         const id = (this.table?.DataArray[this.table.CurrentRowIndex()]?.sys_pk ?? "");
         return { item_id:id, context: {} }
     },
-    DesautorizarPago(sys_pk)
-    {
-        let onSuccess=(data)=>
-        {
-            documento.SetTemplate(1);
-        }
-        let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
-        let url = documento.url_calendar_pagos.replace("@doc",sys_pk);
-        url += "?_action=desautorizar-pago"
-
-        InduxsoftCrudlModel.InvokeService(url,null,onSuccess,onFailure,"PATCH",false,false);
-    },
-    RechazarPago(sys_pk)
-    {
-        let onSuccess=(data)=>
-        {
-            let index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
-            this.table.DeleteRow(index);
-        }
-        let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
-        let url = documento.url_calendar_pagos.replace("@doc",sys_pk);
-        url += "?_action=rechazar-pago"
-
-        InduxsoftCrudlModel.InvokeService(url,null,onSuccess,onFailure,"PATCH",false,false);
-    },
-    DesrechazarPago(sys_pk)
-    {
-        let onSuccess=(data)=>
-        {
-            let index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
-            this.table.DeleteRow(index);
-        }
-        let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
-        let url = documento.url_calendar_pagos.replace("@doc",sys_pk);
-        url += "?_action=desrechazar-pago"
-
-        InduxsoftCrudlModel.InvokeService(url,null,onSuccess,onFailure,"PATCH",false,false);
-    },
-    Delete()
-    {
-        if(!confirm("¿Esta seguro de eliminar el documento?"))return;
-        
-        let onSuccess=(data)=>
-        {
-            if(documento.url_exit.trim()!="")window.location.href=documento.url_exit.trim();
-            else window.location.href="..";
-        }
-        let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
-        let url=".";
-
-        var data=
-        {
-            delete:true
-        }
-        InduxsoftCrudlModel.InvokeService(url,data,onSuccess,onFailure,"DELETE",false,false);
-    },
-    AutorizarPago()
-    {
-        var detail=
-        {
-            auth:{authorizer:true}
-        }
-        InduxsoftCrudlModel.Submit("form_cxp",detail,
-        (data)=>
-        {
-            window.location.reload();
-        });
-    },
-    AuthPago(saldo,sys_pk)
-    {
-        let onSuccess=(data)=>
-        {
-            documento.SetTemplate(0);
-        }
-        let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
-        let url=documento.consultar.replace("@doc",sys_pk);
-
-        var data=
-        {
-            importe:saldo,
-            auth:{authorizer:true}
-        }
-        InduxsoftCrudlModel.InvokeService(url,data,onSuccess,onFailure,"POST",false,false);
-    },
+    
     setTableEvents()
     {
         if (!this.table) return;
@@ -165,96 +103,6 @@ var documento =
         
         v12navbar.toggleButtonInteraction(true);
     },
-    GetTextStatus(status)
-    {
-        let text="";
-        switch (status) 
-        {
-            case 1:
-                text="Autorizado";
-                break;
-            case 2:
-                text="Pre-autorizado";
-                break;
-            case 3:
-                text="Pagado";
-            break;
-            case 99:
-                text="Pendiente";
-            break;
-        }
-        return text;
-    },
-    SetTemplate(temp)
-    {
-        var td=this.table.CurrentTd();
-        if(!td)window.location.reload();
-        else
-        {
-            //temp = 0 autorizar
-            //temp = 1 desautorizar
-            
-            if(!documento.tr_selected){window.location.reload();}
-            else
-            {
-                documento.SetTemplateTMP(td,temp);
-            }
-        }
-    },
-    GetCellByIndex(index)
-    {
-        var elements=documento.tr_selected.querySelectorAll("td");
-        for (let i = 0; i < elements.length; i++) 
-        {
-            const element = elements[i];
-            if(index==i)return element;
-        }
-        return null;
-    },
-    SetTemplateTMP(td,temp)
-    {
-        var index=documento.table.RowIndexOfTd(td);
-        var DataRow=documento.table.DataArray[index];
-        
-        let status=0;
-        if(temp==0)
-        {
-            if(DataRow.two_auth && DataRow.cod_status== 99)status=2;
-            else status=1;
-        }
-        else
-        {
-            status=99;
-        }
-        DataRow["cod_status"]=status;
-        DataRow["status"]=documento.GetTextStatus(status);
-
-        var tmp=temp==0? documento.template_pa : documento.template_depa;
-        tmp=tmp.replaceAll("@","`");
-        tmp=tmp.replaceAll("#","$");
-        var template=this.table.applyTemplate(tmp,DataRow);
-        this.table.SetTdValue(td,template);
-        
-        let index_td=6
-        if(temp==0)
-        {
-            index_td=7
-        }
-        td=documento.GetCellByIndex(index_td);
-        if(td)
-        {
-            var tmp=index_td == 6 ?documento.template_pa : documento.template_depa;
-            tmp=tmp.replaceAll("@","`");
-            tmp=tmp.replaceAll("#","$");
-            var template=this.table.applyTemplate(tmp,DataRow);
-            this.table.SetTdValue(td,template);
-        }
-        documento.table._printRows();
-        documento.tr_selected=null;
-    },
-    list: {},
-
-    form: {},
 
     crear: {
         formcxp: null,
@@ -268,7 +116,7 @@ var documento =
             this.setEvents();
 
             this.btn_auth=document.getElementById("btn_auth");
-            if(this.btn_auth)this.btn_auth.addEventListener("click",()=>{documento.AutorizarPago();});
+            if(this.btn_auth)this.btn_auth.addEventListener("click",()=>{documento.calendario.AutorizarPago();});
         },
 
         setEvents()
@@ -736,6 +584,287 @@ var documento =
                 lbl_aplicado.textContent = formatter.format(rst.aplicado);
                 lbl_xaplicar.textContent = formatter.format(rst.xaplicar);
             }
+        },
+    },
+
+    calendario: {
+        tableId: "", table: null, decimals: 2,
+
+        init()
+        {
+            this.fil_date = document.getElementById("filter_date");
+            this.fil_status = document.getElementById("sts");
+            this.td_total = document.getElementById("td-total");
+            this.td_autorizados = document.getElementById("td-autorizados");
+            this.td_rechazados = document.getElementById("td-rechazados");
+            this.td_pagados = document.getElementById("td-pagados");
+            this.td_pendientes = document.getElementById("td-pendientes");
+
+            this.table = document.getElementById(this.tableId);
+            this.setTableEvents();
+
+            if (this.fil_date._btnDone) this.fil_date._btnDone.addEventListener("click", () => {
+                document.getElementById("form_search").submit();
+            });
+            if (this.fil_status) this.fil_status.addEventListener("change", () => {
+                document.getElementById("form_search").submit();
+            });
+        },
+
+        setTableEvents()
+        {
+            if (!this.table) return;
+
+            const table = this.table;
+            const events = table.EdiTable.Const.Events;
+
+            var _global_data = null;
+
+            table.onTdPaint=(td, row, col, field) =>
+            {
+                var data=table.DataArray[row];
+                if(field!="f_prevpago" && data.edit_fprevpago)
+                {
+                    td.style="background:#F5F5F5;color:black;"
+                }
+                else if (!data.edit_fprevpago)
+                {
+                    td.style="background:#F5F5F5;color:black;"
+                }
+
+                if(field=="pa" || field=="depa")td.style="background:white;color:black;"
+            };
+
+            table.Events[events.EnterCell] = (e) =>
+            {
+                var data = table.DataArray[table.CurrentRowIndex()];
+                this.tr_selected = table.GetTrByIndex(table.RowIndexOfTd(e.td));
+                
+                if(!data)return;
+
+                if(data.edit_fprevpago) table.Columns[4] = {type:table.EdiTable.Const.Columns.Types.Date, field:"f_prevpago"};
+                else table.Columns[4] = {type:table.EdiTable.Const.Columns.Types.NoEditable, field:"f_prevpago"};
+
+                _global_data = data;
+            }
+            table.Events[events.ConfirmEdition] = (e) =>
+            {
+                let index = table.RowIndexOfTd(e.td);
+                if(index < 1)return;
+
+                var data = table.DataArray[index];
+                if(!data)return;
+            
+                if((data.f_prevpago??"") != (e.text??"") && (e.text??"")!="")
+                {
+                    let fecha_fprev=(data.f_prevpago??"");
+                    var request=
+                    {
+                        f_prevpago:e.text,
+                        change_data:true
+                    }
+
+                    let onSuccess=(data)=>
+                    {
+                        
+                    }
+                    let onFailure=(failure)=>
+                    {
+                        data["f_prevpago"]=fecha_fprev;
+                        e.Cancel=true;
+                        alert(failure.message??JSON.stringify(failure));
+                        table._printRows();
+                    }
+                    let url=this.url_calendar_pagos.replace("@doc",data.sys_pk);
+
+                    InduxsoftCrudlModel.InvokeService(url,request,onSuccess,onFailure,"PATCH",false,false);
+                }
+            }
+
+            table._printRows();
+        },
+
+        AuthPago(saldo,sys_pk)
+        {
+            let onSuccess=(data)=>
+            {
+                let index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
+                if (this.fil_status.value != '*') this.table.DeleteRow(index);
+                else
+                {
+                    let DataRow = this.table.DataArray[index];
+                    let status = (DataRow.two_auth && DataRow.cod_status==99) ? 2 : 1;
+                    
+                    DataRow["cod_status"] = status;
+                    DataRow["status"] = this.GetTextStatus(status);
+                    DataRow["autorizado"] = true;
+                    
+                    this.table._printRows();
+                }
+                this.updateSummary();
+                this.tr_selected=null;
+            }
+            let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
+            let url=this.consultar.replace("@doc",sys_pk);
+
+            var data=
+            {
+                importe:saldo,
+                auth:{authorizer:true}
+            }
+            InduxsoftCrudlModel.InvokeService(url,data,onSuccess,onFailure,"POST",false,false);
+        },
+        DesautorizarPago(sys_pk)
+        {
+            let onSuccess=(data)=>
+            {
+                let index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
+                if (this.fil_status.value != '*') this.table.DeleteRow(index);
+                else
+                {
+                    let DataRow = this.table.DataArray[index];
+                    let status = 99;
+
+                    DataRow["cod_status"] = status;
+                    DataRow["status"] = this.GetTextStatus(status);
+                    DataRow["autorizado"] = false;
+
+                    this.table._printRows();
+                }
+                this.updateSummary();
+                this.tr_selected=null;
+            }
+            let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
+            let url = this.url_calendar_pagos.replace("@doc",sys_pk);
+            url += "?_action=desautorizar-pago"
+
+            InduxsoftCrudlModel.InvokeService(url,null,onSuccess,onFailure,"PATCH",false,false);
+        },
+        RechazarPago(sys_pk)
+        {
+            let onSuccess=(data)=>
+            {
+                let index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
+                if (this.fil_status.value != '*') this.table.DeleteRow(index);
+                else
+                {
+                    let DataRow = this.table.DataArray[index];
+                    let status = 5;
+
+                    DataRow["cod_status"] = status;
+                    DataRow["status"] = this.GetTextStatus(status);
+                    DataRow["rechazado"] = true;
+                    
+                    this.table._printRows();
+                }
+                this.updateSummary();
+                this.tr_selected=null;
+            }
+            let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
+            let url = this.url_calendar_pagos.replace("@doc",sys_pk);
+            url += "?_action=rechazar-pago"
+
+            InduxsoftCrudlModel.InvokeService(url,null,onSuccess,onFailure,"PATCH",false,false);
+        },
+        DesrechazarPago(sys_pk)
+        {
+            let onSuccess=(data)=>
+            {
+                let index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
+                if (this.fil_status.value != '*') this.table.DeleteRow(index);
+                else
+                {
+                    let DataRow = this.table.DataArray[index];
+                    let status = 99;
+
+                    DataRow["cod_status"] = status;
+                    DataRow["status"] = this.GetTextStatus(status);
+                    DataRow["rechazado"] = false;
+                    
+                    this.table._printRows();
+                }
+                this.updateSummary();
+                this.tr_selected=null;
+            }
+            let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
+            let url = this.url_calendar_pagos.replace("@doc",sys_pk);
+            url += "?_action=desrechazar-pago"
+
+            InduxsoftCrudlModel.InvokeService(url,null,onSuccess,onFailure,"PATCH",false,false);
+        },
+        AutorizarPago()
+        {
+            var detail=
+            {
+                auth:{authorizer:true}
+            }
+            InduxsoftCrudlModel.Submit("form_cxp",detail,
+            (data)=>
+            {
+                window.location.reload();
+            });
+        },
+        GetTextStatus(status)
+        {
+            let text="";
+            switch (status) 
+            {
+                case 1:
+                    text="Autorizado";
+                    break;
+                case 2:
+                    text="Pre-autorizado";
+                    break;
+                case 3:
+                    text="Pagado";
+                    break;
+                case 5:
+                    text="Rechazado";
+                    break;
+                case 99:
+                    text="Pendiente";
+                break;
+            }
+            return text;
+        },
+        GetCellByIndex(index)
+        {
+            var elements=this.tr_selected.querySelectorAll("td");
+            for (let i = 0; i < elements.length; i++) 
+            {
+                const element = elements[i];
+                if(index==i)return element;
+            }
+            return null;
+        },
+        updateSummary()
+        {
+            let DataArray = this.table.DataArray;
+            let autorizados=0, rechazados=0, pagados=0, pendientes=0;
+
+            for (let i = 0; i < DataArray.length; i++) {
+                const cxp = DataArray[i];
+                
+                if (cxp.autorizado || (cxp.u_autorizo && cxp.u_autorizo2)) {
+                    autorizados = Math.add(autorizados, cxp.saldo);
+                }
+                else if (cxp.pagado) {
+                    pagados = Math.add(pagados, cxp.saldo);
+                }
+                else if (cxp.rechazado) {
+                    rechazados = Math.add(rechazados, cxp.saldo);
+                }
+                else {
+                    pendientes = Math.add(pendientes, cxp.saldo);
+                }
+            }
+            
+            let total = autorizados + rechazados + pagados + pendientes;
+            this.td_total.textContent = "$ "+this.table._format(total, this.decimals, true);
+            this.td_autorizados.textContent = "$ "+this.table._format(autorizados, this.decimals, true);
+            this.td_rechazados.textContent = "$ "+this.table._format(rechazados, this.decimals, true);
+            this.td_pagados.textContent = "$ "+this.table._format(pagados, this.decimals, true);
+            this.td_pendientes.textContent = "$ "+this.table._format(pendientes, this.decimals, true);
         },
     }
 }

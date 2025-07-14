@@ -231,9 +231,9 @@ module "lib.dk"
     GetCodeStatusPago::&info_dcxp
     {
         if @@(info_dcxp,"#rechazado") { return 5 }
-        if @@(info_dcxp,"#pagado") { return 3 } //pagado
-        if @@(info_dcxp,"#autorizado") || (@@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")!="") { return 1 } //autorizado
+        if @@(info_dcxp,"#pagado") { return 3 }
         if @@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")==""{ return 2 } //pre-autorizado
+        if @@(info_dcxp,"#autorizado") || (@@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")!="") { return 1 } //autorizado
         
         return 99 //pendiente
     }
@@ -241,8 +241,8 @@ module "lib.dk"
     {
         if @@(info_dcxp,"#rechazado") { return "Rechazado" }
         if @@(info_dcxp,"#pagado"){ return "Pagado" }
-        if @@(info_dcxp,"#autorizado") || (@@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")!="") { return "Autorizado" }
         if @@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")=="" { return "Pre-autorizado" }
+        if @@(info_dcxp,"#autorizado") || (@@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")!="") { return "Autorizado" }
         
         return "Pendiente"
     }

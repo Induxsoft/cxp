@@ -851,19 +851,33 @@ module "model"
         do dbr.apps.action.pre("GC64")
         do dbr.begin(db)
         
-        ref documento=dbr.rec(db,"select * from dcxp where sys_pk=@_entity_id;",params)
-        if isnull(documento){do rise_error(500,"No se encontró datos del documento")}
-        ref documento=record.caseinsensitive(documento)
+        ref dcxp = dbr.rec(db,"select sys_pk, documento, ifnull(debe,0) debe, ifnull(haber,0) haber, pagos, bonificaciones, iproveedor, icompra, uf_igasto, imovchequera from dcxp where sys_pk=@_entity_id;",params)
 
-        aplicados=@@(documento,"#pagos") + @@(documento,"#bonificaciones") 
-        if aplicados > 0{ do rise_error(500,"No se puede eliminar el documento, el documento ya fue aplicado")}
+        if isnull(dcxp){ do rise_error(511,"No se encontró datos del documento") }
+        /**
+        * 5 - cNota_de_crédito = Bonificación
+        * 19 - cRecibo = Pago
+        */
+        isPaymentOrBonus = (@@(dcxp,"#documento") == 5 || @@(dcxp,"#documento") == 19)
+        if isPaymentOrBonus
+        {
+            aplicados = dbr.num(db,"select count(*) from aplcxp where fk_dcxp_aplicadoa = @sys_pk",dcxp)
+            if aplicados > 0 { do rise_error(512,"No se puede eliminar el documento, el documento ya fue aplicado.") }
+        }
+        else
+        {
+            aplicados = @@(dcxp,"#pagos") + @@(dcxp,"#bonificaciones")
+            if aplicados > 0 { do rise_error(512,"No se puede eliminar el documento, el documento ya fue aplicado") }
 
-        if @@(documento,"#icompra") > 0 {do rise_error(500,"No se puede eliminar el documento, El documento esta relacionado a una compra")}
-        if @@(documento,"#uf_igasto") > 0 {do rise_error(500,"No se puede eliminar el documento, El documento esta relacionado a un gasto")}
+            if @@(dcxp,"#icompra") > 0 {do rise_error(513,"No se puede eliminar el documento, El documento esta relacionado a una compra")}
+            if @@(dcxp,"#uf_igasto") > 0 {do rise_error(514,"No se puede eliminar el documento, El documento esta relacionado a un gasto")}
+        }
 
-        ref entity= entity.delete(db,params)
-        r= dbr.execute(db,"update proveedor set saldo=ifnull(saldo,0) - ifnull(@haber,0) where sys_pk=@iproveedor",documento)
-        if r < 1{do rise_error(500,"No se logró afectar el saldo del proveedor, revise sus datos")}
+        ref entity = entity.delete(db,params)
+        if isPaymentOrBonus && @@(dcxp,"#imovchequera") > 0 { do dbr.delete(db,"movcuenta","sys_pk = @imovchequera",dcxp) }
+
+        r = dbr.execute(db,"update proveedor set saldo = (ifnull(saldo,0) - @haber + @debe) where sys_pk = @iproveedor",dcxp)
+        if r < 1 { do rise_error(500,"No se logró afectar el saldo del proveedor, revise sus datos") }
 
         do dbr.apps.action.pos(entity)
         do dbr.commit(db)
@@ -878,6 +892,7 @@ module "model"
             do rise_error(last_error_code(),last_error())
         }
     }
+
     prepare_filter::list
     {
         new record

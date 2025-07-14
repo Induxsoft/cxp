@@ -16,7 +16,8 @@ module "cxp.crear.dk"
     ref listDocumentos = ifnull(@("&./documentos"),list.create())
 
     // do rise_error(0,to.json(@("&.")))
-    @is_new = (@("$parameters/_entity_id") == "_new")
+    @_entity_id = @("$parameters/_entity_id")
+    @is_new = (@_entity_id == "_new")
     @DECIMAL_PRECISION = @("#parameters/decimals")
 
     num_step = "0."+padright("",(@DECIMAL_PRECISION-1),"0")+"1"
@@ -57,7 +58,7 @@ module "cxp.crear.dk"
         if not(@is_new)
         {
             #$
-            button(class="#<act_btn_cls>" type="button" id="btn_delete" onclick="documento.Delete();"){$"#<@ICON_TRASH> Eliminar"}
+            button(class="#<act_btn_cls>" type="button" id="btn_delete" onclick="documento.Delete(#<@_entity_id>);"){$"#<@ICON_TRASH> Eliminar"}
         }
         #$
         button(class="#<act_btn_cls> #<ifstr(@is_new,'','disable-ctrl')>" type="button" id="btn_save"){$"#<@ICON_SAVE> Guardar"}
@@ -69,7 +70,12 @@ module "cxp.crear.dk"
         @"title": ifstr(@is_new, "Nuevo", "Ver") + " documento por pagar"
         @"buttons*": print_buttons
         // @"urlexit": "javascript:window.history.back();"
-        member @"hidden" { @"print": @true }
+        member @"hidden"
+        {
+            @"print": @true
+            @"copy": @true
+            @"csv": @true
+        }
     }
     
     #$

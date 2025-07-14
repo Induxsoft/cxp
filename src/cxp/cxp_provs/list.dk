@@ -42,6 +42,7 @@ module "list.dk"
     new table_definition
     {
         @"datatable*": ifnull(@("&./data"),list.create())
+        @"tableheight": "96%"
         @"leyend": "Mostrando los primeros # proveedores ordenados por código"
         member @"columns"
         {

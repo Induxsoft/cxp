@@ -19,7 +19,8 @@ module "cxp.aplicar.dk"
 
     @DECIMAL_PRECISION = @("#./decimals")
     
-    url_exit = @CXP_DOCS
+    @_entity_id = @("$parameters/_entity_id")
+    url_exit = replace(@PDR_EDO_CTA,"@proveedor",@@(xaplicar,"#iproveedor"))
     show_tab = ""
 
     if @("$parameters/_act") == "desaplicar" { show_tab = "aplicados" }
@@ -27,10 +28,19 @@ module "cxp.aplicar.dk"
 
     if trim(@@(@_GET,"$url_back")) != "" { url_exit = url_dcode(@@(@_GET,"$url_back")) }
 
+    print_buttons::
+    {
+        cls = "btn btn-main-action btn-sm border-secondary induxsoft-corners"
+
+        #$
+        button(class="#<cls>" type="button" id="btn_delete" onclick="documento.Delete(#<@_entity_id>);"){$"#<@ICON_TRASH> Eliminar"}
+        #!
+    }
+    point buttons to print_buttons
     new nav_config
     {
         @"title": "Aplicación de pago o bonificación"
-        @"buttons*": @null //general_act
+        @"buttons*": buttons
         @"urlexit": "javascript:window.history.back()" //url_exit
     }
     
@@ -76,10 +86,11 @@ module "cxp.aplicar.dk"
     {
         div(id="top_area")
         {
-            // #! do uie.printMainBar(@null, "Aplicación de pago o bonificación a uno o más documentos", @false, url_exit)
-            #! do uie.printV12FormBar(nav_config)
+            #!
+            do uie.printV12FormBar(nav_config)
+            #$
         }
-        #$ div(id="work_area")
+        div(id="work_area")
         {
             form(action="./" method="GET" id="form_filter" class="no-print my-1")
             {
@@ -242,6 +253,7 @@ module "cxp.aplicar.dk"
             script(type="text/javascript")
             {$'
                 document.addEventListener("DOMContentLoaded", () => {
+                    documento.url_exit = "#<url_exit>";
                     documento.aplicar.source = #<to.json(xaplicar)> ?? {};
                     documento.aplicar.decimals = #<@DECIMAL_PRECISION>;
                     documento.aplicar.init();

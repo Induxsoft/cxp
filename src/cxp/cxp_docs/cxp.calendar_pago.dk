@@ -79,19 +79,19 @@ module ""
                     <div class="no-print">
                         ${ (DataRow.cod_status==1 && !DataRow.rechazado) ? `<a href="#<replace(@DOC_PAGOS,"@doc","${DataRow.sys_pk}")>" style="#<tbtn_style>">Pagar</a>` : ``}
                         ${ (DataRow.req_auth && DataRow.cod_status==99 && !DataRow.rechazado)
-                            ? `<button style="#<tbtn_style>" onclick="documento.AuthPago(${DataRow.saldo},${DataRow.sys_pk})">Autorizar</button>`
+                            ? `<button style="#<tbtn_style>" onclick="documento.calendario.AuthPago(${DataRow.saldo},${DataRow.sys_pk})">Autorizar</button>`
                             : ``
                         }
                         ${ (DataRow.req_auth && DataRow.cod_status==99 && !DataRow.rechazado)
-                            ? `<button style="#<tbtn_style>" onclick="documento.RechazarPago(${DataRow.sys_pk})">Rechazar</button>`
+                            ? `<button style="#<tbtn_style>" onclick="documento.calendario.RechazarPago(${DataRow.sys_pk})">Rechazar</button>`
                             : ``
                         }
                         ${ (DataRow.req_auth && DataRow.cod_status==2 && !DataRow.rechazado)
-                            ? `<button style="#<tbtn_style>" onclick="documento.AuthPago(${DataRow.saldo},${DataRow.sys_pk})">Confirmar</button>`
+                            ? `<button style="#<tbtn_style>" onclick="documento.calendario.AuthPago(${DataRow.saldo},${DataRow.sys_pk})">Confirmar</button>`
                             : ``
                         }
                         ${ (DataRow.req_auth && DataRow.rechazado)
-                            ? `<button style="#<tbtn_style>" onclick="documento.DesrechazarPago(${DataRow.sys_pk})">Revertir rechazo</button>`
+                            ? `<button style="#<tbtn_style>" onclick="documento.calendario.DesrechazarPago(${DataRow.sys_pk})">Revertir rechazo</button>`
                             : ``
                         }
                     </div>
@@ -105,7 +105,7 @@ module ""
                 @"template":ftext('
                     <div class="no-print">
                         ${ ((DataRow.cod_status==1 || DataRow.cod_status==2) && DataRow.can_des_auth && !DataRow.rechazado)
-                            ? `<button style="#<tbtn_style>" onclick="documento.DesautorizarPago(${DataRow.sys_pk})">Desautorizar</button>`
+                            ? `<button style="#<tbtn_style>" onclick="documento.calendario.DesautorizarPago(${DataRow.sys_pk})">Desautorizar</button>`
                             : ``
                         }
                         ${ ((DataRow.cod_status==2 || DataRow.cod_status==99) && !DataRow.rechazado)
@@ -147,12 +147,6 @@ module ""
         @"first_value":"*"
     }
     ref titles=@("&./titles")
-
-    template_pa=replace(@@(table_definition,"$columns/pa/template"),"`","@")
-    template_pa=replace(template_pa,"$","#")
-
-    template_depa=replace(@@(table_definition,"$columns/depa/template"),"`","@")
-    template_depa=replace(template_depa,"$","#")
     
     #$
     div(class="v12-list-view container-fluid" id="view")
@@ -178,7 +172,7 @@ module ""
             {
                 div(class="row")
                 {
-                    div(clasS="col-lg-6")
+                    div(clasS="col-auto")
                     {
                         label(class="fw-bold"){"Filtro:"}
                         "date-range"(id="filter_date"
@@ -189,7 +183,7 @@ module ""
                             end="#<al>"
                             "end-label"="Al:"){""}
                     }
-                    div(clasS="col-lg-2")
+                    div(clasS="col-auto")
                     {
                         label{"Estado:"}
                         #!
@@ -215,11 +209,11 @@ module ""
                     {
                         tr
                         {
-                            td{"#<format(@('#./totales/total'),@FMT_MONEY)>"}
-                            td{"#<format(@('#./totales/autorizado'),@FMT_MONEY)>"}
-                            td{"#<format(@('#./totales/rechazado'),@FMT_MONEY)>"}
-                            td{"#<format(@('#./totales/pagado'),@FMT_MONEY)>"}
-                            td{"#<format(@('#./totales/pendiente'),@FMT_MONEY)>"}
+                            td(id="td-total"){"#<format(@('#./totales/total'),@FMT_MONEY)>"}
+                            td(id="td-autorizados"){"#<format(@('#./totales/autorizado'),@FMT_MONEY)>"}
+                            td(id="td-rechazados"){"#<format(@('#./totales/rechazado'),@FMT_MONEY)>"}
+                            td(id="td-pagados"){"#<format(@('#./totales/pagado'),@FMT_MONEY)>"}
+                            td(id="td-pendientes"){"#<format(@('#./totales/pendiente'),@FMT_MONEY)>"}
                         }
                     }
                 }
@@ -261,98 +255,13 @@ module ""
                 script(src="#<@JS_DOCUMENTOS>"){""}
                 script(type="text/javascript")
                 {$'
-                    documento.url_calendar_pagos="#<@CALENDAR_PAGOS>";
-                    documento.consultar="#<@DOC_CONSULTAR>";
-                    documento.template_pa=`#<template_pa>`;
-                    documento.template_depa=`#<template_depa>`;
-                    documento.tr_selected=null;
-
-                    document.addEventListener("DOMContentLoaded",(e)=>
-                    {
-                        var sts=document.getElementById("sts");
-                        var divtable=document.getElementById("list_table_container");
-                        var table=document.getElementById("tbl_calendar_cxp");
-                        if(!documento.table)documento.table=table;
-
-                        // var parent=divtable.parentNode;
-                        // if(parent)parent.setAttribute("style","height: 90%;");
-
-                        var _global_data=null;
-                        table.onTdPaint=(td, row, col, field) =>
-                        {
-                            var data=table.DataArray[row];
-                            if(field!="f_prevpago" && data.edit_fprevpago)
-                            {
-                                td.style="background:#F5F5F5;color:black;"
-                            }
-                            else if (!data.edit_fprevpago)
-                            {
-                                td.style="background:#F5F5F5;color:black;"
-                            }
-
-                            if(field=="pa" || field=="depa")td.style="background:white;color:black;"
-                        };
-                        table.Events[table.EdiTable.Const.Events.EnterCell] = (e) =>
-                        {
-                            var data=table.DataArray[table.CurrentRowIndex()];
-                            documento.tr_selected=documento.table.GetTrByIndex(table.RowIndexOfTd(e.td));
-                            
-                            if(!data)return;
-
-                            if(data.edit_fprevpago)table.Columns[4]={type:table.EdiTable.Const.Columns.Types.Date, field:"f_prevpago"};
-                            else table.Columns[4]={type:table.EdiTable.Const.Columns.Types.NoEditable, field:"f_prevpago"};
-
-                            _global_data=data;
-                        }
-                        table.Events[table.EdiTable.Const.Events.ConfirmEdition] = (e) =>
-                        {
-                            let index=table.RowIndexOfTd(e.td);
-                            if(index < 1)return;
-
-                            var data=table.DataArray[index];
-                            if(!data)return;
-                        
-                            if((data.f_prevpago??"") != (e.text??"") && (e.text??"")!="")
-                            {
-                                let fecha_fprev=(data.f_prevpago??"");
-                                var request=
-                                {
-                                    f_prevpago:e.text,
-                                    change_data:true
-                                }
-
-                                let onSuccess=(data)=>
-                                {
-                                    
-                                }
-                                let onFailure=(failure)=>
-                                {
-                                    data["f_prevpago"]=fecha_fprev;
-                                    e.Cancel=true;
-                                    alert(failure.message??JSON.stringify(failure));
-                                    table._printRows();
-                                }
-                                let url=documento.url_calendar_pagos.replace("@doc",data.sys_pk);
-
-                                InduxsoftCrudlModel.InvokeService(url,request,onSuccess,onFailure,"PATCH",false,false);
-                            }
-                            
-                        }
+                    documento.calendario.tableId = "tbl_calendar_cxp";
+                    documento.calendario.url_calendar_pagos = "#<@CALENDAR_PAGOS>";
+                    documento.calendario.consultar = "#<@DOC_CONSULTAR>";
+                    documento.calendario.tr_selected = null;
+                    documento.calendario.decimals = #<@DECIMAL_PRECISION>;
                     
-                        table._printRows();
-
-                        var filter_date=document.getElementById("filter_date");
-                        if(filter_date._btnDone)filter_date._btnDone.addEventListener("click",()=>
-                        {
-                            document.getElementById("form_search").submit();
-                        });
-
-                        if(sts)sts.addEventListener("change",
-                        ()=>
-                        {
-                            document.getElementById("form_search").submit();
-                        });
-                    });
+                    document.addEventListener("DOMContentLoaded", () => { documento.calendario.init(); });
                 '}
             }
         }
