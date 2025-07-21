@@ -1053,34 +1053,13 @@ module "model"
     }
     cxp.Filter::&params,status
     {
-        sts=@@(params,"$sts")
-        if sts=="*"{return @true}
+        sts = @@(params,"$sts")
+        if sts == "*" { return @true }
 
-        nsts=parse.num(sts)
-        switch nsts
-        {
-            case 1 //por autorizar
-            {
-                if (status == 2 || status == 99) && status != 5 { return @true }
-            }
-            case 2 //Autorizados
-            {
-                if status == 1 { return @true }
-            }
-            case 3 //pagados
-            {
-                if status == 3 { return @true }
-            }
-            case 4 //Por pagar
-            {
-                if (status == 2 || status == 99 || status == 1) && status != 5 { return @true }
-            }
-            case 5 //Rechazado
-            {
-                return status == 5
-            }
-        }
-        return @false
+        nsts = parse.num(sts)
+        // 4:Por pagar = 1:Por confirmar | 2:Autorizado | 99:Pendiente
+        if nsts == 4 { return status==1 || status==2 || status==99 }
+        return status == nsts
     }
     cxp.CelendarioPagos::&db,&params
     {
@@ -1161,7 +1140,15 @@ module "model"
         query=query + " LIMIT 200"
         ref ldata=dbr.list(db,ftext(query),params)
        
-        ref totales=record.create()
+        new totales
+        {
+            @"total": 0
+            @"pendiente": 0
+            @"xconfirmar": 0
+            @"autorizado": 0
+            @"pagado": 0
+            @"rechazado": 0
+        }
 
         cxp_m_aut=parse.num(dbr.vars.get(db,"cxp_m_aut"))
         cxp_m_aut2=parse.num(dbr.vars.get(db,"cxp_m_aut2"))
@@ -1181,6 +1168,11 @@ module "model"
             {
                 case 1
                 {
+                    totales<"xconfirmar"> : @@(totales,"#xconfirmar") + @@(item,"#saldo")
+                    break
+                }
+                case 2
+                {
                     totales<"autorizado"> : @@(totales,"#autorizado") + @@(item,"#saldo")
                     break
                 }
@@ -1197,14 +1189,15 @@ module "model"
                 }
                 default { totales<"pendiente"> : @@(totales,"#pendiente") + @@(item,"#saldo") }
             }
+            totales<"total"> : @@(totales,"#total") + @@(item,"#saldo")
 
             if cxp.Filter(params,cod_status)
             {
                 item<"edit_fprevpago">:@true
                 item<"req_auth">:@true//if(@@(item,"#saldo") > cxp_m_aut || @@(item,"#saldo") > cxp_m_aut2,@true,@false)
 
-                if @@(item,"#saldo") > cxp_m_aut2{item<"two_auth">:@true}
-                else{item<"two_auth">:@false}
+                if cxp_m_aut2 > 0 && @@(item,"#saldo") > cxp_m_aut2 { item<"two_auth"> : @true }
+                else { item<"two_auth"> : @false }
                 
                 if (importe > cxp_m_aut && cxp_m_aut > 0) && (importe < cxp_m_aut2 && cxp_m_aut2 > 0 ) //caso 3
                 {
@@ -1228,8 +1221,6 @@ module "model"
                 do list.add(data,item)
             }
         }
-
-        totales<"total"> : @@(totales,"#autorizado") + @@(totales,"#rechazado") + @@(totales,"#pagado") + @@(totales,"#pendiente")
         
         new result
         {

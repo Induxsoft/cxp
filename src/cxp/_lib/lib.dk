@@ -230,19 +230,21 @@ module "lib.dk"
     }
     GetCodeStatusPago::&info_dcxp
     {
+        // "NO CAMBIAR LAS POSICIONES DE LOS IF" !IMPORTANT
         if @@(info_dcxp,"#rechazado") { return 5 }
         if @@(info_dcxp,"#pagado") { return 3 }
-        if @@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")==""{ return 2 } //pre-autorizado
-        if @@(info_dcxp,"#autorizado") || (@@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")!="") { return 1 } //autorizado
+        if @@(info_dcxp,"#autorizado") || (@@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")!="") { return 2 }
+        if @@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")==""{ return 1 }
         
-        return 99 //pendiente
+        return 99
     }
     GetStatusPago::&info_dcxp
     {
+        // "NO CAMBIAR LAS POSICIONES DE LOS IF" !IMPORTANT
         if @@(info_dcxp,"#rechazado") { return "Rechazado" }
         if @@(info_dcxp,"#pagado"){ return "Pagado" }
-        if @@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")=="" { return "Pre-autorizado" }
         if @@(info_dcxp,"#autorizado") || (@@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")!="") { return "Autorizado" }
+        if @@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")=="" { return "Pre-autorizado" }
         
         return "Pendiente"
     }

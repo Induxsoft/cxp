@@ -46,21 +46,22 @@ module ""
             member @"vencimiento"
             {
                 @"caption":"Vencimiento"
-                @"align": "end"
+                @"align": "center"
                 @"template":ftext('
-                    <div style="background:${(DataRow.vencido && DataRow.cod_status!= 3 ) ? "red":"" };width: 100%;">
+                    <div style="width:100%;${(DataRow.vencido && DataRow.cod_status!=3 ) ? "background:red;color:white;":"" }">
                         ${DataRow.fultmoratorios}
                     </div>
                 ')
             }
             member @"status"
             {
-                @"caption":"Status"
+                @"caption":"Estado"
                 @"align": "center"
             }
             member @"f_prevpago"
             {
                 @"caption":"F. P. Previsto"
+                @"align":"center"
             }
             member @"saldo"
             {
@@ -86,7 +87,7 @@ module ""
                             ? `<button style="#<tbtn_style>" onclick="documento.calendario.RechazarPago(${DataRow.sys_pk})">Rechazar</button>`
                             : ``
                         }
-                        ${ (DataRow.req_auth && DataRow.cod_status==2 && !DataRow.rechazado)
+                        ${ (DataRow.req_auth && DataRow.cod_status==1 && !DataRow.rechazado)
                             ? `<button style="#<tbtn_style>" onclick="documento.calendario.AuthPago(${DataRow.saldo},${DataRow.sys_pk})">Confirmar</button>`
                             : ``
                         }
@@ -195,7 +196,7 @@ module ""
 
             div(class="d-flex justify-content-center")
             {
-                table(class="table m-0")
+                table(class="table text-center m-0")
                 {
                     thead
                     {
@@ -204,6 +205,7 @@ module ""
                         th{"Rechazados"}
                         th{"Pagado"}
                         th{"Pendiente"}
+                        th{"Por confirmar"}
                     }
                     tbody
                     {
@@ -214,6 +216,7 @@ module ""
                             td(id="td-rechazados"){"#<format(@('#./totales/rechazado'),@FMT_MONEY)>"}
                             td(id="td-pagados"){"#<format(@('#./totales/pagado'),@FMT_MONEY)>"}
                             td(id="td-pendientes"){"#<format(@('#./totales/pendiente'),@FMT_MONEY)>"}
+                            td(id="td-xconfirmar"){"#<format(@('#./totales/xconfirmar'),@FMT_MONEY)>"}
                         }
                     }
                 }
@@ -249,6 +252,11 @@ module ""
         }
         section(id="bottom_area")
         {
+            div(class="d-flex justify-content-end gap-2")
+            {
+                span(class="fw-bold"){"Saldo total:"}
+                span(class="" id="saldo_total"){"#<format(@('#./totales/total'),@FMT_MONEY)>"}
+            }
             //////////////////////////////////////////////////////////////////
             div(id="_custom_area")
             {
@@ -260,6 +268,7 @@ module ""
                     documento.calendario.consultar = "#<@DOC_CONSULTAR>";
                     documento.calendario.tr_selected = null;
                     documento.calendario.decimals = #<@DECIMAL_PRECISION>;
+                    documento.calendario.saldos = #<to.json(@("&./totales"))>;
                     
                     document.addEventListener("DOMContentLoaded", () => { documento.calendario.init(); });
                 '}

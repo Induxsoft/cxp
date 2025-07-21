@@ -589,6 +589,7 @@ var documento =
 
     calendario: {
         tableId: "", table: null, decimals: 2,
+        saldos:{ total:0, autorizado:0, rechazado:0, pagado:0, pendiente:0, xconfirmar:0 },
 
         init()
         {
@@ -599,6 +600,8 @@ var documento =
             this.td_rechazados = document.getElementById("td-rechazados");
             this.td_pagados = document.getElementById("td-pagados");
             this.td_pendientes = document.getElementById("td-pendientes");
+            this.td_xconfirmar = document.getElementById("td-xconfirmar");
+            this.saldo_total = document.getElementById("saldo_total");
 
             this.table = document.getElementById(this.tableId);
             this.setTableEvents();
@@ -609,6 +612,8 @@ var documento =
             if (this.fil_status) this.fil_status.addEventListener("change", () => {
                 document.getElementById("form_search").submit();
             });
+
+            this.updateSummary();
         },
 
         setTableEvents()
@@ -686,28 +691,36 @@ var documento =
 
         AuthPago(saldo,sys_pk)
         {
-            let onSuccess=(data)=>
+            const onSuccess = (response) =>
             {
-                let index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
-                if (this.fil_status.value != '*') this.table.DeleteRow(index);
+                const DataRow = this.table.DataArray.find(row => row.sys_pk == sys_pk);
+                let oldStatus = DataRow.cod_status;
+                let newStatus = (DataRow.two_auth && DataRow.cod_status==99) ? 1 : 2;
+                
+                if (this.fil_status.value != '*')
+                {
+                    const index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
+                    this.table.DeleteRow(index);
+                }
                 else
                 {
-                    let DataRow = this.table.DataArray[index];
-                    let status = (DataRow.two_auth && DataRow.cod_status==99) ? 2 : 1;
-                    
-                    DataRow["cod_status"] = status;
-                    DataRow["status"] = this.GetTextStatus(status);
+                    DataRow["cod_status"] = newStatus;
+                    DataRow["status"] = this.GetTextStatus(newStatus);
                     DataRow["autorizado"] = true;
-                    
                     this.table._printRows();
                 }
-                this.updateSummary();
-                this.tr_selected=null;
-            }
-            let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
-            let url=this.consultar.replace("@doc",sys_pk);
 
-            var data=
+                this.updateSummary(DataRow.saldo, oldStatus, newStatus);
+                this.tr_selected=null;
+            };
+            const onFailure = (failure) =>
+            {
+                if (failure.message) alert(failure.message);
+                else console.error(failure);
+            };
+
+            let url = this.consultar.replace("@doc",sys_pk);
+            let data =
             {
                 importe:saldo,
                 auth:{authorizer:true}
@@ -716,25 +729,34 @@ var documento =
         },
         DesautorizarPago(sys_pk)
         {
-            let onSuccess=(data)=>
+            const onSuccess = (response) =>
             {
-                let index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
-                if (this.fil_status.value != '*') this.table.DeleteRow(index);
+                const DataRow = this.table.DataArray.find(row => row.sys_pk == sys_pk);
+                let oldStatus = DataRow.cod_status;
+                let newStatus = 99;
+
+                if (this.fil_status.value != '*')
+                {
+                    const index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
+                    this.table.DeleteRow(index);
+                }
                 else
                 {
-                    let DataRow = this.table.DataArray[index];
-                    let status = 99;
-
-                    DataRow["cod_status"] = status;
-                    DataRow["status"] = this.GetTextStatus(status);
+                    DataRow["cod_status"] = newStatus;
+                    DataRow["status"] = this.GetTextStatus(newStatus);
                     DataRow["autorizado"] = false;
-
                     this.table._printRows();
                 }
-                this.updateSummary();
+
+                this.updateSummary(DataRow.saldo, oldStatus, newStatus);
                 this.tr_selected=null;
-            }
-            let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
+            };
+            const onFailure = (failure) =>
+            {
+                if (failure.message) alert(failure.message);
+                else console.error(failure);
+            };
+
             let url = this.url_calendar_pagos.replace("@doc",sys_pk);
             url += "?_action=desautorizar-pago"
 
@@ -742,25 +764,34 @@ var documento =
         },
         RechazarPago(sys_pk)
         {
-            let onSuccess=(data)=>
+            const onSuccess = (response) =>
             {
-                let index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
-                if (this.fil_status.value != '*') this.table.DeleteRow(index);
+                const DataRow = this.table.DataArray.find(row => row.sys_pk == sys_pk);
+                let oldStatus = DataRow.cod_status;
+                let newStatus = 5;
+                
+                if (this.fil_status.value != '*')
+                {
+                    const index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
+                    this.table.DeleteRow(index);
+                }
                 else
                 {
-                    let DataRow = this.table.DataArray[index];
-                    let status = 5;
-
-                    DataRow["cod_status"] = status;
-                    DataRow["status"] = this.GetTextStatus(status);
+                    DataRow["cod_status"] = newStatus;
+                    DataRow["status"] = this.GetTextStatus(newStatus);
                     DataRow["rechazado"] = true;
-                    
                     this.table._printRows();
                 }
-                this.updateSummary();
+
+                this.updateSummary(DataRow.saldo, oldStatus, newStatus);
                 this.tr_selected=null;
-            }
-            let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
+            };
+            const onFailure = (failure) =>
+            {
+                if (failure.message) alert(failure.message);
+                else console.error(failure);
+            };
+
             let url = this.url_calendar_pagos.replace("@doc",sys_pk);
             url += "?_action=rechazar-pago"
 
@@ -768,25 +799,34 @@ var documento =
         },
         DesrechazarPago(sys_pk)
         {
-            let onSuccess=(data)=>
+            const onSuccess = (response) =>
             {
-                let index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
-                if (this.fil_status.value != '*') this.table.DeleteRow(index);
+                const DataRow = this.table.DataArray.find(row => row.sys_pk == sys_pk);
+                let oldStatus = DataRow.cod_status;
+                let newStatus = 99;
+                
+                if (this.fil_status.value != '*')
+                {
+                    const index = this.table.DataArray.findIndex(row => row.sys_pk == sys_pk);
+                    this.table.DeleteRow(index);
+                }
                 else
                 {
-                    let DataRow = this.table.DataArray[index];
-                    let status = 99;
-
-                    DataRow["cod_status"] = status;
-                    DataRow["status"] = this.GetTextStatus(status);
+                    DataRow["cod_status"] = newStatus;
+                    DataRow["status"] = this.GetTextStatus(newStatus);
                     DataRow["rechazado"] = false;
-                    
                     this.table._printRows();
                 }
-                this.updateSummary();
+
+                this.updateSummary(DataRow.saldo, oldStatus, newStatus);
                 this.tr_selected=null;
-            }
-            let onFailure=(failure)=>{alert(failure.message??JSON.stringify(failure));}
+            };
+            const onFailure = (failure) =>
+            {
+                if (failure.message) alert(failure.message);
+                else console.error(failure);
+            };
+            
             let url = this.url_calendar_pagos.replace("@doc",sys_pk);
             url += "?_action=desrechazar-pago"
 
@@ -806,26 +846,16 @@ var documento =
         },
         GetTextStatus(status)
         {
-            let text="";
-            switch (status) 
+            const descriptions =
             {
-                case 1:
-                    text="Autorizado";
-                    break;
-                case 2:
-                    text="Pre-autorizado";
-                    break;
-                case 3:
-                    text="Pagado";
-                    break;
-                case 5:
-                    text="Rechazado";
-                    break;
-                case 99:
-                    text="Pendiente";
-                break;
-            }
-            return text;
+                1:"Pre-autorizado",
+                2:"Autorizado",
+                3:"Pagado",
+                4:"Por pagar",
+                5:"Rechazado",
+                99:"Pendiente"
+            };
+            return descriptions[status] ?? "Desconocido";
         },
         GetCellByIndex(index)
         {
@@ -837,34 +867,44 @@ var documento =
             }
             return null;
         },
-        updateSummary()
+        updateBalance(saldo,status)
+        {
+            if (saldo == 0) return;
+            switch (status) {
+                case 1:
+                    this.saldos.xconfirmar += saldo;
+                    this.td_xconfirmar.textContent = "$ "+this.table._format(this.saldos.xconfirmar, this.decimals, true);
+                    break;
+                case 2:
+                    this.saldos.autorizado += saldo;
+                    this.td_autorizados.textContent = "$ "+this.table._format(this.saldos.autorizado, this.decimals, true);
+                    break;
+                case 3:
+                    this.saldos.pagado += saldo;
+                    this.td_pagados.textContent = "$ "+this.table._format(this.saldos.pagado, this.decimals, true);
+                    break;
+                case 5:
+                    this.saldos.rechazado += saldo;
+                    this.td_rechazados.textContent = "$ "+this.table._format(this.saldos.rechazado, this.decimals, true);
+                    break;
+                case 99:
+                    this.saldos.pendiente += saldo;
+                    this.td_pendientes.textContent = "$ "+this.table._format(this.saldos.pendiente, this.decimals, true);
+                    break;
+            }
+        },
+        updateSummary(saldo=0,oldStatus=0,newStatus=0)
         {
             let DataArray = this.table.DataArray;
-            let autorizados=0, rechazados=0, pagados=0, pendientes=0;
-
-            for (let i = 0; i < DataArray.length; i++) {
-                const cxp = DataArray[i];
-                
-                if (cxp.autorizado || (cxp.u_autorizo && cxp.u_autorizo2)) {
-                    autorizados = Math.add(autorizados, cxp.saldo);
-                }
-                else if (cxp.pagado) {
-                    pagados = Math.add(pagados, cxp.saldo);
-                }
-                else if (cxp.rechazado) {
-                    rechazados = Math.add(rechazados, cxp.saldo);
-                }
-                else {
-                    pendientes = Math.add(pendientes, cxp.saldo);
-                }
+            let saldos = DataArray.reduce((acc,cxp) => Math.add(acc,cxp.saldo), 0);
+            
+            if (oldStatus && newStatus)
+            {
+                this.updateBalance(saldo * (-1), oldStatus);
+                this.updateBalance(saldo, newStatus);
             }
             
-            let total = autorizados + rechazados + pagados + pendientes;
-            this.td_total.textContent = "$ "+this.table._format(total, this.decimals, true);
-            this.td_autorizados.textContent = "$ "+this.table._format(autorizados, this.decimals, true);
-            this.td_rechazados.textContent = "$ "+this.table._format(rechazados, this.decimals, true);
-            this.td_pagados.textContent = "$ "+this.table._format(pagados, this.decimals, true);
-            this.td_pendientes.textContent = "$ "+this.table._format(pendientes, this.decimals, true);
+            this.saldo_total.textContent = "$ "+this.table._format(saldos, this.decimals, true);
         },
     }
 }
