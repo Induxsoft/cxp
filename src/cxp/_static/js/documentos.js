@@ -595,6 +595,7 @@ var documento =
         {
             this.fil_date = document.getElementById("filter_date");
             this.fil_status = document.getElementById("sts");
+            this.fil_divisas = document.getElementById("dvs");
             this.td_total = document.getElementById("td-total");
             this.td_autorizados = document.getElementById("td-autorizados");
             this.td_rechazados = document.getElementById("td-rechazados");
@@ -610,6 +611,9 @@ var documento =
                 document.getElementById("form_search").submit();
             });
             if (this.fil_status) this.fil_status.addEventListener("change", () => {
+                document.getElementById("form_search").submit();
+            });
+            if (this.fil_divisas) this.fil_divisas.addEventListener("change", () => {
                 document.getElementById("form_search").submit();
             });
 
@@ -848,12 +852,12 @@ var documento =
         {
             const descriptions =
             {
-                1:"Pre-autorizado",
+                1:"Por confirmar",
                 2:"Autorizado",
                 3:"Pagado",
                 4:"Por pagar",
                 5:"Rechazado",
-                99:"Pendiente"
+                99:"Por autorizar"
             };
             return descriptions[status] ?? "Desconocido";
         },

@@ -131,6 +131,20 @@ module ""
     del=@("$parameters/del")
     al=@("$parameters/al")
 
+    new divisas
+    {
+        @"datatable*": ifnull(@("&./divisas"),list.create())
+        @"id": "dvs"
+        new member "attributes"
+        {
+            @"class": "induxsoft-form-select rounded-0 rounded-0"
+            @"name": "dvs"
+            @"required": ""
+        }
+        @"value_field": "sys_pk"
+        @"text_field": "descripcion"
+        @"selected": @("$parameters/dvs")
+    }
     new status
     {
         @"datatable*": ifnull(@("&./status"),list.create())
@@ -186,6 +200,13 @@ module ""
                     }
                     div(clasS="col-auto")
                     {
+                        label{"Divisa:"}
+                        #!
+                        do uie.dbSelect(divisas)
+                        #$
+                    }
+                    div(clasS="col-auto")
+                    {
                         label{"Estado:"}
                         #!
                         do uie.dbSelect(status)
@@ -204,7 +225,7 @@ module ""
                         th{"Autorizado"}
                         th{"Rechazados"}
                         th{"Pagado"}
-                        th{"Pendiente"}
+                        th{"Por autorizar"}
                         th{"Por confirmar"}
                     }
                     tbody

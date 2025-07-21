@@ -244,9 +244,9 @@ module "lib.dk"
         if @@(info_dcxp,"#rechazado") { return "Rechazado" }
         if @@(info_dcxp,"#pagado"){ return "Pagado" }
         if @@(info_dcxp,"#autorizado") || (@@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")!="") { return "Autorizado" }
-        if @@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")=="" { return "Pre-autorizado" }
+        if @@(info_dcxp,"$u_autorizo")!="" && @@(info_dcxp,"$u_autorizo2")=="" { return "Por confirmar" }
         
-        return "Pendiente"
+        return "Por autorizar"
     }
     limpiarTexto::texto
 	{
