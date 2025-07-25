@@ -182,24 +182,35 @@ module "model"
 
     cxp.prepareView::&db,&params,&data
     {
+        //#region prepareView()
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
         switch @@(params,"$_view")
         {
             case "bonificacion"
             {
-                // if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado") }
-
                 sql_documentos = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_bonific,0);"
 
                 data<"info_prov*"> : cxp.obtenerProveedor(db,@@(params,"_entity_id"))
                 data<"documentos*"> : dbr.list(db,sql_documentos,@null)
                 break
             }
+            case "devolucion"
+            {
+                sql_cuentas = "SELECT c.sys_pk, d.codigo AS divisa, d.tcambio, CONCAT(c.nombre,' (',d.codigo,')') nombre FROM chequera c INNER JOIN divisa d ON d.sys_pk = c.idivisa WHERE NOT IFNULL(c.sys_deleted,0) ORDER BY c.sys_pk;"
+                sql_categorias = "SELECT sys_pk,descripcion FROM categoria WHERE tipo = 1 AND NOT IFNULL(sys_deleted,0) ORDER BY sys_pk;"
+                sql_doc_cargos = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_int_mor,0);"
+                sql_doc_depositos = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_chq_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.depositos,0);"
+                
+                data<"proveedor*"> : cxp.obtenerProveedor(db,@@(params,"_entity_id"))
+                data<"cuentas*"> : dbr.list(db,sql_cuentas,@null)
+                data<"categorias*"> : dbr.list(db,sql_categorias,@null)
+                data<"doc_depositos*"> : dbr.list(db,sql_doc_depositos,@null)
+                data<"doc_cargos*"> : dbr.list(db,sql_doc_cargos,@null)
+                break
+            }
             case "pago"
             {
-                // if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado") }
-
                 sql_documentos = "SELECT doc.id, doc.const FROM cdocumentos AS doc INNER JOIN cfg_cxp_docs AS cfg ON cfg.documento = doc.id WHERE IFNULL(cfg.apl_pago,0);"
                 sql_cuentas = "SELECT c.sys_pk, d.codigo AS divisa, d.tcambio, CONCAT(c.nombre,' (',d.codigo,')') nombre FROM chequera c INNER JOIN divisa d ON d.sys_pk = c.idivisa WHERE NOT IFNULL(c.sys_deleted,0) ORDER BY c.sys_pk;"
                 sql_categorias = "SELECT sys_pk,descripcion FROM categoria WHERE tipo = 2 AND NOT IFNULL(sys_deleted,0) ORDER BY sys_pk;"
@@ -210,7 +221,6 @@ module "model"
                 data<"cuentas*"> : dbr.list(db,sql_cuentas,@null)
                 data<"categorias*"> : dbr.list(db,sql_categorias,@null)
                 data<"documentos_cuenta*"> : dbr.list(db,sql_documentos_retiro,@null)
-
                 break
             }
             case ""
@@ -289,9 +299,41 @@ module "model"
         }
     }
 
+    cxp.devolverEfectivo::&db,&params,&data
+    {
+        //#region devolverEfectivo()
+        @use_transaction = @false
+        do dbr.apps.action.pre("GC29")
+        do dbr.begin(db)
+
+        do erp.cxp.movimientos.devolverEfectivoProveedor(db,data)
+
+        do dbr.apps.action.pos(@null)
+        do dbr.commit(db)
+        do dbr.apps.action.ext(@null)
+
+        @url_redir = @CXP_PROVS
+        exception
+        {
+            do errordet(@false)
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+
+            ref formData = record.copy(data,"*")
+            code = last_error_code()
+            error = last_error()
+
+            do record.clear(data)
+            data<"form*"> : formData
+            
+            do cxp.prepareView(db,params,data)
+            do dbr.apps.action.log()
+            do rise_error(code,error)
+        }
+    }
+
     cxp.pagarProveedor::&db,&params,&data
     {
-        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_PAGO_PROVD)) { do rise_error(0,"No autorizado") }
+        //#region pagarProveedor()
         @use_transaction = @false
 
         do dbr.apps.action.pre("GC26")
@@ -325,7 +367,7 @@ module "model"
 
     cxp.bonificarProveedor::&db,&params,&data
     {
-        //if not(dbr.security.isauth(db,@CXP_SEC_PRIVID_BONIFICACION_PROVD)) { do rise_error(0,"No autorizado")}
+        //#region bonificarProveedor()
         @use_transaction = @false
 
         do dbr.apps.action.pre("GC27")
@@ -524,6 +566,7 @@ module "model"
 
     cxp.obtenerBalance::&db,&params
     {
+        //#region Balance()
         do dbr.apps.action.grant("GC23")
 
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
@@ -572,6 +615,7 @@ module "model"
 
     cxp.obtenerDocsPendientesDePago::&db,&params
     {
+        //#region DocsPorPagar()
         do dbr.apps.action.grant("GC24")
 
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
@@ -623,6 +667,7 @@ module "model"
 
     cxp.obtenerPagosPorAplicar::&db,&params
     {
+        //#region PagosPorAplicar()
         do dbr.apps.action.grant("GC25")
         
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
@@ -672,6 +717,7 @@ module "model"
 
     pdr.list::&db,&params
     {
+        //#region list()
         do dbr.apps.action.grant("GC20")
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
@@ -727,6 +773,7 @@ module "model"
 
     pdr.read::&db,&params
     {
+        //#region read()
         do dbr.apps.action.grant("GC20")
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
@@ -746,6 +793,7 @@ module "model"
 
     pdr.blank::&db,&params
     {
+        //#region blank()
         do dbr.apps.action.grant("GC20")
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
@@ -823,6 +871,7 @@ module "model"
 
     pdr.create::&db,&params,&data
     {
+        //#region create()
         @use_transaction = @false
         do dbr.apps.action.pre("GC21")
 
@@ -953,6 +1002,7 @@ module "model"
     }
     pdr.update::&db,&params,&data
     {
+        //#region update()
         @use_transaction = @false
         do dbr.apps.action.pre("GC22")
 

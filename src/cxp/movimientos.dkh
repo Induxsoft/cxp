@@ -502,6 +502,70 @@ module ":erp.cxp.movimientos"
         }
     }
 
+    devolverEfectivoProveedor::&db,&data
+    {
+        namespace "erp.cxp.movimientos"
+        start_transaction = @false
+
+        tcambio_pdr = @@(data,"#tcambio")
+        tcambio_dep = @@(data,"#tcambio_deposito")
+        
+        importe_pdr = @@(data,"#importe")
+        importe_dep = (importe_pdr * tcambio_pdr)
+        importe_dep = (importe_dep / tcambio_dep)
+
+        new deposito
+        {
+            @"conciliado": parse.bool(@@(data,"$conciliado"))
+            // @"beneficiario": @@(data,"$beneficiario")
+            @"referencia": @@(data,"$referencia")
+            @"fecha": @@(data,"$fecha")
+            @"faplicacion": @@(data,"$faplicacion")
+            @"importe": importe_dep
+            @"concepto": @@(data,"$notas")
+            @"documento": @@(data,"#documento_deposito")
+            @"icategoria": @@(data,"#categoria_ingreso")
+            @"icuenta": @@(data,"#cuenta_deposito")
+            // @"iproveedor": @@(data,"#iproveedor")
+        }
+
+        new dcxp
+        {
+            @"aplicable": @false
+            @"aplicacion": @@(data,"$faplicacion")
+            @"basecm": 0
+            @"documento": @@(data,"#documento_cargo")
+            @"fecha": @@(data,"$fecha")
+            @"fultmoratorios": @@(data,"$faplicacion")
+            @"notas": @@(data,"$notas")
+            @"referencia": @@(data,"$referencia")
+            @"tipocambio": @@(data,"#tcambio")
+            @"xaplicar": importe_pdr
+            @"iproveedor": @@(data,"#iproveedor")
+        }
+
+        if not(dbr.in_transaction(db)) {
+            do dbr.begin(db)
+            start_transaction = @true
+        }
+
+        // Realizar retiro a la cuenta.
+        dcxp<"imovchequera"> : erp.efectivo.movimientos.deposito(db,deposito)
+        // Generar documento por pagar (dcxp) y Afectar saldo del proveedor.
+        do determinarImporteCxP(dcxp,importe_pdr)
+        pk_dcxp = saveCxP(db,dcxp)
+
+        if start_transaction { do dbr.commit(db) }
+        return pk_dcxp
+
+        exception
+        {
+            do errordet(@false)
+            if start_transaction { do dbr.rollback(db) }
+            do rise_error(last_error_code(),last_error())
+        }
+    }
+
     pagarProveedor::&db,&data
     {
         namespace "erp.cxp.movimientos"

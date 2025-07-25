@@ -167,8 +167,7 @@ module "cxp.pago.dk"
                         div(class="col-6 text-end") {
                             input(
                                 class="form-control-plaintext induxsoft-num-field mw-100 py-0"
-                                type="number" name="" value="#<@@(info_dcxp,'#haber')>"
-                                disabled=""
+                                type="number" value="#<@@(info_dcxp,'#haber')>" id="capital" disabled=""
                                 "num-style"="currency"
                                 "num-currency"="#<@@(info_dcxp,'$divisa')>"
                                 "num-currency-display"="symbol"
@@ -183,8 +182,7 @@ module "cxp.pago.dk"
                         div(class="col-6 text-end") {
                             input(
                                 class="form-control-plaintext induxsoft-num-field mw-100 py-0"
-                                type="number" name="" value="#<@@(info_dcxp,'#intfinancieros')>"
-                                disabled=""
+                                type="number" value="#<@@(info_dcxp,'#intfinancieros')>" id="intfin" disabled=""
                                 "num-style"="currency"
                                 "num-currency"="#<@@(info_dcxp,'$divisa')>"
                                 "num-currency-display"="symbol"
@@ -199,8 +197,7 @@ module "cxp.pago.dk"
                         div(class="col-6 text-end") {
                             input(
                                 class="form-control-plaintext induxsoft-num-field mw-100 py-0"
-                                type="number" name="" value="#<@@(info_dcxp,'#intmoratorios')>"
-                                disabled=""
+                                type="number" value="#<@@(info_dcxp,'#intmoratorios')>" id="intmor" disabled=""
                                 "num-style"="currency"
                                 "num-currency"="#<@@(info_dcxp,'$divisa')>"
                                 "num-currency-display"="symbol"
@@ -215,8 +212,7 @@ module "cxp.pago.dk"
                         div(class="col-6 text-end") {
                             input(
                                 class="form-control-plaintext induxsoft-num-field mw-100 py-0"
-                                type="number" name="" value="#<@@(info_dcxp,'#bonificaciones')>"
-                                disabled=""
+                                type="number" value="#<@@(info_dcxp,'#bonificaciones')>" id="bonificaciones" disabled=""
                                 "num-style"="currency"
                                 "num-currency"="#<@@(info_dcxp,'$divisa')>"
                                 "num-currency-display"="symbol"
@@ -230,8 +226,7 @@ module "cxp.pago.dk"
                         div(class="col-6 text-end") {
                             input(
                                 class="form-control-plaintext induxsoft-num-field mw-100 py-0"
-                                type="number" name="" value="#<@@(info_dcxp,'#pagos')>"
-                                disabled=""
+                                type="number" value="#<@@(info_dcxp,'#pagos')>" id="pagos" disabled=""
                                 "num-style"="currency"
                                 "num-currency"="#<@@(info_dcxp,'$divisa')>"
                                 "num-currency-display"="symbol"
@@ -245,8 +240,7 @@ module "cxp.pago.dk"
                         div(class="col-6 text-end") {
                             input(
                                 class="form-control-plaintext induxsoft-num-field mw-100 py-0"
-                                type="number" name="" value="#<@@(info_dcxp,'#saldo')>"
-                                disabled=""
+                                type="number" value="#<@@(info_dcxp,'#saldo')>" id="saldo" disabled=""
                                 "num-style"="currency"
                                 "num-currency"="#<@@(info_dcxp,'$divisa')>"
                                 "num-currency-display"="symbol"

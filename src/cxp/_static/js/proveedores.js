@@ -575,6 +575,156 @@ var proveedor =
         },
     },
 
+    devolucion: {
+        formId: "", form: null, ff: null,
+        dtProv: {},
+        dvsPred: {},
+        decimals: 2,
+
+        init()
+        {
+            this.form = document.getElementById(this.formId);
+            this.ff = this.form.elements;
+            
+            this.setEvents();
+        },
+
+        setEvents()
+        {
+            if (!this.form) return;
+
+            this.ff["sel_cuenta_deposito"].addEventListener("change", (event) => {
+                let option = event.target.options[event.target.selectedIndex];
+                let codigo = option.getAttribute("data-divisa").toUpperCase();
+                let cambio = Number(option.getAttribute("data-tcambio"));
+
+                this.pedirTCambio();
+
+                this.ff["txt_tcambio_deposito"].value = Math.RoundTo(cambio, this.decimals);
+                proveedor.trigger(this.ff["txt_tcambio_deposito"],"change");
+            });
+            
+            this.ff["txt_tcambio_deposito"].addEventListener("change", (event) => {
+                let tcambio_ret = Number(event.target.value);
+                let tcambio_pdr = Number(this.ff["txt_tcambio"].value);
+                
+                let importe_pdr = Number(this.ff["txt_importe"].value);
+                let importe_ret = Math.mul(importe_pdr,tcambio_pdr);
+                importe_ret = Math.div(importe_ret,tcambio_ret);
+                
+                this.ff["txt_importe_deposito"].value = Math.RoundTo(importe_ret, this.decimals);
+            });
+            this.ff["txt_importe_deposito"].addEventListener("change", (event) => {
+                let tcambio_pdr = Number(this.ff["txt_tcambio"].value);
+                let tcambio_ret = Number(this.ff["txt_tcambio_deposito"].value);
+                
+                let importe_ret = Number(event.target.value);
+                let importe_pdr = Math.mul(importe_ret,tcambio_ret);
+                importe_pdr = Math.div(importe_pdr,tcambio_pdr);
+
+                this.ff["txt_importe"].value = Math.RoundTo(importe_pdr, this.decimals);
+            });
+
+            this.ff["txt_importe"].addEventListener("change", (event) => {
+                let tcambio_pdr = Number(this.ff["txt_tcambio"].value);
+                let tcambio_ret = Number(this.ff["txt_tcambio_deposito"].value);
+                
+                let importe_pdr = Number(event.target.value);
+                let importe_ret = Math.mul(importe_pdr,tcambio_pdr);
+                importe_ret = Math.div(importe_ret,tcambio_ret);
+
+                this.ff["txt_importe_deposito"].value = Math.RoundTo(importe_ret, this.decimals);
+            });
+
+            const btnSubmit = document.getElementById("btn-submit");
+            btnSubmit.addEventListener("click", (e) => proveedor.trigger(this.form,"submit"));
+        },
+
+        pedirTCambio(){
+            let optCtaR = this.ff["sel_cuenta_deposito"].options[this.ff["sel_cuenta_deposito"].selectedIndex];
+            let cDvsPred = (this.dvsPred.codigo).toUpperCase();
+            let cDvsProv = (this.dtProv.divisa).toUpperCase();
+            let cDvsCtaR = optCtaR.getAttribute("data-divisa").toUpperCase();
+
+            let hide_tcambio_ret = false;
+            let hide_importe_ret = false;
+            let hide_tcambio_pdr = false;
+
+            let div_tcambio_pdr = document.getElementById("div_tcambio");
+            let txt_tcambio_pdr = document.getElementById("txt_tcambio");
+            let txt_importe_pdr = document.getElementById("txt_importe");
+
+            let div_tcambio_ret = document.getElementById("div_tcambio_deposito");
+            let div_importe_ret = document.getElementById("div_importe_deposito");
+            let txt_tcambio_ret = document.getElementById("txt_tcambio_deposito");
+            let spn_tcambio_ret = document.getElementById("spn_tcambio_deposito");
+            let txt_importe_ret = document.getElementById("txt_importe_deposito");
+            let spn_importe_ret = document.getElementById("spn_importe_deposito");
+
+            if (cDvsPred == cDvsProv && cDvsPred == cDvsCtaR)
+            {
+                txt_tcambio_pdr.value = 1;
+                txt_tcambio_ret.value = 1;
+
+                hide_tcambio_pdr = true;
+                hide_tcambio_ret = true;
+                hide_importe_ret = true;
+            }
+            else if (cDvsPred != cDvsProv && cDvsProv == cDvsCtaR)
+            {
+                let tcambio_pdr = Number(txt_tcambio_pdr.value);
+
+                txt_tcambio_pdr.value = (tcambio_pdr <= 0) ? Number(this.dtProv.tcambio) : tcambio_pdr;
+                txt_tcambio_ret.value = (tcambio_pdr <= 0) ? Number(this.dtProv.tcambio) : tcambio_pdr;
+
+                hide_tcambio_ret = true;
+                hide_importe_ret = true;
+            }
+            else if (cDvsPred == cDvsProv && cDvsPred != cDvsCtaR)
+            {
+                let tcambio_ret = Number(txt_tcambio_ret.value);
+
+                txt_tcambio_pdr.value = 1;
+                txt_tcambio_ret.value = (tcambio_ret <= 0) ? Number(optCtaR.getAttribute("data-tcambio")) : tcambio_ret;
+                
+                spn_tcambio_ret.innerText = cDvsPred + " = 1 " + cDvsCtaR;
+                spn_importe_ret.innerText = cDvsCtaR;
+
+                hide_tcambio_pdr = true;
+            }
+            else if (cDvsPred != cDvsProv && cDvsPred == cDvsCtaR)
+            {
+                let tcambio_pdr = Number(txt_tcambio_pdr.value);
+
+                txt_tcambio_pdr.value = (tcambio_pdr <= 0) ? Number(this.dtProv.tcambio) : tcambio_pdr;
+                txt_tcambio_ret.value = 1;
+
+                spn_tcambio_ret.innerText = cDvsPred + " = 1 " + cDvsCtaR;
+                spn_importe_ret.innerText = cDvsCtaR;
+
+                hide_tcambio_ret = true;
+            }
+            else if (cDvsPred != cDvsProv && cDvsPred != cDvsCtaR)
+            {
+                let tcambio_pdr = Number(txt_tcambio_pdr.value);
+                let tcambio_ret = Number(txt_tcambio_ret.value);
+
+                txt_tcambio_pdr.value = (tcambio_pdr <= 0) ? Number(this.dtProv.tcambio) : tcambio_pdr;
+                txt_tcambio_ret.value = (tcambio_ret <= 0) ? Number(optCtaR.getAttribute("data-tcambio")) : tcambio_ret;
+                
+                spn_tcambio_ret.innerText = cDvsPred + " = 1 " + cDvsCtaR;
+                spn_importe_ret.innerText = cDvsCtaR;
+            }
+
+            txt_importe_pdr.value = Number(txt_importe_pdr.value);
+            txt_importe_ret.value = Number(txt_importe_ret.value);
+
+            div_tcambio_ret.classList.toggle("d-none",hide_tcambio_ret);
+            div_importe_ret.classList.toggle("d-none",hide_importe_ret);
+            div_tcambio_pdr.classList.toggle("d-none",hide_tcambio_pdr);
+        },
+    },
+
     bonificacion: {
         formBonificacion: null,
         elements: null,

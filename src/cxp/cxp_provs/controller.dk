@@ -31,6 +31,13 @@ module "controller"
             @form_view = "cxp.bonificacion.dk"
             break
         }
+        case "devolucion"
+        {
+            point @read to pdr.blank
+            point @update to cxp.devolverEfectivo
+            @form_view = "cxp.devolucion.dk"
+            break
+        }
         case "pago"
         {
             point @read to pdr.blank

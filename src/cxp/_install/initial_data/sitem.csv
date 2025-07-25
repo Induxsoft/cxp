@@ -40,6 +40,7 @@ GC25,Pagos por aplicar del proveedor,cxp.proveedores
 GC26,Pago a proveedor,cxp.proveedores
 GC27,Bonificación a proveedor,cxp.proveedores
 GC28,Importar proveedores,cxp.proveedores
+GC29,Devolución de efectivo a proveedor,cxp.proveedores
 cxp.reports,Informes de Cuentas por Pagar,cxp
 GC41,Informe de antigüedad de saldos por pagar,cxp.reports
 GC42,Origen y aplicación,cxp.reports

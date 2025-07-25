@@ -7,6 +7,7 @@ GC14,Bonificar documento,Bonificar,,/!/cxp/documentos/@_src_context_item_id/boni
 GC15,Aplicar intereses moratorios a documento por pagar,Int. Moratorios,,/!/cxp/documentos/@_src_context_item_id/intmoratorios/,0,cxp.documentos,DET01E,1,action
 GC16,Aplicar abonos a documentos por pagar,Aplicar abonos,,/!/cxp/documentos/@_src_context_item_id/aplicar/?_act=aplicar,0,cxp.documentos,DET01E,1,action
 GC17,Desaplicar abonos de documentos por pagar,Desaplicar abonos,,/!/cxp/documentos/@_src_context_item_id/aplicar/?_act=desaplicar,0,cxp.documentos,DET01E,1,action
+
 GC21,Nuevo proveedor,Agregar,,/!/cxp/proveedores/_new/,0,cxp.proveedores,DET03F,0,action
 GC22,Editar proveedor,Editar,,/!/cxp/proveedores/@_src_context_item_id/,0,cxp.proveedores,DET03F,1,action
 GC23,Estado de cuenta del proveedor,Edo. Cuenta,,/!/cxp/proveedores/@_src_context_item_id/balance/,0,cxp.proveedores,DET03F,1,action
@@ -15,16 +16,19 @@ GC25,Pagos por aplicar del proveedor,Por aplicar,,/!/cxp/proveedores/@_src_conte
 GC26,Pago a proveedor,Pagar,,/!/cxp/proveedores/@_src_context_item_id/pago/,0,cxp.proveedores,DET03F,1,action
 GC27,Bonificación a proveedor,Bonificar,,/!/cxp/proveedores/@_src_context_item_id/bonificacion/,0,cxp.proveedores,DET03F,1,action
 GC28,Importar proveedores,Importar,,/!/batch/taskman/GC/importar.proveedor/,0,cxp.proveedores,DET03F,0,action
+GC29,Devolución de efectivo a proveedor,Devolución,,/!/cxp/proveedores/@_src_context_item_id/devolucion/,0,cxp.proveedores,DET03F,1,action
+
 GC31,Agregar gasto,Agregar,,/!/cxp/gastos/_new/,0,cxp.gastos,DET024,0,action
 GC32,Consultar gasto,Consultar,,/!/cxp/gastos/@_src_context_item_id/,0,cxp.gastos,DET024,1,action
+
 GC41,Informe de antigüedad de saldos por pagar,Antigüedad de saldos,,/!/cxp/reports/antiguedad-saldos/,0,cxp.reports,DET03F,0,report
 GC42,Origen y aplicación,Origen y aplicación,,/!/cxp/reports/origen-aplicacion/,0,cxp.reports,DET01E,0,report
 GC43,Historial de pagos por proveedor,HPagos XProveedor,,/!/cxp/reports/historial-pagos-proveedor/,0,cxp.reports,DET03F,0,report
+
 GC50,Ver calendario de pagos autorizados,Calendario de pagos,,/!/cxp/documentos/calendar_pagos/,0,cxp.documentos,DET01E,0,action
 
 GCF0,Importar movimientos iniciales por pagar,"Importar",,/!/batch/taskman/GC/importar.documentos/,0,cxp.documentos,DET01E,0,action
 GCF1,Podar movimientos por pagar,"Podar",,/!/batch/taskman/GC/podar.documentos/,0,cxp.documentos,DET01E,0,action
 GCF2,Limpiar movimientos por pagar,"Limpiar",,/!/batch/taskman/GC/limpiar.documentos/,0,cxp.documentos,DET01E,0,action
-
 GCF3,Podar gastos,"Podar",,/!/batch/taskman/GC/podar.gastos/,0,cxp.gastos,DET024,0,action
 GCF4,Limpiar gastos,"Limpiar",,/!/batch/taskman/GC/limpiar.gastos/,0,cxp.documentos,DET024,0,action
