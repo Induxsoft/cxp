@@ -275,7 +275,13 @@ module "model"
         @use_transaction = @false
 
         do dbr.apps.action.pre("GC31")
-        do dbr.begin(db)
+        in_transaction=@false
+        if not(dbr.in_transaction(db))
+        {
+            do dbr.begin(db)
+            in_transaction=@true
+        }
+        
 
         new p{@"referencia":@@(data,"$referencia")}
         if trim(@@(data,"$referencia"))==""{do rise_error(500,"Debe indicar una referencia")}
@@ -329,9 +335,10 @@ module "model"
         
         // do SaveAdjuntos(db,params,gasto)
         do webshell.detlog.files.save("DET024",@@(entity,"$sys_guid"))
-
         do dbr.apps.action.pos(@null)
-        do dbr.commit(db)
+        
+        if in_transaction{do dbr.commit(db)}
+        
         do dbr.apps.action.ext(@null)
 
         return entity
@@ -355,6 +362,7 @@ module "model"
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
         do ut.evaluateListFilters(params)
+        
         new data
         {
             @"data*": entity.list(db,params)
