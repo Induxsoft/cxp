@@ -494,7 +494,7 @@ module "form.dk"
                     #<@@(@crud_context,"script")>
 
                     _bitacora._url="#<replace(@URL_BITACORA,"@det",@_DET_GASTO)>";
-                    _bitacora.EnableLog("#<@("$./sys_guid")>");
+                    if(#<@("#./sys_pk")>>0)_bitacora.EnableLog("#<@("$./sys_guid")>");
                 });
             '}
         }

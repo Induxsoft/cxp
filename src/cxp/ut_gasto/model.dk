@@ -314,6 +314,17 @@ module "model"
         
         ref entity = entity.create(db,params,gasto)
         
+        if trim(@@(data,"$sys_guid"))!=""
+        {
+            new p
+            {
+                @"sys_guid":trim(@@(data,"$sys_guid"))
+                @"gasto":@@(entity,"#sys_pk")
+            }
+            //esto porque el entity.create -> dbr.save marca error cuando se le envia una sys_guid, no se pudo actualizar la entidad
+            do dbr.execute(db,"update ut_gasto set sys_guid=@sys_guid where sys_pk=@gasto",p)
+        }
+
         if @@(data,"#formapago")==@fp_credito
         {
             igasto=@@(entity,"#sys_pk") //dbr.num(db,"select sys_pk from ut_gasto where sys_guid=@sys_guid",gasto)
@@ -431,6 +442,8 @@ module "model"
         do dbr.apps.action.grant("GC30")
 
         new data{}
+        if trim(@@(params,"$_context"))!=""{ref data=from.json(url_dcode(@@(params,"$_context")))}
+
         do ut.prepareView(db,params,data)
         do ut.data(db,data)
         return data
