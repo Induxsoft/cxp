@@ -1,7 +1,7 @@
 [
     {
         "det":"DET024",
-        "query":"select g.sys_pk id, trim(g.fecha)fecha, g.referencia, g.total,d.codigo divisa, d.tcambio from ut_gasto g inner join divisa d on g.idivisa=d.sys_pk where g.imovchequera=@key",
+        "query":"select g.sys_pk id, trim(g.fecha)fecha, g.referencia, g.total importe,d.codigo divisa, d.tcambio from ut_gasto g inner join divisa d on g.idivisa=d.sys_pk where g.imovchequera=@key",
         "c_divisa":"divisa",
         "c_tcambio":"tcambio",
         "c_fecha":"fecha",
@@ -10,7 +10,7 @@
     },
     {
         "det":"DET01E",
-        "query":"select d.sys_pk id, trim(d.fecha)fecha, d.referencia, d.debe importe,dvs.codigo divisa, dvs.tcambio from dcxp d INNER JOIN proveedor p ON d.iproveedor=p.sys_pk inner join divisa dvs ON p.idivisa=dvs.sys_pk where d.imovchequera=@key",
+        "query":"select d.sys_pk id, trim(d.fecha)fecha, d.referencia, if(IFNULL(d.debe,0)>0,d.debe,d.haber) importe,dvs.codigo divisa, dvs.tcambio from dcxp d INNER JOIN proveedor p ON d.iproveedor=p.sys_pk inner join divisa dvs ON p.idivisa=dvs.sys_pk where d.imovchequera=@key",
         "c_divisa":"divisa",
         "c_tcambio":"tcambio",
         "c_fecha":"fecha",
