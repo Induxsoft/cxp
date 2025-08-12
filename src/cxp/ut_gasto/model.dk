@@ -50,6 +50,7 @@ module "model"
         ut.concepto,
         ROUND(IFNULL(ut.total,0),@decimals) total,
         dvs.codigo AS divisa,
+        dvs.sys_pk AS id_divisa,
         ROUND(ut.tipocambio,@decimals) tcambio,
         edo.const AS edo_admin,
         fpg.const AS formapago,

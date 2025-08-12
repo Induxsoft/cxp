@@ -205,7 +205,7 @@ module "form.dk"
                                 }
                                 @"value_field": "sys_pk"
                                 @"text_field": "divisa"
-                                @"selected": @("$input/divisa")
+                                @"selected": @("$./id_divisa")
                             }
                             do uie.dbSelect(params)
                         }
