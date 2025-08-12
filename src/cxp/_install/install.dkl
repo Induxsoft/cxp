@@ -97,6 +97,7 @@ program "instalador"
             ut.subtotal,
             IFNULL(ut.total,0) AS total,
             dvs.codigo AS divisa,
+            dvs.tcambio dvs_tcambio,
             ut.tipocambio AS tcambio,
             edo.const AS edo_admin,
             fpg.const AS formapago
@@ -124,6 +125,7 @@ program "instalador"
             ut.subtotal,
             IFNULL(ut.total,0) AS total,
             dvs.codigo AS divisa,
+            dvs.tcambio dvs_tcambio,
             ut.tipocambio AS tcambio,
             edo.const AS edo_admin,
             fpg.const AS formapago
@@ -162,6 +164,7 @@ program "instalador"
             ut.subtotal,
             IFNULL(ut.total,0) AS total,
             dvs.codigo AS divisa,
+            dvs.tcambio dvs_tcambio,
             ut.tipocambio AS tcambio,
             edo.const AS edo_admin,
             fpg.const AS formapago
@@ -189,6 +192,7 @@ program "instalador"
             ut.subtotal,
             IFNULL(ut.total,0) total,
             dvs.codigo AS divisa,
+            dvs.tcambio dvs_tcambio,
             ut.tipocambio AS tcambio,
             edo.const AS edo_admin,
             fpg.const AS formapago
