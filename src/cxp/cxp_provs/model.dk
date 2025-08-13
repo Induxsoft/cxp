@@ -306,6 +306,7 @@ module "model"
         do dbr.apps.action.pre("GC29")
         do dbr.begin(db)
 
+        do cxp.movimiento.relacionable.validate(db,params,data)
         do erp.cxp.movimientos.devolverEfectivoProveedor(db,data)
 
         do dbr.apps.action.pos(@null)
@@ -335,10 +336,11 @@ module "model"
     {
         //#region pagarProveedor()
         @use_transaction = @false
-
+        
         do dbr.apps.action.pre("GC26")
         do dbr.begin(db)
 
+        do cxp.movimiento.relacionable.validate(db,params,data)
         do erp.cxp.movimientos.pagarProveedor(db,data)
 
         do dbr.apps.action.pos(@null)
@@ -364,7 +366,45 @@ module "model"
             do rise_error(code,error)
         }
     }
+    cxp.movimiento.relacionable.validate::&db,&params,&data
+    {
+        if parse.bool(@@(data,"$selectmovcuenta")){if @@(data,"#_imovcuenta") < 1{do rise_error(500,"No ha seleccionado un movimiento de cuenta")}}
+        else
+        {
+            switch @@(params,"$_view")
+            {
+                case "pago"
+                {
+                    if @@(data,"#cuenta_retiro") < 1{do rise_error(500,"No ha seleccionado una cuenta")}
+                    if @@(data,"#categoria_retiro") < 1{do rise_error(500,"No ha seleccionado una categoría")}
+                    if @@(data,"#documento_retiro") < 1{do rise_error(500,"No ha seleccionado un documento de retiro")}
+                    break
+                }
+                case "devolucion"
+                {
+                    if @@(data,"#cuenta_deposito") < 1{do rise_error(500,"No ha seleccionado una cuenta")}
+                    if @@(data,"#categoria_ingreso") < 1{do rise_error(500,"No ha seleccionado una categoría")}
+                    if @@(data,"#documento_deposito") < 1{do rise_error(500,"No ha seleccionado un documento de retiro")}
+                    break
+                }
+            }
+            
+        }
+        if @@(data,"#_imovcuenta") > 0
+        {
+            data<"_cuenta*">:dbr.rec(db,"select sys_pk,referencia from movcuenta where sys_pk=@_imovcuenta",data)
+            ref proveedor=dbr.rec(db,"select d.codigo as divisa,d.tcambio 
+                            from proveedor p
+                            INNER JOIN divisa d on p.idivisa=d.sys_pk
+                            where p.sys_pk=@iproveedor",data)
+            if isnull(proveedor){do rise_error(500,"No se encontró el proveedor indicado")}
 
+            if not(erp.efectivo.movimientos.relacionable(db,@@(data,"#_imovcuenta"),trim(@@(proveedor,"$divisa")),@@(data,"#importe"),@@(data,"#tcambio")))
+            {
+                do rise_error(500,"No se puede relacionar el movimiento de cuenta")
+            }
+        }
+    }
     cxp.bonificarProveedor::&db,&params,&data
     {
         //#region bonificarProveedor()

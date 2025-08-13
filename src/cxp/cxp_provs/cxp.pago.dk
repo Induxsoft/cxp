@@ -121,91 +121,6 @@ module "cxp.pago.dk"
                             $"#<@@(dtprov,'$divisa')>"
                         }
                     }
-
-                    hr{}
-
-                    h6(class="tex-no-break m-0 position-absolute"){$"Información bancaria"}
-
-                    div(class="row d-flex justify-content-end align-items-center")
-                    {
-                        label(class="col-auto col-form-label" "for"="sel_cuenta_retiro"){$"Cuenta:"}
-                        div(class="col-6") {
-                            ##
-                            do uie.dbSelect(sel_cuenta_retiro)
-                            ##
-                        }
-                    }
-
-                    div(class="row d-flex justify-content-end align-items-center")
-                    {
-                        label(class="col-auto col-form-label" "for"="txt_beneficiario"){$"Beneficiario:"}
-                        div(class="col-6") {
-                            input(type="text" class="form-control form-control-sm rounded-0" name="beneficiario" id="txt_beneficiario" value="#<@@(dtprov,'$nombre')>")
-                        }
-                    }
-
-                    div(class="row d-flex justify-content-end align-items-center")
-                    {
-                        label(class="col-auto col-form-label" "for"="sel_categoria_retiro"){$"Categoria:"}
-                        div(class="col-6") {
-                            ##
-                            do uie.dbSelect(sel_categoria_retiro)
-                            ##
-                        }
-                    }
-
-                    div(class="row d-flex justify-content-end align-items-center")
-                    {
-                        label(class="col-auto col-form-label" "for"="sel_documento_retiro"){$"Documento Retiro:"}
-                        div(class="col-6") {
-                            ##
-                            do uie.dbSelect(sel_documento_retiro)
-                            ##
-                        }
-                    }
-
-                    div(class="row d-flex justify-content-end align-items-center d-none" id="div_tcambio_retiro")
-                    {
-                        label(class="col-auto col-form-label" "for"="txt_tcambio_retiro"){$"Tipo de cambio:"}
-                        div(class="col-6") {
-                            div(class="input-group input-group-sm") {
-                                input(
-                                    class="form-control rounded-0 induxsoft-num-field mw-100"
-                                    type="number" name="tcambio_retiro" value="#<form('tcambio_retiro','nm',@null)>" id="txt_tcambio_retiro"
-                                    step="#<num_step>" min="1" max="#<num_max>" required="true"
-                                    "num-decs"="#<@DECIMAL_PRECISION>"
-                                )
-                                span(class="input-group-text rounded-0" id="spn_tcambio_retiro"){$"#<cDIVISA_PRED>"}
-                            }
-                        }
-                    }
-
-                    div(class="row d-flex justify-content-end align-items-center d-none" id="div_importe_retiro")
-                    {
-                        label(class="col-auto col-form-label" "for"="txt_importe_retiro"){$"Importe:"}
-                        div(class="col-6") {
-                            div(class="input-group input-group-sm"){
-                                input(
-                                    class="form-control rounded-0 induxsoft-num-field mw-100"
-                                    type="number" name="importe_retiro" value="#<form('importe_retiro','nm',@null)>" id="txt_importe_retiro"
-                                    step="#<num_step>" min="1" max="#<num_max>"
-                                    "num-decs"="#<@DECIMAL_PRECISION>"
-                                )
-                                span(class="input-group-text rounded-0" id="spn_importe_retiro"){$""}
-                            }
-                        }
-                    }
-
-                    div(class="row d-flex justify-content-end align-items-center")
-                    {
-                        div(class="col-6") {
-                            div(class="form-check") {
-                                input(class="form-check-input" type="checkbox" name="conciliado" id="ch_conciliado" checked="checked")
-                                label(class="form-check-label" "for"="ch_conciliado"){$"Conciliado"}
-                            }
-                        }
-                    }
-
                     hr{}
 
                     div(class="row d-flex justify-content-end align-items-center")
@@ -286,6 +201,119 @@ module "cxp.pago.dk"
                                 if concepto == "" { concepto = "Pago a: [" + @@(dtprov,'$codigo') + "] " + @@(dtprov,'$nombre') }
                                 #$
                                 $"#<concepto>"
+                            }
+                        }
+                    }
+                    hr{}
+
+                    div(class="d-flex" style="justify-content: space-around;")
+                    {
+                        h6(class="tex-no-break m-0 fw-bold"){$"Información bancaria"}
+                        div(class="gap-2 d-flex")
+                        {
+                            input(type="checkbox" class="form-check-input" id="selectmovcuenta" name="selectmovcuenta" "#<ifstr(parse.bool(form('selectmovcuenta','tx',@null)),'checked','' )>"="true")
+                            label(class="form-check-label fw-bold" "for"="selectmovcuenta"){"Seleccionar cuenta"}
+                        }
+                    }
+                    
+                    div(id="select_movcuenta" class="d-none")
+                    {
+                        div(class="row d-flex justify-content-end align-items-center mt-2")
+                        {
+                            div(class="col-10")
+                            {
+                                label(class="col-auto col-form-label" "for"="sel_cuenta_retiro"){$"Movimiento de cuenta:"}
+                                "input-key"(name="_imovcuenta" 
+                                id="imovcuenta" 
+                                "data-key"="sys_pk" 
+                                "data-search"="sys_pk" 
+                                "data-text"="referencia" 
+                                "data-source"="#<@efectivo_retiro>" 
+                                "data-value"="#<to.json(ifnull(@('&./form/_cuenta'),record.create()))>" 
+                                columns="sys_pk,referencia,importe_str,divisa,tcambio,beneficiario,categoria,notas" 
+                                colcaptions="ID,Referencia,Importe,Divisa,T.C.,Beneficiario,Categoría,Notas"){$""}
+                            }
+                        }
+                    }
+                    div(id="create_movcuenta")
+                    {
+                        div(class="row d-flex justify-content-end align-items-center")
+                        {
+                            label(class="col-auto col-form-label" "for"="sel_cuenta_retiro"){$"Cuenta:"}
+                            div(class="col-6") {
+                                ##
+                                do uie.dbSelect(sel_cuenta_retiro)
+                                ##
+                            }
+                        }
+
+                        div(class="row d-flex justify-content-end align-items-center")
+                        {
+                            label(class="col-auto col-form-label" "for"="txt_beneficiario"){$"Beneficiario:"}
+                            div(class="col-6") {
+                                input(type="text" class="form-control form-control-sm rounded-0" name="beneficiario" id="txt_beneficiario" value="#<@@(dtprov,'$nombre')>")
+                            }
+                        }
+
+                        div(class="row d-flex justify-content-end align-items-center")
+                        {
+                            label(class="col-auto col-form-label" "for"="sel_categoria_retiro"){$"Categoria:"}
+                            div(class="col-6") {
+                                ##
+                                do uie.dbSelect(sel_categoria_retiro)
+                                ##
+                            }
+                        }
+
+                        div(class="row d-flex justify-content-end align-items-center")
+                        {
+                            label(class="col-auto col-form-label" "for"="sel_documento_retiro"){$"Documento Retiro:"}
+                            div(class="col-6") {
+                                ##
+                                do uie.dbSelect(sel_documento_retiro)
+                                ##
+                            }
+                        }
+
+                        div(class="row d-flex justify-content-end align-items-center d-none" id="div_tcambio_retiro")
+                        {
+                            label(class="col-auto col-form-label" "for"="txt_tcambio_retiro"){$"Tipo de cambio:"}
+                            div(class="col-6") {
+                                div(class="input-group input-group-sm") {
+                                    input(
+                                        class="form-control rounded-0 induxsoft-num-field mw-100"
+                                        type="number" name="tcambio_retiro" value="#<form('tcambio_retiro','nm',@null)>" id="txt_tcambio_retiro"
+                                        step="#<num_step>" min="1" max="#<num_max>"
+                                        "num-decs"="#<@DECIMAL_PRECISION>"
+                                    )
+                                    span(class="input-group-text rounded-0" id="spn_tcambio_retiro"){$"#<cDIVISA_PRED>"}
+                                }
+                            }
+                        }
+
+                        div(class="row d-flex justify-content-end align-items-center d-none" id="div_importe_retiro")
+                        {
+                            label(class="col-auto col-form-label" "for"="txt_importe_retiro"){$"Importe:"}
+                            div(class="col-6") {
+                                div(class="input-group input-group-sm"){
+                                    input(
+                                        class="form-control rounded-0 induxsoft-num-field mw-100"
+                                        type="number" name="importe_retiro" value="#<form('importe_retiro','nm',@null)>" id="txt_importe_retiro"
+                                        step="#<num_step>" min="1" max="#<num_max>"
+                                        "num-decs"="#<@DECIMAL_PRECISION>"
+                                    )
+                                    span(class="input-group-text rounded-0" id="spn_importe_retiro"){$""}
+                                }
+                            }
+                        }
+
+                        div(class="row d-flex justify-content-end align-items-center")
+                        {
+                            div(class="col-6") {
+                                div(class="form-check") {
+                                    input(class="form-check-input" type="checkbox" name="conciliado" id="ch_conciliado" checked="checked")
+                                    label(class="form-check-label" "for"="ch_conciliado"){$"Conciliado"}
+                                }
                             }
                         }
                     }

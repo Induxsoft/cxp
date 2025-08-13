@@ -550,7 +550,10 @@ module ":erp.cxp.movimientos"
         }
 
         // Realizar retiro a la cuenta.
-        dcxp<"imovchequera"> : erp.efectivo.movimientos.deposito(db,deposito)
+        if field.exist(data,"_imovchequera") && @@(data,"#_imovchequera")> 0{dcxp<"imovchequera">:@@(data,"#_imovchequera")}
+        else if field.exist(data,"_imovcuenta") && @@(data,"#_imovcuenta")> 0{dcxp<"imovchequera">:@@(data,"#_imovcuenta")}
+        else{dcxp<"imovchequera"> : erp.efectivo.movimientos.deposito(db,deposito)}
+
         // Generar documento por pagar (dcxp) y Afectar saldo del proveedor.
         do determinarImporteCxP(dcxp,importe_pdr)
         pk_dcxp = saveCxP(db,dcxp)
@@ -565,7 +568,7 @@ module ":erp.cxp.movimientos"
             do rise_error(last_error_code(),last_error())
         }
     }
-
+    
     pagarProveedor::&db,&data
     {
         namespace "erp.cxp.movimientos"
@@ -621,7 +624,10 @@ module ":erp.cxp.movimientos"
         }
 
         // Realizar retiro a la cuenta.
-        dcxp<"imovchequera"> : erp.efectivo.movimientos.retiro(db,retiro)
+        if field.exist(data,"_imovchequera") && @@(data,"#_imovchequera")> 0{dcxp<"imovchequera">:@@(data,"#_imovchequera")}
+        else if field.exist(data,"_imovcuenta") && @@(data,"#_imovcuenta")> 0{dcxp<"imovchequera">:@@(data,"#_imovcuenta")}
+        else{dcxp<"imovchequera"> : erp.efectivo.movimientos.retiro(db,retiro)}
+        
         // Generar documento por pagar (dcxp) y Afectar saldo del proveedor.
         do determinarImporteCxP(dcxp,importe_pdr)
         pk_dcxp = saveCxP(db,dcxp)
