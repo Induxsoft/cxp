@@ -239,8 +239,8 @@ module "cxp.pago.dk"
                                 "data-text"="referencia" 
                                 "data-source"="#<@efectivo_retiro>" 
                                 "data-value"="#<to.json(ifnull(@('&./form/_cuenta'),record.create()))>" 
-                                columns="sys_pk,referencia,importe_str,divisa,tcambio,beneficiario,categoria,notas" 
-                                colcaptions="ID,Referencia,Importe,Divisa,T.C.,Beneficiario,Categoría,Notas"){$""}
+                                columns="sys_pk,aplicacion,referencia,importe_str,divisa,tcambio,beneficiario,categoria,creado,notas" 
+                                colcaptions="ID,Aplicación,Referencia,Importe,Divisa,T.C.,Beneficiario,Categoría,Creación,Notas"){$""}
                             }
                         }
                     }
