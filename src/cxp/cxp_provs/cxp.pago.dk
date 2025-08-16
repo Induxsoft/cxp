@@ -212,15 +212,24 @@ module "cxp.pago.dk"
                         div(class="gap-2 d-flex")
                         {
                             input(type="checkbox" class="form-check-input" id="selectmovcuenta" name="selectmovcuenta" "#<ifstr(parse.bool(form('selectmovcuenta','tx',@null)),'checked','' )>"="true")
-                            label(class="form-check-label fw-bold" "for"="selectmovcuenta"){"Seleccionar cuenta"}
+                            label(class="form-check-label fw-bold" "for"="selectmovcuenta"){"Seleccionar movimiento"}
                         }
                     }
                     
+                    div(class="row d-flex justify-content-end align-items-center")
+                    {
+                        label(class="col-auto col-form-label" "for"="sel_cuenta_retiro"){$"Cuenta:"}
+                        div(class="col-6") {
+                            ##
+                            do uie.dbSelect(sel_cuenta_retiro)
+                            ##
+                        }
+                    }
                     div(id="select_movcuenta" class="d-none")
                     {
                         div(class="row d-flex justify-content-end align-items-center mt-2")
                         {
-                            div(class="col-10")
+                            div(class="col-7")
                             {
                                 label(class="col-auto col-form-label" "for"="sel_cuenta_retiro"){$"Movimiento de cuenta:"}
                                 "input-key"(name="_imovcuenta" 
@@ -239,16 +248,6 @@ module "cxp.pago.dk"
                     {
                         div(class="row d-flex justify-content-end align-items-center")
                         {
-                            label(class="col-auto col-form-label" "for"="sel_cuenta_retiro"){$"Cuenta:"}
-                            div(class="col-6") {
-                                ##
-                                do uie.dbSelect(sel_cuenta_retiro)
-                                ##
-                            }
-                        }
-
-                        div(class="row d-flex justify-content-end align-items-center")
-                        {
                             label(class="col-auto col-form-label" "for"="txt_beneficiario"){$"Beneficiario:"}
                             div(class="col-6") {
                                 input(type="text" class="form-control form-control-sm rounded-0" name="beneficiario" id="txt_beneficiario" value="#<@@(dtprov,'$nombre')>")
@@ -257,7 +256,7 @@ module "cxp.pago.dk"
 
                         div(class="row d-flex justify-content-end align-items-center")
                         {
-                            label(class="col-auto col-form-label" "for"="sel_categoria_retiro"){$"Categoria:"}
+                            label(class="col-auto col-form-label" "for"="sel_categoria_retiro"){$"Categoría:"}
                             div(class="col-6") {
                                 ##
                                 do uie.dbSelect(sel_categoria_retiro)

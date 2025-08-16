@@ -58,10 +58,17 @@ var proveedor =
     },
     CreateEventsSelectCuenta(obj)
     {
+        if(obj.elements["sel_cuenta_deposito"])obj.elements["sel_cuenta_deposito"].addEventListener("change",()=>{if(obj.imovcuenta)obj.imovcuenta.setValue({});})
+        if(obj.elements["sel_cuenta_retiro"])obj.elements["sel_cuenta_retiro"].addEventListener("change",()=>{if(obj.imovcuenta)obj.imovcuenta.setValue({});})
+            
         if(obj.imovcuenta)obj.imovcuenta.onBeforeSearch=(uri)=>
         {
+            let cuenta=0;
+            if(obj.elements["sel_cuenta_deposito"])cuenta=Number(obj.elements["sel_cuenta_deposito"].value??0);
+            else if(obj.elements["sel_cuenta_retiro"])cuenta=Number(obj.elements["sel_cuenta_retiro"].value??0);
+
             let url=uri.replace("@importe", Number(obj.elements["txt_importe"].value ?? 0)).replace("@divisa",obj.dtProv.divisa??"");
-            return url.replace("@tcambio",Number(obj.elements["txt_tcambio"].value ?? 0));
+            return url.replace("@tcambio",Number(obj.elements["txt_tcambio"].value ?? 0)).replace("@cuenta",cuenta );
         }
         if(obj.selectmovcuenta)
         {
