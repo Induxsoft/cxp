@@ -50,8 +50,10 @@ var proveedor =
         obj.select_movcuenta=null;
         obj.create_movcuenta=null;
         obj.imovcuenta=null;
+        obj.rdo_create_movcuenta=null;
 
-        obj.selectmovcuenta=document.getElementById("selectmovcuenta");
+        obj.rdo_create_movcuenta=document.getElementById("rdo_create_movcuenta");
+        obj.selectmovcuenta=document.getElementById("rdo_select_movcuenta");
         obj.select_movcuenta=document.getElementById("select_movcuenta");
         obj.create_movcuenta=document.getElementById("create_movcuenta");
         obj.imovcuenta=document.getElementById("imovcuenta");
@@ -88,7 +90,16 @@ var proveedor =
                     if(obj.create_movcuenta)obj.create_movcuenta.classList.remove("d-none");
                 }
             });
+            
             if(obj.selectmovcuenta.checked)tools.trigger(obj.selectmovcuenta,"change");
+        }
+
+        if(obj.rdo_create_movcuenta)
+        {
+            obj.rdo_create_movcuenta.addEventListener("change",()=>
+            {
+                if(obj.rdo_create_movcuenta.checked)if(obj.selectmovcuenta)tools.trigger(obj.selectmovcuenta,"change");
+            });
         }
     },
     list: {

@@ -246,13 +246,27 @@ module "cxp.devolucion.dk"
 
                         hr{}
 
-                        div(class="d-flex" style="justify-content: space-around;")
+                        div(class="row pb-2" style="justify-content: space-around;")
                         {
-                            h6(class="tex-no-break m-0 fw-bold"){$"Información bancaria"}
-                            div(class="gap-2 d-flex")
+                            div(class="row")
                             {
-                                input(type="checkbox" class="form-check-input" id="selectmovcuenta" name="selectmovcuenta" "#<ifstr(parse.bool(form('selectmovcuenta','tx',@null)),'checked','' )>"="true")
-                                label(class="form-check-label fw-bold" "for"="selectmovcuenta"){"Seleccionar movimiento"}
+                                div(class="col-md-6")
+                                {
+                                    h6(class="tex-no-break m-0 fw-bold"){$"Información bancaria"}
+                                }
+                                div(class="col-md-6 p-0 m-0 d-flex" style="justify-content: space-between;")
+                                {
+                                    label(class="form-check-label fw-bold d-flex gap-1" "for"="rdo_create_movcuenta")
+                                    {
+                                        input(type="radio" class="form-check-input" id="rdo_create_movcuenta" name="selectmovcuenta" "#<ifstr(form('selectmovcuenta','tx',@null)=='1' || form('selectmovcuenta','tx',@null)=='','checked','' )>"="true" value="1")
+                                        "Crear movimiento"
+                                    }
+                                    label(class="form-check-label fw-bold d-flex gap-1" "for"="rdo_select_movcuenta")
+                                    {
+                                        input(type="radio" class="form-check-input" id="rdo_select_movcuenta" name="selectmovcuenta" "#<ifstr(form('selectmovcuenta','tx',@null)=='2','checked','' )>"="true" value="2")
+                                        "Seleccionar movimiento"
+                                    }
+                                }
                             }
                         }
 
@@ -272,7 +286,7 @@ module "cxp.devolucion.dk"
                             {
                                 div(class="col-7")
                                 {
-                                    label(class="col-auto col-form-label" "for"="sel_cuenta_retiro"){$"Movimiento de cuenta:"}
+                                    label(class="col-auto fw-bold col-form-label" "for"="sel_cuenta_retiro"){$"Movimiento de cuenta:"}
                                     "input-key"(name="_imovcuenta" 
                                     id="imovcuenta" 
                                     "data-key"="sys_pk" 
@@ -281,7 +295,14 @@ module "cxp.devolucion.dk"
                                     "data-source"="#<@efectivo_deposito>" 
                                     "data-value"="#<to.json(ifnull(@('&./form/_cuenta'),record.create()))>" 
                                     columns="sys_pk,aplicacion,referencia,importe_str,divisa,tcambio,beneficiario,categoria,creado,notas" 
-                                    colcaptions="ID,Aplicación,Referencia,Importe,Divisa,T.C.,Beneficiario,Categoría,Creación,Notas"){$""}
+                                    colcaptions="ID,Aplicación,Referencia,Importe,Divisa,T.C.,Beneficiario,Categoría,Creación,Notas"
+                                    "control-styles"="
+                                    #input_search_container, #input_description_container,
+                                    #button_search_container, #button_clear_container {
+                                        height: calc(1.5em + .5rem + 2px) !important;
+                                        padding: .25rem .5rem !important;
+                                        font-size: .875rem !important;
+                                    }"){$""}
                                 }
                             }
                         }
