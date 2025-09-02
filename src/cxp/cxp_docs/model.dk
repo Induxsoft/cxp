@@ -1134,7 +1134,7 @@ module "model"
                             HAVING __saldo > 0
         "
 
-        query=sql_vencidos+" union all "+ sql_rng_all
+        query=sql_vencidos+" union "+ sql_rng_all
         query=query + " LIMIT 250"
 
         ref divisas = dbr.list(db,"
