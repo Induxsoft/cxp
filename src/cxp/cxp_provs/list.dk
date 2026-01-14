@@ -76,7 +76,7 @@ module "list.dk"
         }
         @"buttons*": @null
         @"urlexit": "/"
-        @"main": "GC28,GC21,GC22,GC23,GC24,GC25,GC26,GC27,GC29"
+        @"main": "GC28,GC21,GC22,GC2A,GC23,GC24,GC25,GC26,GC27,GC29"
         @"actions*": dbr.apps.itemactions(@('&database'),"DET03F","action","",0)
         @"reports*": dbr.apps.itemactions(@('&database'),"DET03F","report","",0)
         @"jscurrentcontext": "proveedor.getCurrentContext"

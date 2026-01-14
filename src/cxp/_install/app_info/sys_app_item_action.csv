@@ -10,6 +10,7 @@ GC17,Desaplicar abonos de documentos por pagar,Desaplicar abonos,,/!/cxp/documen
 
 GC21,Nuevo proveedor,Agregar,,/!/cxp/proveedores/_new/,0,cxp.proveedores,DET03F,0,action
 GC22,Editar proveedor,Editar,,/!/cxp/proveedores/@_src_context_item_id/,0,cxp.proveedores,DET03F,1,action
+GC2A,Eliminar proveedor,Eliminar,,javascript:proveedor.delete(@_src_context_item_id),0,cxp.proveedores,DET03F,1,action
 GC23,Estado de cuenta del proveedor,Edo. Cuenta,,/!/cxp/proveedores/@_src_context_item_id/balance/,0,cxp.proveedores,DET03F,1,action
 GC24,Documentos por pagar del proveedor,Documentos,,/!/cxp/proveedores/@_src_context_item_id/pendientes/,0,cxp.proveedores,DET03F,1,action
 GC25,Pagos por aplicar del proveedor,Por aplicar,,/!/cxp/proveedores/@_src_context_item_id/xaplicar/,0,cxp.proveedores,DET03F,1,action

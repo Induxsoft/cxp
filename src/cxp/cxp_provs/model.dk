@@ -1182,6 +1182,90 @@ module "model"
 
     pdr.delete::&db,&params
     {
-        do rise_error(500,"Acción no implementada.")
+        return delete_entity(db,params)
+    }
+    function delete_entity(&db,&params)
+    {
+        @use_transaction = @false
+        @just_read_entity = @true
+
+        // Privilegios sobre entidades: XX00:DET000:0
+        do dbr.apps.action.pre("GC2A")
+        
+        ref entity = @null
+        deleted = @false
+
+        codeblock "Intentar eliminación física"
+        {
+            do dbr.begin(db)
+
+            // Eliminar registros relacionados aqui...
+            do entity.delete(db,params)
+
+            do dbr.apps.action.pos(entity)
+            do dbr.commit(db)
+            deleted = @true
+            do dbr.apps.action.ext(entity)
+
+            exception
+            {
+                if dbr.in_transaction(db) { do dbr.rollback(db) }
+                do dbr.apps.action.log()
+                do pop_exception()
+            }
+        }
+        if not(deleted)
+        {
+            do dbr.begin(db)
+
+            params<"lastuser"> : @@(@http_context,"$session/user/uid")
+            sql = ftext("
+            UPDATE #<@table_name> SET
+                sys_timestamp = NOW(),
+                sys_lastuser = @lastuser,
+                sys_deleted = 1,
+                sys_info = codigo,
+                codigo = CONCAT('~',sys_pk)
+            WHERE #<@keyfield> = @_entity_id
+            ")
+            do dbr.execute(db,sql,params)
+            ref entity:entity.read(db,params)
+
+            do dbr.apps.action.pos(entity)
+            do dbr.commit(db)
+            do dbr.apps.action.ext(entity)
+        }
+
+        return entity
+
+        exception{ do catch(db,params,@null) }
+    }
+    function catch(&db,&params,&data)
+    {
+        do errordet(@false)
+        code = last_error_code()
+        error = last_error()
+
+        if dbr.in_transaction(db) { do dbr.rollback(db) }
+        if isset("@@_action_context") { do dbr.apps.action.log() }
+
+        if isanyword(@@(params,"$_operation"),"create,update")
+        {
+            if isnull(data) { ref data:record.create() }
+            if contains(error,"Duplicate entry") { error = "Entrada duplicada, ya existe un registro con los mismos valores." }
+
+            ref FormData = record.copy(data,"*")
+            do record.clear(data)
+            data<"form*"> : FormData
+        }
+        else if @@(params,"$_operation") == "delete"
+        {
+            if contains(error,"Cannot delete or update a parent row") || contains(error,"DELETE Error") {
+                error = "No es posible eliminar, otros registros dependen del elemento proporcionado."
+            }
+        }
+
+        do clear_exceptions()
+        do rise_error(code,error)
     }
 }

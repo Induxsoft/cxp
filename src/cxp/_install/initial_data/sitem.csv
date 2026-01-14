@@ -34,6 +34,7 @@ cxp.proveedores,Proveedores y cuentas por pagar,cxp
 GC20,Proveedores y CxP,cxp.proveedores
 GC21,Nuevo proveedor,cxp.proveedores
 GC22,Editar proveedor,cxp.proveedores
+GC2A,Eliminar proveedor,cxp.proveedores
 GC23,Estado de cuenta del proveedor,cxp.proveedores
 GC24,Documentos por pagar del proveedor,cxp.proveedores
 GC25,Pagos por aplicar del proveedor,cxp.proveedores
