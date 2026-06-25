@@ -61,6 +61,8 @@ model "erp.cxp"
     // Configuración de documentos por pagar
     entity "cfg_cxp_docs"
     {
+        @"sys_recver" int
+        
         @"documento" ref:"cdocumentos" key
         @"pagable" bool     // Si es true, puede agregarse como documento por pagar al que se le pueden aplicar cargos, bonificaciones y pagos
         @"apl_int_fin" bool // Si es true, puede usarse para aplicarse como intereses financieros

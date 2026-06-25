@@ -1,0 +1,119 @@
+#include "dkli.dkh"
+#!
+module ""
+{
+    do errordet(@false)
+
+    @table_name = "cfg_cxp_docs"
+    @keyfield = "documento"
+
+    @list_query = "
+    SELECT
+        IF(c.pagable,     'Sí', 'No') pagable,
+        IF(c.apl_int_fin, 'Sí', 'No') apl_int_fin,
+        IF(c.apl_int_mor, 'Sí', 'No') apl_int_mor,
+        IF(c.apl_bonific, 'Sí', 'No') apl_bonific,
+        IF(c.apl_pago,    'Sí', 'No') apl_pago,
+        d.id AS documento,
+        d.const AS cdocumento
+    FROM #<@table_name> c
+        RIGHT JOIN cdocumentos d ON c.documento = d.id
+    ORDER BY d.id
+    "
+
+
+    _dumpCfgDocs :: &db, &data
+    {
+        sql = ftext("INSERT INTO #<@table_name> (sys_recver,documento,pagable,apl_int_fin,apl_int_mor,apl_bonific,apl_pago) VALUES ")
+        
+        values = ""
+        for i = 0; i < list.count(data)
+        {
+            ref cfg = list.obj(data,i)
+            
+            documento   = @@(cfg,"#documento")
+            pagable     = parse.bool(@@(cfg,"$pagable"))
+            apl_int_fin = parse.bool(@@(cfg,"$apl_int_fin"))
+            apl_int_mor = parse.bool(@@(cfg,"$apl_int_mor"))
+            apl_bonific = parse.bool(@@(cfg,"$apl_bonific"))
+            apl_pago    = parse.bool(@@(cfg,"$apl_pago"))
+
+            values = values + ftext("(ifnull(sys_recver,0)+1, #<documento>, #<pagable>, #<apl_int_fin>, #<apl_int_mor>, #<apl_bonific>, #<apl_pago>),")
+        }
+        sql = sql + rremove(values,1)
+
+        sql = sql + " AS new ON DUPLICATE KEY UPDATE
+            sys_recver  = new.sys_recver,
+            pagable     = new.pagable,
+            apl_int_fin = new.apl_int_fin,
+            apl_int_mor = new.apl_int_mor,
+            apl_bonific = new.apl_bonific,
+            apl_pago    = new.apl_pago;
+        "
+
+        do dbr.execute(db,sql,@null)
+    }
+
+    entity.list :: &db, &params
+    {
+        do dbr.apps.action.grant("GB70")
+
+        new resp
+        {
+            @"data*": dbr.list(db,ftext(@list_query),params)
+            @"itemactions*": dbr.apps.itemactions(db,"DET0C6","action","",0)
+            @"itemreports*": dbr.apps.itemactions(db,"DET0C6","report","",0)
+        }
+        return resp
+
+        exception{ do catch(db,params,@null) }
+    }
+
+    entity.create :: &db, &params, &data
+    {
+        do dbr.apps.action.grant("GB71")
+
+        ref modified = @@(data,"&modified")
+        if @count(modified) < 1 { return list.create() }
+
+        do _dumpCfgDocs(db,modified)
+        return dbr.list(db,ftext(@list_query),params)
+
+        exception{ do catch(db,params,data) }
+    }
+
+    entity.delete :: &db, &params
+    {
+        do dbr.apps.action.grant("GB73")
+
+        do dbr.delete(db,@table_name,"documento=@_entity_id",params)
+        return @null
+
+        exception{ do catch(db,params,@null) }
+    }
+
+
+    function catch(&db,&params,&data)
+    {
+        code = last_error_code()
+        error = last_error()
+
+        if dbr.in_transaction(db) { do dbr.rollback(db) }
+        if isset("@@_action_context") { do dbr.apps.action.log() }
+
+        if isanyword(@@(params,"$_operation"),"create,update")
+        {
+            if isnull(data) { ref data:record.create() }
+            if contains(error,"Duplicate entry") { error = "Entrada duplicada, ya existe un registro con los mismos valores." }
+        }
+        else if @@(params,"$_operation") == "delete"
+        {
+            if contains(error,"Cannot delete or update a parent row") || contains(error,"DELETE Error") {
+                error = "No es posible eliminar, otros registros dependen del elemento proporcionado."
+            }
+        }
+        
+        do clear_exceptions()
+        do rise_error(code,error)
+    }
+}

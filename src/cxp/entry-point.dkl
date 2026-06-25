@@ -50,6 +50,7 @@ module "Controller configs"
 	do crudl.routes.entity("/proveedores/","cxp_provs")
 	do crudl.routes.entity("/gastos/","ut_gasto")
 	do crudl.routes.entity("/reports/","reports")
+	do crudl.routes.entity("/cfg-docs/","cfg_cxp_docs")
 
 	if crudl.route("/gasto-files/")
 	{

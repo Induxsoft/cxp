@@ -1,0 +1,120 @@
+#include "dkli.dkh"
+#!
+module ""
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "uielements.v12.dkl"
+    // #include "../_lib/config.dk"
+    // #include "../_lib/lib.dk"
+	// #include "../_lib/icons.dk"
+
+    do @context.begin(@crud_context)
+
+	@_entities_type = @("$parameters/_entities_type")
+    table_id = "tbl_"+@_entities_type
+
+    function printNavButtons()
+    {
+        cls = "btn btn-main-action btn-sm border-secondary induxsoft-corners no-shadow"
+        #$
+        button(class="#<cls>" type="button" onclick="cfg.discard()" id="btn-discard" hidden=""){"Descartar"}
+        button(class="#<cls>" type="button" onclick="cfg.save()"){"Guardar"}
+        // button(class="#<cls>" type="button" onclick="cfg.delete()"){"Eliminar"}
+        #!
+    }
+    point buttons to printNavButtons
+    new nav_config
+    {
+        @"title": "Configuración de documentos"
+        @"urlexit": "/"
+        @"buttons*": buttons
+
+        @"actions*": ifnull(@("&./itemactions"),list.create())
+        @"reports*": ifnull(@("&./itemreports"),list.create())
+        @"jscurrentcontext": "getCurrentContext"
+
+        member "hidden"
+        {
+            @"send": @true
+            @"copy": @true
+            @"csv": @true
+            @"print": @true
+        }
+    }
+    
+    // Encapsula a la vista en su totalidad, todo lo que hay antes o después no se considera 
+    #$
+    div(class="container-lg" id="view")
+    {
+        // Filtros y acciones
+        section(id="top_area")
+        {
+            #!
+            do uie.printV12FormBar(nav_config)
+            #$
+        }
+        // Contenido principal
+        section(id="work_area")
+        {
+            "edit-table"(id="#<table_id>" data="#<to.json(@('&./data'))>" style="width:100%;"
+            "auto-confirm"="true"
+            "row-height"="1.2rem"
+            "control-styles"="
+                tr th { font-size:.9rem; font-weight:500 !important; outline:none !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; -o-text-overflow:ellipsis; }
+                tr td { font-size:.8rem; }
+
+                #__table_input { font-size:unset !important; }
+
+                @media print
+                {
+                    tr th { background-color: #DCDCDC; }
+                    tr td { background-color: #FFF !important; color:#000 !important; }
+                }
+            ")
+            {
+                "edit-thead"
+                {
+                    "edit-tr"
+                    {
+                        "edit-th"(type="NoEditable" field="cdocumento"){"Documento"}
+                        "edit-th"(type="Check" field="pagable" textalign="center"){"Pagable"}
+                        "edit-th"(type="Check" field="apl_int_fin" textalign="center"){"Apl. IntFin"}
+                        "edit-th"(type="Check" field="apl_int_mor" textalign="center"){"Apl. IntMor"}
+                        "edit-th"(type="Check" field="apl_bonific" textalign="center"){"Apl. Bonificaciones"}
+                        "edit-th"(type="Check" field="apl_pago" textalign="center"){"Apl. Pagos"}
+                    }
+                }
+            }
+        }
+        // Resúmenes y datos al pie
+        section(id="bottom_area")
+        {
+            //////////////////////////////////////////////////////////////////
+            div(id="_custom_area")
+            {
+                script(src="/$/cxp/js/cfg_cxp_docs.js"){$""}
+                script(type="text/javascript")
+                {$'
+                    function filter(ff) { ff.form.submit(); }
+                    
+                    function getCurrentContext() {
+                        const table = document.getElementById("#<table_id>");
+                        const id = (table?.DataArray[table.CurrentRowIndex()]?.documento ?? "");
+                        return { item_id:id, context: {} }
+                    }
+
+                    cfg.table_id = "#<table_id>";
+                    
+                    document.addEventListener("DOMContentLoaded", () => {
+                        // Script injection
+                        #<@@(@crud_context,"script")>
+                    });
+                '}
+            }
+        }
+    }
+    #!
+
+    do @context.end()
+}

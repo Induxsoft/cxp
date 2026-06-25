@@ -46,3 +46,6 @@ cxp.reports,Informes de Cuentas por Pagar,cxp
 GC41,Informe de antigüedad de saldos por pagar,cxp.reports
 GC42,Origen y aplicación,cxp.reports
 GC43,Historial de pagos por proveedor,cxp.reports
+cxp.cfg_cxp_docs,Configuración de documentos por pagar,cxp
+GC70,Configuración de documentos,cxp.cfg_cxp_docs
+GC71,Guardar Configuración de documentos,cxp.cfg_cxp_docs

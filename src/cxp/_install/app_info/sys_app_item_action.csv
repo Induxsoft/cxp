@@ -28,6 +28,8 @@ GC43,Historial de pagos por proveedor,HPagos XProveedor,,/!/cxp/reports/historia
 
 GC50,Ver calendario de pagos autorizados,Calendario de pagos,,/!/cxp/documentos/calendar_pagos/,0,cxp.documentos,DET01E,0,action
 
+GC70,Configuración de documentos por pagar,cfg-docs,,/!/cxp/cfg-docs/,0,cxp.cfg_cxp_docs,DET0C6,0,shortcut
+
 GCF0,Importar movimientos iniciales por pagar,"Importar",,/!/batch/taskman/GC/importar.documentos/,0,cxp.documentos,DET01E,0,action
 GCF1,Podar movimientos por pagar,"Podar",,/!/batch/taskman/GC/podar.documentos/,0,cxp.documentos,DET01E,0,action
 GCF2,Limpiar movimientos por pagar,"Limpiar",,/!/batch/taskman/GC/limpiar.documentos/,0,cxp.documentos,DET01E,0,action
