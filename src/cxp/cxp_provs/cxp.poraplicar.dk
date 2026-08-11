@@ -14,6 +14,7 @@ module "cxp.poraplicar.dk"
     do @context.begin(@crud_context)
 
     ref @_GET = @("&parameters")
+    ref titles = ifnull(@("&./titles"),record.create())
 
     @_entities_type = @("$parameters/_entities_type")
 	@_entity_id = @("$parameters/_entity_id")
@@ -135,30 +136,33 @@ module "cxp.poraplicar.dk"
                 }
             }
 
-            div(class="d-flex justify-content-between")
+            div(id="div-saldos")
             {
-                h6(class=""){$"#<@('$./nombre')>"}
-                h6(class=""){$"#<@('$./divisa')>"}
-            }
-
-            table(class="table table-sm table-bordered")
-            {
-                thead
+                div(class="d-flex justify-content-between")
                 {
-                    tr
-                    {
-                        th{$"Saldo total"}
-                        th{$"Saldo docs"}
-                        th{$"Por aplicar"}
-                    }
+                    h6(class=""){$"#<@('$./nombre')>"}
+                    h6(class=""){$"#<@('$./divisa')>"}
                 }
-                tbody
+
+                table(class="table table-sm table-bordered")
                 {
-                    tr
+                    thead
                     {
-                        td(class="text-end"){$"$ #<number_format(@('#./saldos/saldo_total'))>"}
-                        td(class="text-end"){$"$ #<number_format(@('#./saldos/saldo_docs'))>"}
-                        td(class="text-end"){$"$ #<number_format(@('#./saldos/por_aplicar'))>"}
+                        tr
+                        {
+                            th{$"Saldo total"}
+                            th{$"Saldo docs"}
+                            th{$"Por aplicar"}
+                        }
+                    }
+                    tbody
+                    {
+                        tr
+                        {
+                            td(class="text-end"){$"$ #<number_format(@('#./saldos/saldo_total'))>"}
+                            td(class="text-end"){$"$ #<number_format(@('#./saldos/saldo_docs'))>"}
+                            td(class="text-end"){$"$ #<number_format(@('#./saldos/por_aplicar'))>"}
+                        }
                     }
                 }
             }
@@ -166,7 +170,63 @@ module "cxp.poraplicar.dk"
         
         section(class="container-fluid" id="work_area")
         {
-            "edit-table"(class="w-100" id="table_poraplicar" data="#<to.json(@('&./docs'))>")
+            style
+            {$'
+                table {
+                    table-layout:auto;
+                    width:100%;
+                    overflow:hidden;
+                }
+                th {
+                    font-weight:500;
+                    font-size:.9rem;
+                }
+                td { font-size:.8rem; }
+            '}
+
+            div(class="show-on-print")
+            {
+                p(class="text-center my-0"){$"#<@@(titles,'$title')>"}
+                p(class="text-center my-0"){$"#<@@(titles,'$subtitle')>"}
+                p(class="text-center my-0"){$"#<@@(titles,'$subtitle_2')>"}
+
+                div(class="row")
+                {
+                    div(class="col-3 text-start")
+                    {""}
+                    div(class="col-6 text-center")
+                    {
+                        h4(class="mb-0"){"Documentos por aplicar"}
+                    }
+                    div(class="col-3 text-end")
+                    {
+                        small(class="d-block"){ $"#<cut(@('$http/session/user/name'),25)>" }
+                        small(class="d-block"){ $"#<date_str(now(),'dd/MMM/yyyy')>" }
+                    }
+                }
+            }
+
+            "edit-table"(
+                id="table_poraplicar"
+                data="#<to.json(@('&./docs'))>"
+                "control-styles"='
+                    table { width:100%; }
+                    
+                    th {
+                        font-weight:500 !important;
+                        font-size:.9rem;
+                    }
+                    td { font-size:.8rem; }
+                    
+                    @media print {
+                        div:has(table) { overflow:revert !important; }
+                        table {
+                            table-layout:auto;
+                            overflow:hidden !important;
+                        }
+                    }
+                '
+            )
             {
                 "edit-thead"
                 {
@@ -181,6 +241,8 @@ module "cxp.poraplicar.dk"
                     }
                 }
             }
+
+            div(class="show-on-print"){p(class="fixed-bottom text-center my-1"){$"#<@@(titles,'$footer')>"}}
         }
 
         p{$"#<@('$error/message')>"}
@@ -195,6 +257,8 @@ module "cxp.poraplicar.dk"
 			}
 
             document.addEventListener("DOMContentLoaded", () => {
+                const top_area = document.getElementById("top_area");
+                const div_saldos = document.getElementById("div-saldos");
                 const table = document.getElementById("table_poraplicar");
                 const event = table.EdiTable.Const.Events;
 
@@ -217,6 +281,15 @@ module "cxp.poraplicar.dk"
                 }
 
                 v12navbar.toggleButtonInteraction(true);
+
+                // Vista de impresión activada.
+                window.addEventListener("beforeprint", () => {
+                    table.insertAdjacentElement("beforebegin",div_saldos);
+                });
+                // Vista de impresión desactivada.
+                window.addEventListener("afterprint", () => {
+                    top_area.appendChild(div_saldos);
+                });
             })
 		'}
     }

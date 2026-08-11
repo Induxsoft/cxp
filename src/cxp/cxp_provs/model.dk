@@ -640,6 +640,7 @@ module "model"
         ref data = cxp.obtenerProveedor(db,@@(params,"_entity_id"))
         do cxp.obtenerSaldos(db,params,data)
         data<"docs*"> : dbr.list(db,ftext(sql),params)
+        do setPrintTitles(db,data)
 
         return data
 
@@ -692,6 +693,7 @@ module "model"
         ref data = cxp.obtenerProveedor(db,@@(params,"_entity_id"))
         do cxp.obtenerSaldos(db,params,data)
         data<"docs*"> : dbr.list(db,ftext(sql),params)
+        do setPrintTitles(db,data)
 
         return data
 
@@ -742,6 +744,7 @@ module "model"
         ref data = cxp.obtenerProveedor(db,@@(params,"_entity_id"))
         do cxp.obtenerSaldos(db,params,data)
         data<"docs*"> : dbr.list(db,ftext(sql),params)
+        do setPrintTitles(db,data)
 
         return data
 
