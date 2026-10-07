@@ -764,6 +764,10 @@ module "model"
         do dbr.apps.action.grant("GC20")
         if not(field.exist(params,"decimals")){ params<"decimals"> : parse.num(dbr.vars.get(db,"FXCA001")) }
 
+        max_rows = trun(parse.num(dbr.vars.get(db,"cxp.proveedores.max_rows")))
+
+        if max_rows > 1 { @default_max_rows = max_rows }
+        
         sql_proveedores = "
         SELECT 
             pdr.sys_pk,

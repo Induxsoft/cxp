@@ -21,5 +21,22 @@
                 "varinput": { "control": "decimal" } 
             }
         ]
+    },
+    {
+        "id": "cxp.views",
+        "parent":"cxp",
+        "caption": "Interfaces / Vistas",
+        "help": "Ajustar el diseño de las vistas",
+        "vars": [
+            {
+                "varname": "cxp.proveedores.max_rows",
+                "vardefault": "500",
+                "varvalue": "500",
+                "varcaption": "Mostrar los primeros N proveedores",
+                "varhelp": "Máximo de filas a mostrar en: \"Proveedores\"",
+                "vartype": "int",
+                "varinput": { "control": "number" }
+            }
+        ]
     }
 ]
